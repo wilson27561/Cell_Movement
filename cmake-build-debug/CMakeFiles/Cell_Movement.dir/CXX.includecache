@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/wilson27561/Documents/Cell_Movement/flute.h
+
+/Users/wilson27561/Documents/Cell_Movement/main.cpp
+iostream
+-
+stdio.h
+-
+stdlib.h
+-
+flute.h
+/Users/wilson27561/Documents/Cell_Movement/flute.h
+
