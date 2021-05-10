@@ -3,4 +3,4 @@ project(Cell_Movement)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Cell_Movement main.cpp flute.cpp flute.h flute_mst.cpp dl.h dl.cpp mst2.cpp mst2.h heap.cpp heap.h global.h neighbors.cpp neighbors.h dist.cpp dist.h err.cpp err.h)
+add_executable(Cell_Movement main.cpp flute/flute.cpp flute/flute.h flute/flute_mst.cpp flute/dl.h flute/dl.cpp flute/mst2.cpp flute/mst2.h flute/heap.cpp flute/heap.h flute/global.h flute/neighbors.cpp flute/neighbors.h flute/dist.cpp flute/dist.h flute/err.cpp flute/err.h)

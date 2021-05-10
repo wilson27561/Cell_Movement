@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "flute.h"
+#include "flute/flute.h"
 
 int main() {
     int d=0;

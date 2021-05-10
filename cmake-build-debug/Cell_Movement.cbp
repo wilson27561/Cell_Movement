@@ -80,55 +80,55 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/dist.cpp">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/dist.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/dist.h">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/dist.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/dl.cpp">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/dl.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/dl.h">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/dl.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/err.cpp">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/err.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/err.h">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/err.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute.cpp">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/flute.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute.h">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/flute.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute_mst.cpp">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/flute_mst.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/global.h">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/global.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/heap.cpp">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/heap.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/heap.h">
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/heap.h">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/mst2.cpp">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/mst2.h">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/neighbors.cpp">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/neighbors.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/main.cpp">
-			<Option target="Cell_Movement"/>
-		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/mst2.cpp">
-			<Option target="Cell_Movement"/>
-		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/mst2.h">
-			<Option target="Cell_Movement"/>
-		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/neighbors.cpp">
-			<Option target="Cell_Movement"/>
-		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/neighbors.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/CMakeLists.txt">

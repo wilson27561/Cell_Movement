@@ -142,167 +142,221 @@ Cell_Movement/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/build
 .PHONY : Cell_Movement/fast
 
-dist.o: dist.cpp.o
+flute/dist.o: flute/dist.cpp.o
 
-.PHONY : dist.o
-
-# target to build an object file
-dist.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/dist.cpp.o
-.PHONY : dist.cpp.o
-
-dist.i: dist.cpp.i
-
-.PHONY : dist.i
-
-# target to preprocess a source file
-dist.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/dist.cpp.i
-.PHONY : dist.cpp.i
-
-dist.s: dist.cpp.s
-
-.PHONY : dist.s
-
-# target to generate assembly for a file
-dist.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/dist.cpp.s
-.PHONY : dist.cpp.s
-
-dl.o: dl.cpp.o
-
-.PHONY : dl.o
+.PHONY : flute/dist.o
 
 # target to build an object file
-dl.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/dl.cpp.o
-.PHONY : dl.cpp.o
+flute/dist.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o
+.PHONY : flute/dist.cpp.o
 
-dl.i: dl.cpp.i
+flute/dist.i: flute/dist.cpp.i
 
-.PHONY : dl.i
+.PHONY : flute/dist.i
 
 # target to preprocess a source file
-dl.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/dl.cpp.i
-.PHONY : dl.cpp.i
+flute/dist.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/dist.cpp.i
+.PHONY : flute/dist.cpp.i
 
-dl.s: dl.cpp.s
+flute/dist.s: flute/dist.cpp.s
 
-.PHONY : dl.s
+.PHONY : flute/dist.s
 
 # target to generate assembly for a file
-dl.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/dl.cpp.s
-.PHONY : dl.cpp.s
+flute/dist.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/dist.cpp.s
+.PHONY : flute/dist.cpp.s
 
-err.o: err.cpp.o
+flute/dl.o: flute/dl.cpp.o
 
-.PHONY : err.o
+.PHONY : flute/dl.o
 
 # target to build an object file
-err.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/err.cpp.o
-.PHONY : err.cpp.o
+flute/dl.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/dl.cpp.o
+.PHONY : flute/dl.cpp.o
 
-err.i: err.cpp.i
+flute/dl.i: flute/dl.cpp.i
 
-.PHONY : err.i
+.PHONY : flute/dl.i
 
 # target to preprocess a source file
-err.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/err.cpp.i
-.PHONY : err.cpp.i
+flute/dl.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/dl.cpp.i
+.PHONY : flute/dl.cpp.i
 
-err.s: err.cpp.s
+flute/dl.s: flute/dl.cpp.s
 
-.PHONY : err.s
+.PHONY : flute/dl.s
 
 # target to generate assembly for a file
-err.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/err.cpp.s
-.PHONY : err.cpp.s
+flute/dl.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/dl.cpp.s
+.PHONY : flute/dl.cpp.s
 
-flute.o: flute.cpp.o
+flute/err.o: flute/err.cpp.o
 
-.PHONY : flute.o
+.PHONY : flute/err.o
 
 # target to build an object file
-flute.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute.cpp.o
-.PHONY : flute.cpp.o
+flute/err.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/err.cpp.o
+.PHONY : flute/err.cpp.o
 
-flute.i: flute.cpp.i
+flute/err.i: flute/err.cpp.i
 
-.PHONY : flute.i
+.PHONY : flute/err.i
 
 # target to preprocess a source file
-flute.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute.cpp.i
-.PHONY : flute.cpp.i
+flute/err.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/err.cpp.i
+.PHONY : flute/err.cpp.i
 
-flute.s: flute.cpp.s
+flute/err.s: flute/err.cpp.s
 
-.PHONY : flute.s
+.PHONY : flute/err.s
 
 # target to generate assembly for a file
-flute.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute.cpp.s
-.PHONY : flute.cpp.s
+flute/err.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/err.cpp.s
+.PHONY : flute/err.cpp.s
 
-flute_mst.o: flute_mst.cpp.o
+flute/flute.o: flute/flute.cpp.o
 
-.PHONY : flute_mst.o
+.PHONY : flute/flute.o
 
 # target to build an object file
-flute_mst.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute_mst.cpp.o
-.PHONY : flute_mst.cpp.o
+flute/flute.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o
+.PHONY : flute/flute.cpp.o
 
-flute_mst.i: flute_mst.cpp.i
+flute/flute.i: flute/flute.cpp.i
 
-.PHONY : flute_mst.i
+.PHONY : flute/flute.i
 
 # target to preprocess a source file
-flute_mst.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute_mst.cpp.i
-.PHONY : flute_mst.cpp.i
+flute/flute.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/flute.cpp.i
+.PHONY : flute/flute.cpp.i
 
-flute_mst.s: flute_mst.cpp.s
+flute/flute.s: flute/flute.cpp.s
 
-.PHONY : flute_mst.s
+.PHONY : flute/flute.s
 
 # target to generate assembly for a file
-flute_mst.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute_mst.cpp.s
-.PHONY : flute_mst.cpp.s
+flute/flute.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/flute.cpp.s
+.PHONY : flute/flute.cpp.s
 
-heap.o: heap.cpp.o
+flute/flute_mst.o: flute/flute_mst.cpp.o
 
-.PHONY : heap.o
+.PHONY : flute/flute_mst.o
 
 # target to build an object file
-heap.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/heap.cpp.o
-.PHONY : heap.cpp.o
+flute/flute_mst.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/flute_mst.cpp.o
+.PHONY : flute/flute_mst.cpp.o
 
-heap.i: heap.cpp.i
+flute/flute_mst.i: flute/flute_mst.cpp.i
 
-.PHONY : heap.i
+.PHONY : flute/flute_mst.i
 
 # target to preprocess a source file
-heap.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/heap.cpp.i
-.PHONY : heap.cpp.i
+flute/flute_mst.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/flute_mst.cpp.i
+.PHONY : flute/flute_mst.cpp.i
 
-heap.s: heap.cpp.s
+flute/flute_mst.s: flute/flute_mst.cpp.s
 
-.PHONY : heap.s
+.PHONY : flute/flute_mst.s
 
 # target to generate assembly for a file
-heap.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/heap.cpp.s
-.PHONY : heap.cpp.s
+flute/flute_mst.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/flute_mst.cpp.s
+.PHONY : flute/flute_mst.cpp.s
+
+flute/heap.o: flute/heap.cpp.o
+
+.PHONY : flute/heap.o
+
+# target to build an object file
+flute/heap.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/heap.cpp.o
+.PHONY : flute/heap.cpp.o
+
+flute/heap.i: flute/heap.cpp.i
+
+.PHONY : flute/heap.i
+
+# target to preprocess a source file
+flute/heap.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/heap.cpp.i
+.PHONY : flute/heap.cpp.i
+
+flute/heap.s: flute/heap.cpp.s
+
+.PHONY : flute/heap.s
+
+# target to generate assembly for a file
+flute/heap.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/heap.cpp.s
+.PHONY : flute/heap.cpp.s
+
+flute/mst2.o: flute/mst2.cpp.o
+
+.PHONY : flute/mst2.o
+
+# target to build an object file
+flute/mst2.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/mst2.cpp.o
+.PHONY : flute/mst2.cpp.o
+
+flute/mst2.i: flute/mst2.cpp.i
+
+.PHONY : flute/mst2.i
+
+# target to preprocess a source file
+flute/mst2.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/mst2.cpp.i
+.PHONY : flute/mst2.cpp.i
+
+flute/mst2.s: flute/mst2.cpp.s
+
+.PHONY : flute/mst2.s
+
+# target to generate assembly for a file
+flute/mst2.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/mst2.cpp.s
+.PHONY : flute/mst2.cpp.s
+
+flute/neighbors.o: flute/neighbors.cpp.o
+
+.PHONY : flute/neighbors.o
+
+# target to build an object file
+flute/neighbors.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/neighbors.cpp.o
+.PHONY : flute/neighbors.cpp.o
+
+flute/neighbors.i: flute/neighbors.cpp.i
+
+.PHONY : flute/neighbors.i
+
+# target to preprocess a source file
+flute/neighbors.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/neighbors.cpp.i
+.PHONY : flute/neighbors.cpp.i
+
+flute/neighbors.s: flute/neighbors.cpp.s
+
+.PHONY : flute/neighbors.s
+
+# target to generate assembly for a file
+flute/neighbors.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/flute/neighbors.cpp.s
+.PHONY : flute/neighbors.cpp.s
 
 main.o: main.cpp.o
 
@@ -331,60 +385,6 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/main.cpp.s
 .PHONY : main.cpp.s
 
-mst2.o: mst2.cpp.o
-
-.PHONY : mst2.o
-
-# target to build an object file
-mst2.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/mst2.cpp.o
-.PHONY : mst2.cpp.o
-
-mst2.i: mst2.cpp.i
-
-.PHONY : mst2.i
-
-# target to preprocess a source file
-mst2.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/mst2.cpp.i
-.PHONY : mst2.cpp.i
-
-mst2.s: mst2.cpp.s
-
-.PHONY : mst2.s
-
-# target to generate assembly for a file
-mst2.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/mst2.cpp.s
-.PHONY : mst2.cpp.s
-
-neighbors.o: neighbors.cpp.o
-
-.PHONY : neighbors.o
-
-# target to build an object file
-neighbors.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/neighbors.cpp.o
-.PHONY : neighbors.cpp.o
-
-neighbors.i: neighbors.cpp.i
-
-.PHONY : neighbors.i
-
-# target to preprocess a source file
-neighbors.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/neighbors.cpp.i
-.PHONY : neighbors.cpp.i
-
-neighbors.s: neighbors.cpp.s
-
-.PHONY : neighbors.s
-
-# target to generate assembly for a file
-neighbors.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/neighbors.cpp.s
-.PHONY : neighbors.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -394,33 +394,33 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... Cell_Movement"
-	@echo "... dist.o"
-	@echo "... dist.i"
-	@echo "... dist.s"
-	@echo "... dl.o"
-	@echo "... dl.i"
-	@echo "... dl.s"
-	@echo "... err.o"
-	@echo "... err.i"
-	@echo "... err.s"
-	@echo "... flute.o"
-	@echo "... flute.i"
-	@echo "... flute.s"
-	@echo "... flute_mst.o"
-	@echo "... flute_mst.i"
-	@echo "... flute_mst.s"
-	@echo "... heap.o"
-	@echo "... heap.i"
-	@echo "... heap.s"
+	@echo "... flute/dist.o"
+	@echo "... flute/dist.i"
+	@echo "... flute/dist.s"
+	@echo "... flute/dl.o"
+	@echo "... flute/dl.i"
+	@echo "... flute/dl.s"
+	@echo "... flute/err.o"
+	@echo "... flute/err.i"
+	@echo "... flute/err.s"
+	@echo "... flute/flute.o"
+	@echo "... flute/flute.i"
+	@echo "... flute/flute.s"
+	@echo "... flute/flute_mst.o"
+	@echo "... flute/flute_mst.i"
+	@echo "... flute/flute_mst.s"
+	@echo "... flute/heap.o"
+	@echo "... flute/heap.i"
+	@echo "... flute/heap.s"
+	@echo "... flute/mst2.o"
+	@echo "... flute/mst2.i"
+	@echo "... flute/mst2.s"
+	@echo "... flute/neighbors.o"
+	@echo "... flute/neighbors.i"
+	@echo "... flute/neighbors.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... mst2.o"
-	@echo "... mst2.i"
-	@echo "... mst2.s"
-	@echo "... neighbors.o"
-	@echo "... neighbors.i"
-	@echo "... neighbors.s"
 .PHONY : help
 
 
