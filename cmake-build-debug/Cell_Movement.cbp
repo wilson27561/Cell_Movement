@@ -80,6 +80,18 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Header/Layer.cpp">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Header/Layer.h">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/Constant.cpp">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/Constant.h">
+			<Option target="Cell_Movement"/>
+		</Unit>
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/dist.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>

@@ -193,6 +193,32 @@ CMakeFiles/Cell_Movement.dir/flute/err.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Cell_Movement.dir/flute/err.cpp.s"
 	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/wilson27561/Documents/Cell_Movement/flute/err.cpp -o CMakeFiles/Cell_Movement.dir/flute/err.cpp.s
 
+CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
+CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o: ../Util/Constant.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Util/Constant.cpp
+
+CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/wilson27561/Documents/Cell_Movement/Util/Constant.cpp > CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.i
+
+CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/wilson27561/Documents/Cell_Movement/Util/Constant.cpp -o CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.s
+
+CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
+CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o: ../Header/Layer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Header/Layer.cpp
+
+CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.i"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/wilson27561/Documents/Cell_Movement/Header/Layer.cpp > CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.i
+
+CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.s"
+	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/wilson27561/Documents/Cell_Movement/Header/Layer.cpp -o CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.s
+
 # Object files for target Cell_Movement
 Cell_Movement_OBJECTS = \
 "CMakeFiles/Cell_Movement.dir/main.cpp.o" \
@@ -203,7 +229,9 @@ Cell_Movement_OBJECTS = \
 "CMakeFiles/Cell_Movement.dir/flute/heap.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/flute/neighbors.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o" \
-"CMakeFiles/Cell_Movement.dir/flute/err.cpp.o"
+"CMakeFiles/Cell_Movement.dir/flute/err.cpp.o" \
+"CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o" \
+"CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o"
 
 # External object files for target Cell_Movement
 Cell_Movement_EXTERNAL_OBJECTS =
@@ -217,9 +245,11 @@ Cell_Movement: CMakeFiles/Cell_Movement.dir/flute/heap.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/flute/neighbors.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/flute/err.cpp.o
+Cell_Movement: CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o
+Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/build.make
 Cell_Movement: CMakeFiles/Cell_Movement.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable Cell_Movement"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Linking CXX executable Cell_Movement"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Cell_Movement.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
