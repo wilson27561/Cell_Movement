@@ -4,3 +4,16 @@
 #include "Constant.h"
 const string FILEPATH = "case3.txt";
 const string MAXCELLMOVE = "MaxCellMove";
+const string GGRIDBOUNDARYIDX = "GGridBoundaryIdx";
+const string NUMLAYER = "NumLayer";
+const string NUMNONDEFAULTSUPPLYGGRID = "NumNonDefaultSupplyGGrid";
+const string LAYERPREFIX_M = "M";
+const string NUMMASTERCELL = "NumMasterCell";
+const string MASTERCELL = "MasterCell";
+const string CELLINST  = "CellInst";
+const string NET = "Net";
+const string NUMVOLTAGEAREA = "NumVoltageAreas";
+const string NAME =  "Name";
+const string GGRIDS = "GGrids";
+const string INSTANCES = "Instances";
+const string NUMROUTES = "NumRoutes";

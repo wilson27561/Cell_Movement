@@ -1,4 +1,8 @@
 /Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/wilson27561/Documents/Cell_Movement
--- Configuring done
--- Generating done
--- Build files have been written to: /Users/wilson27561/Documents/Cell_Movement/cmake-build-debug
+CMake Error at CMakeLists.txt:5 (target_link_libraries):
+  Cannot specify link libraries for target "main.cpp" which is not built by
+  this project.
+
+
+-- Configuring incomplete, errors occurred!
+See also "/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles/CMakeOutput.log".

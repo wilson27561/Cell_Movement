@@ -1,0 +1,61 @@
+//
+// Created by Ｗilson on 2021/5/17.
+//
+
+#include "CellInstance.h"
+
+const string &CellInstance::getCellName() const {
+    return cellName;
+}
+
+void CellInstance::setCellName(const string &cellName) {
+    CellInstance::cellName = cellName;
+}
+
+const string &CellInstance::getLayerName() const {
+    return layerName;
+}
+
+void CellInstance::setLayerName(const string &layerName) {
+    CellInstance::layerName = layerName;
+}
+
+int CellInstance::getRowIndx() const {
+    return rowIndx;
+}
+
+void CellInstance::setRowIndx(int rowIndx) {
+    CellInstance::rowIndx = rowIndx;
+}
+
+int CellInstance::getColIndx() const {
+    return colIndx;
+}
+
+void CellInstance::setColIndx(int colIndx) {
+    CellInstance::colIndx = colIndx;
+}
+
+const string &CellInstance::getMovalbe() const {
+    return movalbe;
+}
+
+void CellInstance::setMovalbe(const string &movalbe) {
+    CellInstance::movalbe = movalbe;
+}
+
+const string &CellInstance::getConnectPin() const {
+    return connectPin;
+}
+
+void CellInstance::setConnectPin(const string &connectPin) {
+    CellInstance::connectPin = connectPin;
+}
+
+const string &CellInstance::getMasterCellName() const {
+    return masterCellName;
+}
+
+void CellInstance::setMasterCellName(const string &masterCellName) {
+    CellInstance::masterCellName = masterCellName;
+}
