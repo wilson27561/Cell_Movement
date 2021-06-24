@@ -12,13 +12,6 @@ void Blockage::setBlockageName(const string &blockageName) {
     Blockage::blockageName = blockageName;
 }
 
-const string &Blockage::getBlockageLayer() const {
-    return blockageLayer;
-}
-
-void Blockage::setBlockageLayer(const string &blockageLayer) {
-    Blockage::blockageLayer = blockageLayer;
-}
 
 int Blockage::getDemand() const {
     return demand;
@@ -26,4 +19,12 @@ int Blockage::getDemand() const {
 
 void Blockage::setDemand(int demand) {
     Blockage::demand = demand;
+}
+
+int Blockage::getBlockageLayer() const {
+    return blockageLayer;
+}
+
+void Blockage::setBlockageLayer(int blockageLayer) {
+    Blockage::blockageLayer = blockageLayer;
 }

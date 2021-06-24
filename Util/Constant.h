@@ -27,6 +27,13 @@ extern const string NAME;
 extern const string GGRIDS;
 extern const string INSTANCES;
 extern const string NUMROUTES;
+extern const string UP;
+extern const string DOWN;
+extern const string LEFT;
+extern const string RIGHT;
+extern const string HORIZONTAL;
+extern const string VERTICAL;
+
 
 
 //class Constant {

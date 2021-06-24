@@ -52,3 +52,11 @@ const vector<Route> &Net::getNumRoute() const {
 void Net::setNumRoute(const vector<Route> &numRoute) {
     Net::numRoute = numRoute;
 }
+
+const vector<CellInstance> &Net::getConnectCell() const {
+    return connectCell;
+}
+
+void Net::setConnectCell(const vector<CellInstance> &connectCell) {
+    Net::connectCell = connectCell;
+}

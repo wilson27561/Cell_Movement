@@ -10,6 +10,7 @@
 #include <map>
 #include "Pin.h"
 #include "Route.h"
+#include "CellInstance.h"
 using namespace std;
 class Net {
 private :
@@ -17,8 +18,15 @@ private :
     int numPin;
     string minRoutingConstraint;
     double weight;
+    //目前沒用到
     map<string,string> connectPin;
+    vector<CellInstance> connectCell;
     vector<Route> numRoute;
+public:
+    const vector<CellInstance> &getConnectCell() const;
+
+    void setConnectCell(const vector<CellInstance> &connectCell);
+
 public:
     const map<string, string> &getConnectPin() const;
 

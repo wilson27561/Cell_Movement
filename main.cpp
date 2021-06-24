@@ -6,49 +6,52 @@
 #include "Util/Constant.h"
 #include "Util/Util.cpp"
 #include "Util/ReadFile.cpp"
-#include "Util/RoutingFunction.cpp"
+#include "Util/Evaluation.cpp"
+#include "Util/ReRoute.cpp"
 #include "Header/Layer.h"
 #include "Header/MasterCell.h"
 #include "Header/NumNonDefaultSupplyGgrid.h"
 #include "Header/CellInstance.h"
 #include "Header/Net.h"
-using namespace std;
+#include "Header/SteinerPoint.h"
 
-void printMap(map<string,vector<NumNonDefaultSupplyGgrid>> numNonDefaultSupplyMap){
-    for (auto const& item : numNonDefaultSupplyMap)
-    {
-        for (auto const& numNon:item.second) {
-            cout  << item.first << " " << numNon.getCollndx() << " " << numNon.getRowIndx() << " "  << numNon.getLayIndx()<< " "  << numNon.getIncrOrDecrValue() <<endl;
-        }
-    }
-}
+using namespace std;
 
 
 int main() {
 
     Util util;
     ReadFile readFile;
-    RoutingFunction routingFunction;
-    const string filePath = "case2.txt";
+    Evaluation evaluation;
+    ReRoute reRoute;
+    const string filePath = "case3.txt";
     string content;
     vector<string> contentvector;
     ifstream fin(FILEPATH);
 //   case Data
     int maxCellMovent = 0;
     GgridBoundaryIndex ggridBoundaryIndex;
-    map<string,Layer> layerMap;
-    map<string,vector<NumNonDefaultSupplyGgrid>> numNonDefaultSupplyMap;
-    map<string,MasterCell> masterCellMap;
-    map<string,CellInstance> cellInstanceMap;
-    map<string,VoltageArea> voltageAreaMap;
-    map<string,Net> netMap;
+    map<string, Layer> layerMap;
+    map<string, vector<int>> powerFactorMap;
+    vector<NumNonDefaultSupplyGgrid> numNonDefaultSupplyVector;
+    map<string, MasterCell> masterCellMap;
+    map<string, CellInstance> cellInstanceMap;
+    map<string, VoltageArea> voltageAreaMap;
+    map<string, Net> netMap;
+    map<string, int> boundaryMap;
+    map<string, string> cellMap;
+    map<string, Grid> gridMap;
+    vector<vector<vector<int> > > gridVector;
+    map<string, vector<string>> blockageCellMap;
 
-    if(fin){
-        while (getline(fin,content)){
+
+    if (fin) {
+        while (getline(fin, content)) {
             contentvector.push_back(content);
         }
     }
     fin.close();
+
 
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = util.splitString(contentvector[i]);
@@ -59,14 +62,17 @@ int main() {
         } else if (lineVector[0] == NUMLAYER) {
             layerMap = readFile.readLayer(contentvector, i, lineVector[1]);
         } else if (lineVector[0] == NUMNONDEFAULTSUPPLYGGRID) {
-            numNonDefaultSupplyMap = readFile.readNumNonDefaultSupply(contentvector, numNonDefaultSupplyMap, i,lineVector[1]);
-//             printMap(numNonDefaultSupplyMap);
+            numNonDefaultSupplyVector = readFile.readNumNonDefaultSupply(contentvector, numNonDefaultSupplyVector, i,
+                                                                         lineVector[1]);
         } else if (lineVector[0] == MASTERCELL) {
             masterCellMap = readFile.readMasterCell(contentvector, lineVector, masterCellMap, i);
+            blockageCellMap = readFile.readBlockageCell(contentvector, lineVector, blockageCellMap, i);
         } else if (lineVector[0] == CELLINST) {
             cellInstanceMap = readFile.readCellInstance(lineVector, cellInstanceMap);
+            blockageCellMap = readFile.readBlockageCell(lineVector, blockageCellMap);
+            boundaryMap = readFile.readBoundary(lineVector, boundaryMap);
         } else if (lineVector[0] == NET) {
-            netMap = readFile.readNet(contentvector, lineVector, netMap, i);
+            netMap = readFile.readNet(contentvector, lineVector, netMap, masterCellMap, cellInstanceMap, i);
         } else if (lineVector[0] == NUMROUTES) {
             netMap = readFile.readRoute(contentvector, lineVector, netMap, i);
         } else if (lineVector[0] == NUMVOLTAGEAREA) {
@@ -74,11 +80,37 @@ int main() {
         };
     }
 
-    //         program total wire length -> add weight -> powerFactor
-         int wire =   routingFunction.wireLength(netMap);
-        cout << "wirelength : " << wire << endl;
+    int beforelengthScore = evaluation.wireLength(netMap);
+    powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
+    gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
+    netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
-    }
+//    int score = evaluation.evaluationScore(netMap,  layerMap);
+    int lengthScore = evaluation.wireLength(netMap);
+
+
+    cout << "before : " << beforelengthScore << " " << "after : "<< lengthScore << endl;
+
+    //   program total wire length -> add weight -> powerFactor
+//         int wire =   evaluation.wireLength(netMap);
+//         cout << "wire length : " << wire << endl;
+//         double score = evaluation.evaluationScore(netMap,layerMap);
+//         cout << "score : " << score << endl;
+//       Step 1 將所有 length 限制在boundary box內部
+//    for (auto const &item : boundaryMap) {
+//       cout << "key : "<<item.first << endl;
+//       cout << "value : "<<item.second << endl;
+//    }
+//    for (auto const &item : cellMap) {
+//       cout << "key : "<<item.first << endl;
+//       cout << "value : "<<item.second << endl;
+//    }
+//    cout << "size : "<<netMap.size()<< endl;
+
+
+}
+
+
 
 //    int d=0;
 //    int x[MAXD], y[MAXD];
@@ -115,3 +147,41 @@ int main() {
 //cout << routVec[i].getStartRowIndx() <<" " << routVec[i].getStartColIndx() <<" "<<  routVec[i].getStartLayIndx() <<" "<< routVec[i].getEndRowIndx()<<" " << routVec[i].getEndColIndx()<<" " << routVec[i].getEndlayIndx() <<" "<< routVec[i].getNetName() << endl;
 //}
 //}
+
+
+
+
+//make layer grid (目前先用vecotr去實作，三維陣列傳入副涵式方法不確定)
+//    int rowGridBegin = ggridBoundaryIndex.getRowBeginIdx();
+//    int colGridBegin = ggridBoundaryIndex.getColBeginIdx();
+//    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
+//    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
+//    int layerSize = layerMap.size();
+//    int ROWS = colGridEnd + 1;
+//    int COLUMNS = colGridEnd + 1;
+//    int LAYER = layerSize + 1;
+//    int maze [LAYER][ROWS][COLUMNS];
+//
+//
+//    for (int layer = 0; layer < LAYER; layer++) {
+//        for (int row = rowGridBegin; row < ROWS; row++) {
+//            for (int col = colGridBegin; col < COLUMNS; col++) {
+//                maze[layer][row][col] = layerMap[to_string(layer)].getDefaultSupplyOfOneGrid();
+//            }
+//        }
+//    }
+//    for (auto const &numNonDefaultSupply : numNonDefaultSupplyVector) {
+////        cout << item.getLayIndx() << " " << item.getRowIndx() << " " << item.getCollndx() << " " << item.getIncrOrDecrValue() << endl;
+//        maze[numNonDefaultSupply.getLayIndx()][numNonDefaultSupply.getRowIndx()][numNonDefaultSupply.getCollndx()] = maze[numNonDefaultSupply.getLayIndx()][numNonDefaultSupply.getRowIndx()][numNonDefaultSupply.getCollndx()] +  numNonDefaultSupply.getIncrOrDecrValue();
+//    }
+//
+//    for (int layer = 1; layer < LAYER; layer++) {
+//        cout << "layer : " << layer << endl;
+//        for (int row = 5; row >= 1; row--) {
+//            for (int col = 1; col < COLUMNS; col++) {
+//                std::cout << maze[layer][row][col] << "\t";
+//            }
+//            std::cout << "" << std::endl;
+//        }
+//        std::cout << "" << std::endl;
+//    }

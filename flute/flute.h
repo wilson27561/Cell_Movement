@@ -1,6 +1,10 @@
 /*****************************/
 /*  User-Defined Parameters  */
 /*****************************/
+// include 重複的話 可以這樣做
+#ifndef CELL_MOVEMENT_FLUTE_H
+#define CELL_MOVEMENT_FLUTE_H
+
 #define MAXD 1000    // max. degree that can be handled
 #define ACCURACY 10  // Default accuracy
 #define ROUTING 1   // 1 to construct routing, 0 to estimate WL only
@@ -92,3 +96,5 @@ extern Tree flutes_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc);
 #define min(x,y) ((x)<(y)?(x):(y))
 #define abs(x) ((x)<0?(-x):(x))
 #define ADIFF(x,y) ((x)>(y)?(x-y):(y-x))  // Absolute difference
+
+#endif //CELL_MOVEMENT_FLUTE_H

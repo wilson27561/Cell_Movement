@@ -10,16 +10,19 @@ using namespace std;
 class Blockage {
 private:
     string blockageName;
-    string blockageLayer;
+    int blockageLayer;
+public:
+    int getBlockageLayer() const;
+
+    void setBlockageLayer(int blockageLayer);
+
+private:
     int demand;
 public:
     const string &getBlockageName() const;
 
     void setBlockageName(const string &blockageName);
 
-    const string &getBlockageLayer() const;
-
-    void setBlockageLayer(const string &blockageLayer);
 
     int getDemand() const;
 

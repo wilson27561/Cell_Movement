@@ -18,6 +18,7 @@ private:
     int endColIndx;
     int endlayIndx;
 public:
+
     const string &getNetName() const;
 
     void setNetName(const string &netName);

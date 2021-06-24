@@ -12,13 +12,6 @@ void CellInstance::setCellName(const string &cellName) {
     CellInstance::cellName = cellName;
 }
 
-const string &CellInstance::getLayerName() const {
-    return layerName;
-}
-
-void CellInstance::setLayerName(const string &layerName) {
-    CellInstance::layerName = layerName;
-}
 
 int CellInstance::getRowIndx() const {
     return rowIndx;
@@ -58,4 +51,12 @@ const string &CellInstance::getMasterCellName() const {
 
 void CellInstance::setMasterCellName(const string &masterCellName) {
     CellInstance::masterCellName = masterCellName;
+}
+
+int CellInstance::getLayerName() const {
+    return layerName;
+}
+
+void CellInstance::setLayerName(int layerName) {
+    CellInstance::layerName = layerName;
 }

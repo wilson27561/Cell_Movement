@@ -27,3 +27,11 @@ int Grid::getSupply() const {
 void Grid::setSupply(int supply) {
     Grid::supply = supply;
 }
+
+int Grid::getLayIndx() const {
+    return layIndx;
+}
+
+void Grid::setLayIndx(int layIndx) {
+    Grid::layIndx = layIndx;
+}

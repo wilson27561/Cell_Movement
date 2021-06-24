@@ -10,6 +10,13 @@ class Grid {
 private:
     int rowIndx;
     int colIndx;
+    int layIndx;
+public:
+    int getLayIndx() const;
+
+    void setLayIndx(int layIndx);
+
+private:
     int supply;
 public:
     int getRowIndx() const;

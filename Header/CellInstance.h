@@ -10,7 +10,7 @@ using namespace std;
 class CellInstance {
 private:
         string cellName;
-        string layerName;
+        int layerName;
         int rowIndx;
         int colIndx;
         string movalbe;
@@ -25,9 +25,9 @@ public:
 
     void setMasterCellName(const string &masterCellName);
 
-    const string &getLayerName() const;
+    int getLayerName() const;
 
-    void setLayerName(const string &layerName);
+    void setLayerName(int layerName);
 
     int getRowIndx() const;
 
