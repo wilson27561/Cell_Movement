@@ -80,16 +80,18 @@ int main() {
         };
     }
 
-    int beforelengthScore = evaluation.wireLength(netMap);
+//    int beforelengthScore = evaluation.wireLength(netMap);
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
     gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
+    
+    //拔一條繞一條
     netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
 //    int score = evaluation.evaluationScore(netMap,  layerMap);
-    int lengthScore = evaluation.wireLength(netMap);
+//    int lengthScore = evaluation.wireLength(netMap);
 
 
-    cout << "before : " << beforelengthScore << " " << "after : "<< lengthScore << endl;
+//    cout << "before : " << beforelengthScore << " " << "after : "<< lengthScore << endl;
 
     //   program total wire length -> add weight -> powerFactor
 //         int wire =   evaluation.wireLength(netMap);
