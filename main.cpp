@@ -79,12 +79,38 @@ int main() {
             voltageAreaMap = readFile.readVoltageArea(contentvector, lineVector, voltageAreaMap, i);
         };
     }
+    //TODO giveup route 機制
+    //TODO 拔一條繞一條
 
 //    int beforelengthScore = evaluation.wireLength(netMap);
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
     gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
-    
-    //拔一條繞一條
+    gridVector = readFile. reduceRouteGridVector(gridVector, netMap);
+
+
+
+
+
+
+
+
+
+
+//    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
+//    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
+//    int layerSize = layerMap.size();
+//    for (int layer = 0; layer < layerSize; layer++) {
+//        for (int row = rowGridEnd - 1; row >= 0; row--) {
+//            for (int col = 0; col < colGridEnd; col++) {
+//                std::cout << gridVector[layer][row][col] << "\t";
+//            }
+//            std::cout << "" << std::endl;
+//        }
+//        std::cout << "" << std::endl;
+//    }
+
+
+
     netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
 //    int score = evaluation.evaluationScore(netMap,  layerMap);

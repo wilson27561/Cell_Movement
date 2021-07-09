@@ -308,9 +308,9 @@ public :
         int ROWS = rowGridEnd + 1;
         int COLUMNS = colGridEnd + 1;
         int LAYER = layerSize + 1;
-        cout << "ROWS : " << ROWS << endl;
-        cout << "COLUMNS : " << COLUMNS << endl;
-        cout << "LAYER : " << LAYER << endl;
+//        cout << "ROWS : " << ROWS << endl;
+//        cout << "COLUMNS : " << COLUMNS << endl;
+//        cout << "LAYER : " << LAYER << endl;
 
         for (int layer = 1; layer < LAYER; layer++) {
             vector<vector<int> > rowVector;
@@ -330,7 +330,7 @@ public :
 //        for (auto const &numNonDefaultSupply : numNonDefaultSupplyVector) {
 //            gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] =  gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] + numNonDefaultSupply.getIncrOrDecrValue();
 //        }
-        cout << "blockage Type : " << endl;
+//        cout << "blockage Type : " << endl;
         // blockage
         for (auto const &item : blockageCellMap) {
             string masterCellName = item.first;
@@ -348,16 +348,60 @@ public :
 
 
         //實際位置開頭由1開始
-        for (int layer = 0; layer < layerSize; layer++) {
-            for (int row = rowGridEnd - 1; row >= 0; row--) {
-                for (int col = 0; col < colGridEnd; col++) {
-                    std::cout << gridVector[layer][row][col] << "\t";
-                }
-                std::cout << "" << std::endl;
-            }
-            std::cout << "" << std::endl;
+//        for (int layer = 0; layer < layerSize; layer++) {
+//            for (int row = rowGridEnd - 1; row >= 0; row--) {
+//                for (int col = 0; col < colGridEnd; col++) {
+//                    std::cout << gridVector[layer][row][col] << "\t";
+//                }
+//                std::cout << "" << std::endl;
+//            }
+//            std::cout << "" << std::endl;
+//        }
+
+        return gridVector;
+    }
+
+    vector<vector<vector<int> > > reduceRouteGridVector(vector<vector<vector<int> > > gridVector, map<string, Net> netMap){
+
+        for(auto const &item : netMap){
+            gridVector = reduceRouteSupply( gridVector,item.second.getNumRoute());
         }
 
+        return gridVector;
+    }
+
+
+    vector<vector<vector<int> > > reduceRouteSupply(vector<vector<vector<int> > > gridVector,vector<Route> numRoute){
+
+        for (int i = 0; i<numRoute.size();i++) {
+          int startLayIndex =   numRoute[i].getStartLayIndx();
+          int endLayIndex = numRoute[i].getEndlayIndx();
+          int startRowIndex = numRoute[i].getStartRowIndx();
+          int endRowIndex = numRoute[i].getEndRowIndx();
+          int startColIndex = numRoute[i].getStartColIndx();
+          int endColIndex = numRoute[i].getEndColIndx();
+//          cout <<  startRowIndex << " " << startColIndex << " " << startLayIndex << " " << endRowIndex << " " << endColIndex << " "<< endLayIndex << " " <<  numRoute[i].getNetName()<<endl;
+          if(startLayIndex == endLayIndex and startColIndex == endColIndex){
+              if(startRowIndex > endRowIndex){
+                  for (int rowIndex = startRowIndex; rowIndex <=endRowIndex ; rowIndex++) {
+                      gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] = gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] -1;
+                  }
+              }else{
+                  for (int rowIndex = endRowIndex; rowIndex >=startRowIndex ; rowIndex--) {
+                      gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] = gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] -1;
+                  }
+              }
+          }
+          if(startLayIndex == endLayIndex and startRowIndex == endRowIndex){
+              for (int colIndex = startColIndex; colIndex <=endColIndex ; colIndex++) {
+                  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] =  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] -1;
+              }
+          }else{
+              for (int colIndex = endColIndex; colIndex >=startColIndex ; colIndex--) {
+                  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] =  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] -1;
+              }
+          }
+        }
         return gridVector;
     }
 
