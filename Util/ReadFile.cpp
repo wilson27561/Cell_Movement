@@ -308,9 +308,6 @@ public :
         int ROWS = rowGridEnd + 1;
         int COLUMNS = colGridEnd + 1;
         int LAYER = layerSize + 1;
-//        cout << "ROWS : " << ROWS << endl;
-//        cout << "COLUMNS : " << COLUMNS << endl;
-//        cout << "LAYER : " << LAYER << endl;
 
         for (int layer = 1; layer < LAYER; layer++) {
             vector<vector<int> > rowVector;
@@ -327,10 +324,10 @@ public :
             gridVector.push_back(rowVector);
         }
         // non - default supply grid
-//        for (auto const &numNonDefaultSupply : numNonDefaultSupplyVector) {
-//            gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] =  gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] + numNonDefaultSupply.getIncrOrDecrValue();
-//        }
-//        cout << "blockage Type : " << endl;
+        for (auto const &numNonDefaultSupply : numNonDefaultSupplyVector) {
+            gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] =  gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] + numNonDefaultSupply.getIncrOrDecrValue();
+        }
+
         // blockage
         for (auto const &item : blockageCellMap) {
             string masterCellName = item.first;

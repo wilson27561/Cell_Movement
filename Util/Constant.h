@@ -33,6 +33,8 @@ extern const string LEFT;
 extern const string RIGHT;
 extern const string HORIZONTAL;
 extern const string VERTICAL;
+extern const string ADD;
+extern const string REDUCE;
 
 
 

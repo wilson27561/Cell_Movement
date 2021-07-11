@@ -79,24 +79,12 @@ int main() {
             voltageAreaMap = readFile.readVoltageArea(contentvector, lineVector, voltageAreaMap, i);
         };
     }
-    //TODO giveup route 機制
-    //TODO 拔一條繞一條
-
 //    int beforelengthScore = evaluation.wireLength(netMap);
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
     gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
-    gridVector = readFile. reduceRouteGridVector(gridVector, netMap);
-
-
-
-
-
-
-
-
-
-
-//    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
+    gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
+    netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
+    //    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
 //    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
 //    int layerSize = layerMap.size();
 //    for (int layer = 0; layer < layerSize; layer++) {
@@ -110,8 +98,6 @@ int main() {
 //    }
 
 
-
-    netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
 //    int score = evaluation.evaluationScore(netMap,  layerMap);
 //    int lengthScore = evaluation.wireLength(netMap);

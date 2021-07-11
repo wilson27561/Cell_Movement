@@ -24,3 +24,5 @@ const string LEFT = "Left";
 const string RIGHT = "Right";
 const string HORIZONTAL = "H";
 const string VERTICAL = "V";
+const string ADD = "add";
+const string REDUCE = "reduce";
