@@ -23,7 +23,7 @@ public:
             for (int i = 0; i < item.second.getNumRoute().size(); i++) {
 //               每一層的分數要相加
                if(routVec[i].getStartLayIndx() == routVec[i].getEndlayIndx()){
-                   string layName  = transferIndexToName(routVec[i].getStartLayIndx());
+                   string layName  = to_string(routVec[i].getStartLayIndx());
                    double powerFactor  = layerMap[layName].getPowerFactor();
                    double powerScore = countDistance(routVec[i])*powerFactor;
 //                   cout << "Net : " << item.first << endl;
@@ -36,10 +36,10 @@ public:
         }
         return netScore;
     }
-    string transferIndexToName(int layIndex){
-        string M = "M";
-        return M+ to_string(layIndex);
-    }
+//    string transferIndexToName(int layIndex){
+//        string M = "M";
+//        return M+ to_string(layIndex);
+//    }
 
     int wireLength(map<string,Net> netMap) {
         int totalWireLength = 0;

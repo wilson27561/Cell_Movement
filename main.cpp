@@ -20,15 +20,16 @@ using namespace std;
 
 int main() {
 
+    double START,END;
+    START = clock();
+
     Util util;
     ReadFile readFile;
     Evaluation evaluation;
     ReRoute reRoute;
-    const string filePath = "case3.txt";
     string content;
     vector<string> contentvector;
     ifstream fin(FILEPATH);
-//   case Data
     int maxCellMovent = 0;
     GgridBoundaryIndex ggridBoundaryIndex;
     map<string, Layer> layerMap;
@@ -39,10 +40,10 @@ int main() {
     map<string, VoltageArea> voltageAreaMap;
     map<string, Net> netMap;
     map<string, int> boundaryMap;
-    map<string, string> cellMap;
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
     map<string, vector<string>> blockageCellMap;
+    map<string,CellInstance> numMoveCellInstMap;
 
 
     if (fin) {
@@ -52,39 +53,88 @@ int main() {
     }
     fin.close();
 
+    //TODO 調整讀檔方式
+    //TODO bug case1 cell 沒有連接在對的層
+    //TODO bug case3
+    //TODO 多執行緒 讀檔
+    //TODO two pin 做 cell move
+    //TODO 是否要將via 放到兩條線中間
+    //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
+    //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
+
 
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = util.splitString(contentvector[i]);
         if (lineVector[0] == MAXCELLMOVE) {
+            cout << "max cell Movement start " << endl;
             maxCellMovent = readFile.readMaxCell(lineVector);
+            cout << "max cell Movement end " << endl;
         } else if (lineVector[0] == GGRIDBOUNDARYIDX) {
+            cout << "GridBoundary start " << endl;
             ggridBoundaryIndex = readFile.readGGridBoundaryIdx(lineVector);
+            cout << "GridBoundary end " << endl;
         } else if (lineVector[0] == NUMLAYER) {
-            layerMap = readFile.readLayer(contentvector, i, lineVector[1]);
+            cout << "-----layerMap start-----" << endl;
+            readFile.readLayer(contentvector, &i, lineVector[1],&layerMap);
+            cout << "-----layerMap end-----" << endl;
         } else if (lineVector[0] == NUMNONDEFAULTSUPPLYGGRID) {
-            numNonDefaultSupplyVector = readFile.readNumNonDefaultSupply(contentvector, numNonDefaultSupplyVector, i,
-                                                                         lineVector[1]);
+            cout << "-----NumNonDefaultSupply start-----" << endl;
+            readFile.readNumNonDefaultSupply(contentvector, &numNonDefaultSupplyVector, &i,lineVector[1]);
+            cout << "-----NumNonDefaultSupply end-----" << endl;
         } else if (lineVector[0] == MASTERCELL) {
-            masterCellMap = readFile.readMasterCell(contentvector, lineVector, masterCellMap, i);
-            blockageCellMap = readFile.readBlockageCell(contentvector, lineVector, blockageCellMap, i);
+            cout << "-----MasterCell start-----" << endl;
+            readFile.readMasterCell(contentvector, lineVector, &masterCellMap, &i);
+            cout << "-----MasterCell end-----" << endl;
+//            cout << "-----BlockageCell start-----" << endl;
+//            blockageCellMap = readFile.readBlockageMasterCell(contentvector, lineVector, blockageCellMap, i);
+//            cout << "-----BlockageCell end-----" << endl;
         } else if (lineVector[0] == CELLINST) {
+            cout << "-----CellInstance start-----" << endl;
             cellInstanceMap = readFile.readCellInstance(lineVector, cellInstanceMap);
+            cout << "-----CellInstance end-----" << endl;
+            cout << "-----BlockageCell start-----" << endl;
             blockageCellMap = readFile.readBlockageCell(lineVector, blockageCellMap);
+            cout << "-----BlockageCell end-----" << endl;
             boundaryMap = readFile.readBoundary(lineVector, boundaryMap);
+            cout << "-----Boundary end-----" << endl;
         } else if (lineVector[0] == NET) {
+            cout << "-----net start-----" << endl;
             netMap = readFile.readNet(contentvector, lineVector, netMap, masterCellMap, cellInstanceMap, i);
+            cout << "-----net end-----" << endl;
         } else if (lineVector[0] == NUMROUTES) {
+            cout << "-----route start-----" << endl;
             netMap = readFile.readRoute(contentvector, lineVector, netMap, i);
+            cout << "-----route end-----" << endl;
         } else if (lineVector[0] == NUMVOLTAGEAREA) {
+            cout << "-----voltage start-----" << endl;
             voltageAreaMap = readFile.readVoltageArea(contentvector, lineVector, voltageAreaMap, i);
+            cout << "-----voltage end-----" << endl;
         };
     }
-//    int beforelengthScore = evaluation.wireLength(netMap);
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
     gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
     gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
-    netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
-    //    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
+
+
+
+
+//    netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
+
+
+
+//    ofstream myfile;
+//    myfile.open ("output.txt");
+//    myfile << "Writing this to a file.\n";
+//    myfile.close();
+
+
+
+
+    END = clock();
+    cout << endl << "程式執行所花費：" << (double)clock()/CLOCKS_PER_SEC << " S";
+    cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;
+
+//    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
 //    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
 //    int layerSize = layerMap.size();
 //    for (int layer = 0; layer < layerSize; layer++) {
@@ -99,11 +149,8 @@ int main() {
 
 
 
-//    int score = evaluation.evaluationScore(netMap,  layerMap);
-//    int lengthScore = evaluation.wireLength(netMap);
 
 
-//    cout << "before : " << beforelengthScore << " " << "after : "<< lengthScore << endl;
 
     //   program total wire length -> add weight -> powerFactor
 //         int wire =   evaluation.wireLength(netMap);

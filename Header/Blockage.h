@@ -11,21 +11,17 @@ class Blockage {
 private:
     string blockageName;
     int blockageLayer;
-public:
-    int getBlockageLayer() const;
-
-    void setBlockageLayer(int blockageLayer);
-
-private:
     int demand;
+
+
 public:
     const string &getBlockageName() const;
-
     void setBlockageName(const string &blockageName);
 
+    int getBlockageLayer() const;
+    void setBlockageLayer(int blockageLayer);
 
     int getDemand() const;
-
     void setDemand(int demand);
 
 };

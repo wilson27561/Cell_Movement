@@ -37,13 +37,7 @@ void CellInstance::setMovalbe(const string &movalbe) {
     CellInstance::movalbe = movalbe;
 }
 
-const string &CellInstance::getConnectPin() const {
-    return connectPin;
-}
 
-void CellInstance::setConnectPin(const string &connectPin) {
-    CellInstance::connectPin = connectPin;
-}
 
 const string &CellInstance::getMasterCellName() const {
     return masterCellName;
@@ -59,4 +53,12 @@ int CellInstance::getLayerName() const {
 
 void CellInstance::setLayerName(int layerName) {
     CellInstance::layerName = layerName;
+}
+
+const map<string, string> &CellInstance::getConnectPin() const {
+    return connectPin;
+}
+
+void CellInstance::setConnectPin(const map<string, string> &connectPin) {
+    CellInstance::connectPin = connectPin;
 }

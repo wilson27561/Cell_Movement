@@ -6,6 +6,8 @@
 #define CELL_MOVEMENT_CELLINSTANCE_H
 
 #include <iostream>
+#include <map>
+
 using namespace std;
 class CellInstance {
 private:
@@ -14,7 +16,7 @@ private:
         int rowIndx;
         int colIndx;
         string movalbe;
-        string connectPin;
+        map<string,string> connectPin;
         string masterCellName;
 public:
     const string &getCellName() const;
@@ -41,9 +43,9 @@ public:
 
     void setMovalbe(const string &movalbe);
 
-    const string &getConnectPin() const;
+    const map <string, string> &getConnectPin() const;
 
-    void setConnectPin(const string &connectPin);
+    void setConnectPin(const map <string, string> &connectPin);
 
 };
 

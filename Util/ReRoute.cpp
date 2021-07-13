@@ -41,7 +41,6 @@ public:
         //TODO two pin 做 cell move
         //TODO 多執行緒
         //TODO 是否要將via 放到兩條線中間
-//
 
         set<string> reRouteNet;
         for (auto const &item : netMap) {
@@ -168,8 +167,6 @@ public:
         int index = 0;
         //-------  steiner tree  start -------
         for (auto const &cell : netMap[reRouteNet].getConnectCell()) {
-//                cout << cell.getCellName() << " " << cell.getConnectPin() << " " << cell.getRowIndx() << " "
-//                     << cell.getColIndx() << " " << cell.getLayerName() << endl;
             row[index] = cell.getRowIndx();
             col[index] = cell.getColIndx();
             index += 1;
@@ -187,15 +184,21 @@ public:
         //-------  steiner point route end -------
 
         //-------  route via start -------
+        for (int index = 0; index < steinerLine.size(); index++) {
+            cout << steinerLine[index].getCellPointRow() << " " << steinerLine[index].getCellPointCol() << " " << steinerLine[index].getSteinerPointRow() << " "<<steinerLine[index].getSteinerPointCol() << " "
+            << steinerLine[index].getLayer() << endl;
+        }
+
         set<string> viaSet;
         for (int index = 0; index < steinerLine.size(); index++) {
             SteinerPoint steinerPoint = steinerLine[index];
 //            gridVector = reduceSupply(gridVector, steinerPoint);
-            //處理minRoutingLayConstraint
+            //-------  minRoutingLayConstraint start -------
             if (index == 0 and minimumRoutingConstraint != "NoCstr") {
 //                cout << "put in minimumRoutingContraint : " << endl;
                 routeVector = getMinRoutingConstraint(routeVector, steinerPoint, minimumRoutingConstraint, reRouteNet);
             }
+            //-------  minRoutingLayConstraint end -------
             Route route;
             route.setStartRowIndx(steinerPoint.getCellPointRow());
             route.setStartColIndx(steinerPoint.getCellPointCol());
@@ -205,26 +208,30 @@ public:
             route.setEndlayIndx(steinerPoint.getLayer());
             route.setNetName(reRouteNet);
             routeVector.push_back(route);
+            //----- 兩條線via 接在一起 start -----
             if (index != 0) {
                 int lastLayer = steinerLine[(index - 1)].getLayer();
                 int layer = steinerLine[index].getLayer();
                 if (layer != lastLayer) {
                     Route route = getVia(steinerLine[(index - 1)], steinerLine[index], reRouteNet, viaSet);
                     string viaName = getViaName(route);
-                    //TODO 是否要將via 放到兩條線中間
                     if (viaSet.count(viaName) == false) {
                         routeVector.push_back(route);
                         viaSet.insert(viaName);
                     }
                 }
             }
+            //----- 兩條線via 接在一起 end ----
+            //----- cell point 接在一起 start -----
+
+            //----- cell point 接在一起 end -----
         }
         //-------  route via end -------
         cout << "End route line : " << endl;
         for (Route route: routeVector) {
             cout << "route line : " << route.getStartRowIndx() << " "
                  << route.getStartColIndx() << " " << route.getStartLayIndx()
-                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()
+                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()<<" " << route.getNetName()
                  << endl;
         }
         return routeVector;
@@ -524,23 +531,27 @@ public:
 //                     << steinerPointCol << endl;
 //                cout << " Cell to SteinerPoint" << endl;
                 if (steinerPointRow > cellPointRow and steinerPointCol > cellPointCol) {
+                    cout << "bottomLeftToTopRight" << endl;
                     //左下到右上
                     steinerLineVector = bottomLeftToTopRight(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
                 } else if (steinerPointRow > cellPointRow and steinerPointCol < cellPointCol) {
+                    cout << "bottomRightToTopLeft" << endl;
                     //右下到左上
                     steinerLineVector = bottomRightToTopLeft(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
 
                 } else if (steinerPointRow < cellPointRow and steinerPointCol > cellPointCol) {
+                    cout << "topLeftToBottomRight" << endl;
                     //左上到右下
                     steinerLineVector = topLeftToBottomRight(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
 
                 } else {
+                    cout << "topRightToBottomLeft" << endl;
                     //右上到左下
                     steinerLineVector = topRightToBottomLeft(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
@@ -562,7 +573,6 @@ public:
         SteinerPoint steinerPointSecond;
         SteinerPoint steinerPointThird;
         bool foundRoute = false;
-        cout << "Top left to bottom right" << endl;
         //down-left-down
         for (int tempCol = startColGrid; tempCol >= endColGrid; tempCol--) {
             bool lineFirst = false;
@@ -787,7 +797,6 @@ public:
         SteinerPoint steinerPointThird;
         bool foundRoute = false;
 
-//        cout << " Top right to bottom left" << endl;
         //Right-down-Right
         for (int tempCol = startColGrid; tempCol <= endColGrid; tempCol++) {
             bool lineFirst = false;
@@ -1249,7 +1258,6 @@ public:
         SteinerPoint steinerPointSecond;
         SteinerPoint steinerPointThird;
         bool foundRoute = false;
-//        cout << " Bottom left to top right" << endl;
         //Up-Right-Up
         //向上走 每換一次Row 代表 換不同的 pattern route 的 方法
         for (int tempRow = startRowGrid; tempRow <= endRowGrid; tempRow++) {
