@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <math.h>
 #include "flute/flute.h"
 #include "Util/Constant.h"
 #include "Util/Util.cpp"
@@ -10,7 +9,6 @@
 #include "Util/ReRoute.cpp"
 #include "Header/Layer.h"
 #include "Header/MasterCell.h"
-#include "Header/NumNonDefaultSupplyGgrid.h"
 #include "Header/CellInstance.h"
 #include "Header/Net.h"
 #include "Header/SteinerPoint.h"
@@ -29,12 +27,10 @@ int main() {
     ReRoute reRoute;
     string content;
     vector<string> contentvector;
-    ifstream fin(FILEPATH);
     int maxCellMovent = 0;
     GgridBoundaryIndex ggridBoundaryIndex;
     map<string, Layer> layerMap;
     map<string, vector<int>> powerFactorMap;
-    vector<NumNonDefaultSupplyGgrid> numNonDefaultSupplyVector;
     map<string, MasterCell> masterCellMap;
     map<string, CellInstance> cellInstanceMap;
     map<string, VoltageArea> voltageAreaMap;
@@ -42,11 +38,10 @@ int main() {
     map<string, int> boundaryMap;
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
-//    map<string, vector<string>> blockageCellMap;
     map<string,CellInstance> numMoveCellInstMap;
     map<string, map <string, Blockage>> blockageCellMap;
 
-
+    ifstream fin(FILEPATH);
     if (fin) {
         while (getline(fin, content)) {
             contentvector.push_back(content);
@@ -55,9 +50,11 @@ int main() {
     fin.close();
 
     //TODO 調整讀檔方式  --> 已調整
-    //TODO 調整boundary map 改為每條線經過的 -->
-    //TODO blockage 這部分要改一下
+    //TODO 調整boundary map 改為每條線經過的 --> 已調整
+    //TODO blockage 這部分要改一下 -> 已調整
+    //TODO net supply 寫在 讀檔內 -> 已調整
     //TODO bug case1 cell 沒有連接在對的層 via部分改過
+    //TODO output file
     //TODO bug case3
     //TODO random route
     //TODO 多執行緒 讀檔
@@ -81,34 +78,26 @@ int main() {
             cout << "-----layerMap start-----" << endl;
             readFile.readLayer(contentvector, &i, lineVector[1],&layerMap);
             cout << "-----layerMap end-----" << endl;
+            gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector);
         } else if (lineVector[0] == NUMNONDEFAULTSUPPLYGGRID) {
             cout << "-----NumNonDefaultSupply start-----" << endl;
-            readFile.readNumNonDefaultSupply(contentvector, &numNonDefaultSupplyVector, &i,lineVector[1]);
+            readFile.readNumNonDefaultSupply(contentvector,&gridVector,&i,lineVector[1]);
             cout << "-----NumNonDefaultSupply end-----" << endl;
         } else if (lineVector[0] == MASTERCELL) {
             cout << "-----MasterCell start-----" << endl;
             readFile.readMasterCell(contentvector, lineVector, &masterCellMap, &i);
             cout << "-----MasterCell end-----" << endl;
-//            cout << "-----BlockageCell start-----" << endl;
-//            blockageCellMap = readFile.readBlockageMasterCell(contentvector, lineVector, blockageCellMap, i);
-//            cout << "-----BlockageCell end-----" << endl;
         } else if (lineVector[0] == CELLINST) {
             cout << "-----CellInstance start-----" << endl;
-            readFile.readCellInstance(lineVector, &cellInstanceMap,&masterCellMap,&blockageCellMap);
+            readFile.readCellInstance(lineVector, &cellInstanceMap,&masterCellMap,&blockageCellMap,&gridVector);
             cout << "-----CellInstance end-----" << endl;
-//            cout << "-----BlockageCell start-----" << endl;
-//            blockageCellMap = readFile.readBlockageCell(lineVector, blockageCellMap);
-//            cout << "-----BlockageCell end-----" << endl;
-//            boundaryMap = readFile.readBoundary(lineVector, boundaryMap);
-            cout << "-----Boundary end-----" << endl;
         } else if (lineVector[0] == NET) {
             cout << "-----net start-----" << endl;
-            //TODO 這裏使用boundaryMap
             readFile.readNet(contentvector, lineVector, &netMap, masterCellMap, cellInstanceMap, &i);
             cout << "-----net end-----" << endl;
         } else if (lineVector[0] == NUMROUTES) {
             cout << "-----route start-----" << endl;
-            readFile.readRoute(contentvector, lineVector, &netMap, &i);
+            readFile.readRoute(contentvector, lineVector, &netMap,&gridVector,&i);
             cout << "-----route end-----" << endl;
         } else if (lineVector[0] == NAME) {
             cout << "-----voltage start-----" << endl;
@@ -116,21 +105,8 @@ int main() {
             cout << "-----voltage end-----" << endl;
         };
     }
-
-    for(auto const &item : netMap){
-        cout << item.first << endl;
-        for(auto const &bound:item.second.getBoundaryMap())
-        {
-            cout << bound.first << " " << bound.second << endl;
-        }
-    }
-
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
-    gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
-    gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
-
-
-
+//    gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
     netMap = reRoute.boundaryReroute(netMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
 

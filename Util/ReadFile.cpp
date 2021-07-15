@@ -74,47 +74,16 @@ public :
         return powerFactorMap;
     };
 
-    void readNumNonDefaultSupply(vector<string> contentVector, vector<NumNonDefaultSupplyGgrid> *numNonDefaultSupplyVector,
-                            int *index, string layerCount) {
+    void readNumNonDefaultSupply(vector<string> contentVector,vector<vector<vector<int> > > *gridVector,int *index, string layerCount) {
         int indexCount = *index;
         int mapSize = indexCount + stoi(layerCount);
         //  use vector to put NumNonDefaultSupplyGgrid
         for (int i = indexCount + 1; i <= mapSize; i++) {
             vector<string> lineVector = splitString(contentVector[i]);
-            NumNonDefaultSupplyGgrid numNonDefaultSupply;
-            string layerName = LAYERPREFIX_M + lineVector[2];
-            numNonDefaultSupply.setRowIndx(stoi(lineVector[0]));
-            numNonDefaultSupply.setCollndx(stoi(lineVector[1]));
-            numNonDefaultSupply.setLayIndx(stoi(lineVector[2]));
-            numNonDefaultSupply.setIncrOrDecrValue(stoi(lineVector[3]));
-            numNonDefaultSupply.setLayerName(layerName);
-            (*numNonDefaultSupplyVector).push_back(numNonDefaultSupply);
+            (*gridVector)[stoi(lineVector[2])-1][stoi(lineVector[0])-1][stoi(lineVector[1])-1] = (*gridVector)[stoi(lineVector[2])-1][stoi(lineVector[0])-1][stoi(lineVector[1])-1] +stoi(lineVector[3]);
         }
         *index = mapSize;
 
-    }
-
-    map<string,vector<string>> readBlockageMasterCell(vector<string> contentVector, vector<string> lineVector, map<string, vector<string>> blockageCellMap,
-                                              int index){
-
-        int blockageCount = stoi(lineVector[3]);
-        string masterCellName = lineVector[1];
-        if(blockageCount > 0){
-            vector<string> blockageCellVector;
-            blockageCellMap.insert(pair<string,vector<string>>(masterCellName,blockageCellVector));
-        }
-        return blockageCellMap;
-    }
-    map<string,vector<string>> readBlockageCell(vector<string> lineVector,map<string, vector<string>> blockageCellMap){
-        cout << "blockage 2 " << endl;
-        string cellName = lineVector[1];
-        string masterCellName =  lineVector[2];
-
-        if(blockageCellMap.count(masterCellName) == true){
-            blockageCellMap[masterCellName].push_back(cellName);
-        }
-
-        return blockageCellMap;
     }
 
 
@@ -154,7 +123,7 @@ public :
 
     }
 
-    void readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,map<string,MasterCell> *masterCellMap,map<string, map <string, Blockage>>  *blockageCellMap) {
+    void readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,map<string,MasterCell> *masterCellMap,map<string, map <string, Blockage>>  *blockageCellMap,vector<vector<vector<int> > > *gridVector) {
         CellInstance cellInstance;
         cellInstance.setCellName(lineVector[1]);
         cellInstance.setMasterCellName(lineVector[2]);
@@ -162,59 +131,20 @@ public :
         cellInstance.setColIndx(stoi(lineVector[4]));
         cellInstance.setMovalbe(lineVector[5]);
         (*cellInstanceMap).insert(pair<string, CellInstance>(lineVector[1], cellInstance));
+
         if((*masterCellMap)[lineVector[2]].getBlockageType().size()>0){
             map <string, Blockage> blockageMap = (*masterCellMap)[lineVector[2]].getBlockageType();
             (*blockageCellMap).insert(pair<string, map <string, Blockage>>(lineVector[1],blockageMap));
+            // reduce blockage
+            for(auto const item : blockageMap){
+                (*gridVector)[item.second.getBlockageLayer()-1][cellInstance.getRowIndx()-1][cellInstance.getColIndx()-1] =  (*gridVector)[item.second.getBlockageLayer()-1][cellInstance.getRowIndx()-1][cellInstance.getColIndx()-1] - item.second.getDemand();
+            }
+
         }
 
     };
 
-
-//    map<string, int> readBoundary(vector<string> lineVector, map<string, int> boundaryMap) {
-////        cout << " row : " << lineVector[3] << " col : "<<lineVector[4]  << endl;
-//
-//        if (boundaryMap.find(UP) == boundaryMap.end()) {
-//            boundaryMap.insert(pair<string, int>(UP, stoi(lineVector[3])));
-//        } else {
-//            int oriUp = boundaryMap[UP];
-//            int newUp = stoi(lineVector[3]);
-//            if (newUp > oriUp) {
-//                boundaryMap[UP] = stoi(lineVector[3]);
-//
-//            }
-//        }
-//        if (boundaryMap.find(DOWN) == boundaryMap.end()) {
-//            boundaryMap.insert(pair<string, int>(DOWN, stoi(lineVector[3])));
-//        } else {
-//            int oriDown = boundaryMap[DOWN];
-//            int newDown = stoi(lineVector[3]);
-//            if (oriDown > newDown) {
-//                boundaryMap[DOWN] = stoi(lineVector[3]);
-//            }
-//        }
-//        //做邊
-//        if (boundaryMap.find(LEFT) == boundaryMap.end()) {
-//            boundaryMap.insert(pair<string, int>(LEFT, stoi(lineVector[4])));
-//        } else {
-//            int oriLeft = boundaryMap[LEFT];
-//            int newLeft = stoi(lineVector[4]);
-//            if (oriLeft > newLeft) {
-//                boundaryMap[LEFT] = stoi(lineVector[4]);
-//            }
-//        }
-//        if (boundaryMap.find(RIGHT) == boundaryMap.end()) {
-//            boundaryMap.insert(pair<string, int>(RIGHT, stoi(lineVector[4])));
-//        } else {
-//            int oriRight = boundaryMap[RIGHT];
-//            int newRight = stoi(lineVector[4]);
-//            if (newRight > oriRight) {
-//                boundaryMap[RIGHT] = stoi(lineVector[4]);
-//            }
-//        }
-//        return boundaryMap;
-//    }
-
-    void readBoundaryNew(CellInstance cellInstance, map<string, int> *boundaryMap) {
+    void readBoundary(CellInstance cellInstance, map<string, int> *boundaryMap) {
 
         if ((*boundaryMap).find(UP) == (*boundaryMap).end()) {
             (*boundaryMap).insert(pair<string, int>(UP, cellInstance.getRowIndx()));
@@ -270,7 +200,6 @@ public :
 
         vector<CellInstance> connectCellVector;
         for (int i = indexCount + 1; i <= indexCount + pinCount; i++) {
-            cout << "contentvector : " << contentVector[i] << endl;
             vector<string> pinVector = splitString(contentVector[i]);
             vector<string> pinCellVec = splitByChar(pinVector[1], '/');
             //pinCellVec[0] -> C1 pinCellVec[1] -> P1 一個net可能會連接同一個cell 不同  pin
@@ -285,7 +214,7 @@ public :
             cellinstance.setLayerName(stoi(layer));
             cellinstance.setRowIndx(cellInstanceMap[pinCellVec[0]].getRowIndx());
             cellinstance.setColIndx(cellInstanceMap[pinCellVec[0]].getColIndx());
-            readBoundaryNew(cellinstance, &boundaryMap);
+            readBoundary(cellinstance, &boundaryMap);
             connectCellVector.push_back(cellinstance);
         }
         net.setBoundaryMap(boundaryMap);
@@ -295,7 +224,7 @@ public :
     }
 
     void
-    readRoute(vector<string> contentVector, vector<string> lineVector, map<string, Net> *netMap, int *index) {
+    readRoute(vector<string> contentVector, vector<string> lineVector, map<string, Net> *netMap, vector<vector<vector<int> > > *gridVector ,int *index) {
         int indexCount = *index;
         int numRoutes = stoi(lineVector[1]);
 
@@ -312,18 +241,16 @@ public :
                 route.setEndlayIndx(stoi(routeVector[5]));
                 vector<Route> routingVector = (*netMap)[routeVector[6]].getNumRoute();
                 routingVector.push_back(route);
-//                cout <<"vec size : " << routeVector[6]<< endl;
                 (*netMap)[routeVector[6]].setNumRoute(routingVector);
-//               cout <<"size : " << netMap[routeVector[6]].getNumRoute().size()<< endl;
-//               netMap[routeVector[6]].getNumRoute().push_back(route);
+                reduceRoute (&(*gridVector), route.getStartLayIndx() ,  route.getEndlayIndx(), route.getStartRowIndx(), route.getEndRowIndx(), route.getStartColIndx(), route.getEndColIndx());
             }
+
         }
         *index = indexCount + numRoutes;
     }
 
     vector<vector<vector<int> > > getLayerGrid(GgridBoundaryIndex ggridBoundaryIndex, map<string, Layer> layerMap,
-                                               vector<vector<vector<int> > > gridVector,
-                                               vector<NumNonDefaultSupplyGgrid> numNonDefaultSupplyVector, map<string, map<string,Blockage>> blockageCellMap,map<string, CellInstance> cellInstanceMap,map<string, MasterCell> masterCellMap) {
+                                               vector<vector<vector<int> > > gridVector) {
         int rowGridBegin = ggridBoundaryIndex.getRowBeginIdx();
         int colGridBegin = ggridBoundaryIndex.getColBeginIdx();
         int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
@@ -347,10 +274,6 @@ public :
             }
             gridVector.push_back(rowVector);
         }
-        // non - default supply grid
-        for (auto const &numNonDefaultSupply : numNonDefaultSupplyVector) {
-            gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] =  gridVector[numNonDefaultSupply.getLayIndx() - 1][numNonDefaultSupply.getRowIndx() - 1][numNonDefaultSupply.getCollndx() - 1] + numNonDefaultSupply.getIncrOrDecrValue();
-        }
 
         // blockage map<string, vector<string>> blockageCellMap
 //        for (auto const &item : blockageCellMap) {
@@ -369,15 +292,15 @@ public :
 
 
         //實際位置開頭由1開始readBlockageCell
-//        for (int layer = 0; layer < layerSize; layer++) {
-//            for (int row = rowGridEnd - 1; row >= 0; row--) {
-//                for (int col = 0; col < colGridEnd; col++) {
-//                    std::cout << gridVector[layer][row][col] << "\t";
-//                }
-//                std::cout << "" << std::endl;
-//            }
-//            std::cout << "" << std::endl;
-//        }
+        for (int layer = 0; layer < layerSize; layer++) {
+            for (int row = rowGridEnd - 1; row >= 0; row--) {
+                for (int col = 0; col < colGridEnd; col++) {
+                    std::cout << gridVector[layer][row][col] << "\t";
+                }
+                std::cout << "" << std::endl;
+            }
+            std::cout << "" << std::endl;
+        }
 
         return gridVector;
     }
@@ -401,30 +324,35 @@ public :
           int endRowIndex = numRoute[i].getEndRowIndx();
           int startColIndex = numRoute[i].getStartColIndx();
           int endColIndex = numRoute[i].getEndColIndx();
-//          cout <<  startRowIndex << " " << startColIndex << " " << startLayIndex << " " << endRowIndex << " " << endColIndex << " "<< endLayIndex << " " <<  numRoute[i].getNetName()<<endl;
-          if(startLayIndex == endLayIndex and startColIndex == endColIndex){
-              if(startRowIndex > endRowIndex){
-                  for (int rowIndex = startRowIndex; rowIndex <=endRowIndex ; rowIndex++) {
-                      gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] = gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] -1;
-                  }
-              }else{
-                  for (int rowIndex = endRowIndex; rowIndex >=startRowIndex ; rowIndex--) {
-                      gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] = gridVector[startLayIndex-1][rowIndex-1][startColIndex-1] -1;
-                  }
-              }
-          }
-          if(startLayIndex == endLayIndex and startRowIndex == endRowIndex){
-              for (int colIndex = startColIndex; colIndex <=endColIndex ; colIndex++) {
-                  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] =  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] -1;
-              }
-          }else{
-              for (int colIndex = endColIndex; colIndex >=startColIndex ; colIndex--) {
-                  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] =  gridVector[startLayIndex-1][startRowIndex-1][colIndex-1] -1;
-              }
-          }
+
+          reduceRoute( &gridVector, startLayIndex ,  endLayIndex, startRowIndex, endRowIndex, startColIndex, endColIndex);
         }
         return gridVector;
     }
+
+    void  reduceRoute (vector<vector<vector<int> > > *gridVector,int startLayIndex , int endLayIndex,int startRowIndex,int endRowIndex,int startColIndex,int endColIndex){
+        if(startLayIndex == endLayIndex and startColIndex == endColIndex){
+            if(startRowIndex > endRowIndex){
+                for (int rowIndex = startRowIndex; rowIndex <=endRowIndex ; rowIndex++) {
+                    (*gridVector)[startLayIndex-1][rowIndex-1][startColIndex-1] = (*gridVector)[startLayIndex-1][rowIndex-1][startColIndex-1] -1;
+                }
+            }else{
+                for (int rowIndex = endRowIndex; rowIndex >=startRowIndex ; rowIndex--) {
+                    (*gridVector)[startLayIndex-1][rowIndex-1][startColIndex-1] = (*gridVector)[startLayIndex-1][rowIndex-1][startColIndex-1] -1;
+                }
+            }
+        }
+        if(startLayIndex == endLayIndex and startRowIndex == endRowIndex){
+            for (int colIndex = startColIndex; colIndex <=endColIndex ; colIndex++) {
+                (*gridVector)[startLayIndex-1][startRowIndex-1][colIndex-1] =  (*gridVector)[startLayIndex-1][startRowIndex-1][colIndex-1] -1;
+            }
+        }else{
+            for (int colIndex = endColIndex; colIndex >=startColIndex ; colIndex--) {
+                (*gridVector)[startLayIndex-1][startRowIndex-1][colIndex-1] =  (*gridVector)[startLayIndex-1][startRowIndex-1][colIndex-1] -1;
+            }
+        }
+    }
+
 
     void readVoltageArea(vector<string> contentVector, map<string, VoltageArea> *voltageAreaMap,int *index){
          int indexCount = (*index);

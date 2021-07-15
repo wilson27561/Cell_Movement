@@ -208,7 +208,11 @@ public:
             route.setEndlayIndx(steinerPoint.getLayer());
             route.setNetName(reRouteNet);
             routeVector.push_back(route);
-            //----- 兩條線via 接在一起 start -----
+            //think Point
+            //step 1 : 統計每個Layer 有多少個 steiner point 包括 cell
+            //step 2 : 檢查每一層往上接該層的steiner point，有接到的就移除該point及該point在該線段另一頭的point
+
+            //----- 兩條線via 接在一起 start 前後皆再一起-----
             if (index != 0) {
                 int lastLayer = steinerLine[(index - 1)].getLayer();
                 int layer = steinerLine[index].getLayer();
