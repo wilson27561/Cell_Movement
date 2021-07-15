@@ -20,6 +20,7 @@ private :
     double weight;
     //目前沒用到
     map<string,string> connectPin;
+    map<string,int> boundaryMap;
     vector<CellInstance> connectCell;
     vector<Route> numRoute;
 public:
@@ -54,6 +55,9 @@ public:
     void setNumRoute(const vector<Route> &numRoute);
 
 
+    const map<string, int> &getBoundaryMap() const;
+
+    void setBoundaryMap(const map<string, int> &boundaryMap);
 };
 
 

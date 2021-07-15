@@ -30,7 +30,7 @@ class ReRoute {
 
 public:
     map<string, Net>
-    boundaryReroute(map<string, Net> netMap, map<string, int> boundaryMap, map<string, Layer> layerMap,
+    boundaryReroute(map<string, Net> netMap, map<string, Layer> layerMap,
                     map<string, CellInstance> cellInstanceMap, map<string, MasterCell> masterCellMap,
                     vector<vector<vector<int> > > gridVector, map<string, vector<int>> powerFactorMap) {
         //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
@@ -49,10 +49,10 @@ public:
 
             bool isNeedReroute = false;
             //判斷net 是否 需要重繞
-            if(isOutOfBoundary(routeVec,  boundaryMap)){
+            if(isOutOfBoundary(routeVec,  item.second.getBoundaryMap())){
                 isNeedReroute = true;
-//                cout << " out of boundary" << endl;
-            }else if(isOverFlowHalfPerimeter( routeVec,  boundaryMap)){
+//                cout << " out of boundary net " << item.first  << endl;
+            }else if(isOverFlowHalfPerimeter( routeVec,  item.second.getBoundaryMap())){
                 isNeedReroute = true;
 //                cout << " Over Flow HalfPerimeter" << endl;
             }else{

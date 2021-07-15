@@ -154,76 +154,123 @@ public :
 
     }
 
-    map<string, CellInstance> readCellInstance(vector<string> lineVector, map<string, CellInstance> cellInstanceMap) {
+    void readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,map<string,MasterCell> *masterCellMap,map<string, map <string, Blockage>>  *blockageCellMap) {
         CellInstance cellInstance;
         cellInstance.setCellName(lineVector[1]);
-        //CellMasterName;
         cellInstance.setMasterCellName(lineVector[2]);
         cellInstance.setRowIndx(stoi(lineVector[3]));
         cellInstance.setColIndx(stoi(lineVector[4]));
         cellInstance.setMovalbe(lineVector[5]);
-        cellInstanceMap.insert(pair<string, CellInstance>(lineVector[1], cellInstance));
-        return cellInstanceMap;
+        (*cellInstanceMap).insert(pair<string, CellInstance>(lineVector[1], cellInstance));
+        if((*masterCellMap)[lineVector[2]].getBlockageType().size()>0){
+            map <string, Blockage> blockageMap = (*masterCellMap)[lineVector[2]].getBlockageType();
+            (*blockageCellMap).insert(pair<string, map <string, Blockage>>(lineVector[1],blockageMap));
+        }
+
     };
 
 
-    map<string, int> readBoundary(vector<string> lineVector, map<string, int> boundaryMap) {
-//        cout << " row : " << lineVector[3] << " col : "<<lineVector[4]  << endl;
+//    map<string, int> readBoundary(vector<string> lineVector, map<string, int> boundaryMap) {
+////        cout << " row : " << lineVector[3] << " col : "<<lineVector[4]  << endl;
+//
+//        if (boundaryMap.find(UP) == boundaryMap.end()) {
+//            boundaryMap.insert(pair<string, int>(UP, stoi(lineVector[3])));
+//        } else {
+//            int oriUp = boundaryMap[UP];
+//            int newUp = stoi(lineVector[3]);
+//            if (newUp > oriUp) {
+//                boundaryMap[UP] = stoi(lineVector[3]);
+//
+//            }
+//        }
+//        if (boundaryMap.find(DOWN) == boundaryMap.end()) {
+//            boundaryMap.insert(pair<string, int>(DOWN, stoi(lineVector[3])));
+//        } else {
+//            int oriDown = boundaryMap[DOWN];
+//            int newDown = stoi(lineVector[3]);
+//            if (oriDown > newDown) {
+//                boundaryMap[DOWN] = stoi(lineVector[3]);
+//            }
+//        }
+//        //做邊
+//        if (boundaryMap.find(LEFT) == boundaryMap.end()) {
+//            boundaryMap.insert(pair<string, int>(LEFT, stoi(lineVector[4])));
+//        } else {
+//            int oriLeft = boundaryMap[LEFT];
+//            int newLeft = stoi(lineVector[4]);
+//            if (oriLeft > newLeft) {
+//                boundaryMap[LEFT] = stoi(lineVector[4]);
+//            }
+//        }
+//        if (boundaryMap.find(RIGHT) == boundaryMap.end()) {
+//            boundaryMap.insert(pair<string, int>(RIGHT, stoi(lineVector[4])));
+//        } else {
+//            int oriRight = boundaryMap[RIGHT];
+//            int newRight = stoi(lineVector[4]);
+//            if (newRight > oriRight) {
+//                boundaryMap[RIGHT] = stoi(lineVector[4]);
+//            }
+//        }
+//        return boundaryMap;
+//    }
 
-        if (boundaryMap.find(UP) == boundaryMap.end()) {
-            boundaryMap.insert(pair<string, int>(UP, stoi(lineVector[3])));
+    void readBoundaryNew(CellInstance cellInstance, map<string, int> *boundaryMap) {
+
+        if ((*boundaryMap).find(UP) == (*boundaryMap).end()) {
+            (*boundaryMap).insert(pair<string, int>(UP, cellInstance.getRowIndx()));
         } else {
-            int oriUp = boundaryMap[UP];
-            int newUp = stoi(lineVector[3]);
+            int oriUp = (*boundaryMap)[UP];
+            int newUp = cellInstance.getRowIndx();
             if (newUp > oriUp) {
-//                 boundaryMap.insert(pair<string, int>(UP,stoi(lineVector[3])));
-                boundaryMap[UP] = stoi(lineVector[3]);
+                (*boundaryMap)[UP] = cellInstance.getRowIndx();
 
             }
         }
-        if (boundaryMap.find(DOWN) == boundaryMap.end()) {
-            boundaryMap.insert(pair<string, int>(DOWN, stoi(lineVector[3])));
+        if ((*boundaryMap).find(DOWN) == (*boundaryMap).end()) {
+            (*boundaryMap).insert(pair<string, int>(DOWN,cellInstance.getRowIndx()));
         } else {
-            int oriDown = boundaryMap[DOWN];
-            int newDown = stoi(lineVector[3]);
+            int oriDown = (*boundaryMap)[DOWN];
+            int newDown = cellInstance.getRowIndx();
             if (oriDown > newDown) {
-//                boundaryMap.insert(pair<string, int>(DOWN,stoi(lineVector[3])));
-                boundaryMap[DOWN] = stoi(lineVector[3]);
+                (*boundaryMap)[DOWN] = cellInstance.getRowIndx();
             }
         }
         //做邊
-        if (boundaryMap.find(LEFT) == boundaryMap.end()) {
-            boundaryMap.insert(pair<string, int>(LEFT, stoi(lineVector[4])));
+        if ((*boundaryMap).find(LEFT) == (*boundaryMap).end()) {
+            (*boundaryMap).insert(pair<string, int>(LEFT,  cellInstance.getColIndx()));
         } else {
-            int oriLeft = boundaryMap[LEFT];
-            int newLeft = stoi(lineVector[4]);
+            int oriLeft = (*boundaryMap)[LEFT];
+            int newLeft =  cellInstance.getColIndx();
             if (oriLeft > newLeft) {
-                boundaryMap[LEFT] = stoi(lineVector[4]);
+                (*boundaryMap)[LEFT] =  cellInstance.getColIndx();
             }
         }
-        if (boundaryMap.find(RIGHT) == boundaryMap.end()) {
-            boundaryMap.insert(pair<string, int>(RIGHT, stoi(lineVector[4])));
+        if ((*boundaryMap).find(RIGHT) == (*boundaryMap).end()) {
+            (*boundaryMap).insert(pair<string, int>(RIGHT,  cellInstance.getColIndx()));
         } else {
-            int oriRight = boundaryMap[RIGHT];
-            int newRight = stoi(lineVector[4]);
+            int oriRight = (*boundaryMap)[RIGHT];
+            int newRight =  cellInstance.getColIndx();
             if (newRight > oriRight) {
-                boundaryMap[RIGHT] = stoi(lineVector[4]);
+                (*boundaryMap)[RIGHT] = cellInstance.getColIndx();
             }
         }
-        return boundaryMap;
     }
 
-    map<string, Net>
-    readNet(vector<string> contentVector, vector<string> lineVector, map<string, Net> netMap,
-            map<string, MasterCell> masterCellMap, map<string, CellInstance> cellInstanceMap, int index) {
+    void
+    readNet(vector<string> contentVector, vector<string> lineVector, map<string, Net> *netMap,
+            map<string, MasterCell> masterCellMap, map<string, CellInstance> cellInstanceMap, int *index) {
+        int indexCount =  *index;
+
         int pinCount = stoi(lineVector[2]);
         Net net;
         net.setNetName(lineVector[1]);
         net.setMinRoutingConstraint(lineVector[3]);
         net.setWeight(stod(lineVector[4]));
+        map<string, int> boundaryMap;
+
         vector<CellInstance> connectCellVector;
-        for (int i = index + 1; i <= index + pinCount; i++) {
-            cout << "read Net : " << contentVector[i] << endl;
+        for (int i = indexCount + 1; i <= indexCount + pinCount; i++) {
+            cout << "contentvector : " << contentVector[i] << endl;
             vector<string> pinVector = splitString(contentVector[i]);
             vector<string> pinCellVec = splitByChar(pinVector[1], '/');
             //pinCellVec[0] -> C1 pinCellVec[1] -> P1 一個net可能會連接同一個cell 不同  pin
@@ -231,7 +278,6 @@ public :
             map<string, Pin> pinMap = masterCellMap[masterCellName].getPinType();
             CellInstance cellinstance;
             cellinstance.setCellName(pinCellVec[0]);
-
 //            cellinstance.setConnectPin(pinCellVec[1]);
 //            cout << "cell Name : " << pinCellVec[0] <<" Pin :" << pinCellVec[1] << " layer : "  <<pinMap[pinCellVec[1]].getLayer()<< endl;
             string layer = pinMap[pinCellVec[1]].getLayer();
@@ -239,20 +285,23 @@ public :
             cellinstance.setLayerName(stoi(layer));
             cellinstance.setRowIndx(cellInstanceMap[pinCellVec[0]].getRowIndx());
             cellinstance.setColIndx(cellInstanceMap[pinCellVec[0]].getColIndx());
+            readBoundaryNew(cellinstance, &boundaryMap);
             connectCellVector.push_back(cellinstance);
         }
+        net.setBoundaryMap(boundaryMap);
         net.setConnectCell(connectCellVector);
-        netMap.insert(pair<string, Net>(lineVector[1], net));
-
-        return netMap;
+        (*netMap).insert(pair<string, Net>(lineVector[1], net));
+        (*index) = indexCount + pinCount;
     }
 
-    map<string, Net>
-    readRoute(vector<string> contentVector, vector<string> lineVector, map<string, Net> netMap, int index) {
+    void
+    readRoute(vector<string> contentVector, vector<string> lineVector, map<string, Net> *netMap, int *index) {
+        int indexCount = *index;
         int numRoutes = stoi(lineVector[1]);
-        for (int i = index + 1; i <= index + numRoutes; i++) {
+
+        for (int i = indexCount + 1; i <= indexCount + numRoutes; i++) {
             vector<string> routeVector = splitString(contentVector[i]);
-            if (netMap.count(routeVector[6])) {
+            if ((*netMap).count(routeVector[6])) {
                 Route route;
                 route.setNetName(routeVector[6]);
                 route.setStartRowIndx(stoi(routeVector[0]));
@@ -261,20 +310,20 @@ public :
                 route.setEndRowIndx(stoi(routeVector[3]));
                 route.setEndColIndx(stoi(routeVector[4]));
                 route.setEndlayIndx(stoi(routeVector[5]));
-                vector<Route> routingVector = netMap[routeVector[6]].getNumRoute();
+                vector<Route> routingVector = (*netMap)[routeVector[6]].getNumRoute();
                 routingVector.push_back(route);
 //                cout <<"vec size : " << routeVector[6]<< endl;
-                netMap[routeVector[6]].setNumRoute(routingVector);
+                (*netMap)[routeVector[6]].setNumRoute(routingVector);
 //               cout <<"size : " << netMap[routeVector[6]].getNumRoute().size()<< endl;
 //               netMap[routeVector[6]].getNumRoute().push_back(route);
             }
         }
-        return netMap;
+        *index = indexCount + numRoutes;
     }
 
     vector<vector<vector<int> > > getLayerGrid(GgridBoundaryIndex ggridBoundaryIndex, map<string, Layer> layerMap,
                                                vector<vector<vector<int> > > gridVector,
-                                               vector<NumNonDefaultSupplyGgrid> numNonDefaultSupplyVector, map<string, vector<string>> blockageCellMap,map<string, CellInstance> cellInstanceMap,map<string, MasterCell> masterCellMap) {
+                                               vector<NumNonDefaultSupplyGgrid> numNonDefaultSupplyVector, map<string, map<string,Blockage>> blockageCellMap,map<string, CellInstance> cellInstanceMap,map<string, MasterCell> masterCellMap) {
         int rowGridBegin = ggridBoundaryIndex.getRowBeginIdx();
         int colGridBegin = ggridBoundaryIndex.getColBeginIdx();
         int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
@@ -319,7 +368,7 @@ public :
 //        }
 
 
-        //實際位置開頭由1開始
+        //實際位置開頭由1開始readBlockageCell
 //        for (int layer = 0; layer < layerSize; layer++) {
 //            for (int row = rowGridEnd - 1; row >= 0; row--) {
 //                for (int col = 0; col < colGridEnd; col++) {
@@ -377,40 +426,41 @@ public :
         return gridVector;
     }
 
-
-    map<string, VoltageArea>
-    readVoltageArea(vector<string> contentVector, vector<string> lineVector, map<string, VoltageArea> voltageAreaMap,
-                    int index) {
+    void readVoltageArea(vector<string> contentVector, map<string, VoltageArea> *voltageAreaMap,int *index){
+         int indexCount = (*index);
+         bool isBreak = true;
         VoltageArea voltageArea;
         vector<Grid> gridVector;
         vector<string> instanceVector;
-        for (int i = index + 1; i < contentVector.size(); i++) {
-            vector<string> voltage = splitString(contentVector[i]);
-            if (voltage[0] == NAME) {
-                voltageArea.setAreaName(voltage[1]);
-            } else if (voltage[0] == GGRIDS) {
-                int gridCount = stoi(voltage[1]);
-                for (int j = i + 1; j <= i + gridCount; j++) {
-                    vector<string> voltage = splitString(contentVector[j]);
-                    Grid grid;
-                    grid.setRowIndx(stoi(voltage[0]));
-                    grid.setColIndx(stoi(voltage[1]));
-                    gridVector.push_back(grid);
-                }
-                voltageArea.setGridVector(gridVector);
-                i = i + gridCount;
-            } else if (voltage[0] == INSTANCES) {
-                int instanceCount = stoi(voltage[1]);
-                for (int j = i + 1; j <= i + instanceCount; j++) {
-                    vector<string> voltage = splitString(contentVector[j]);
-                    instanceVector.push_back(voltage[0]);
-                }
-                voltageArea.setInstance(instanceVector);
-                i = i + instanceCount;
-            }
-        }
-        return voltageAreaMap;
+        vector<string> voltage = splitString(contentVector[indexCount]);
+        string areaName =voltage[1];
+        voltageArea.setAreaName(voltage[1]);
+         while (isBreak){
+             vector<string> voltage = splitString(contentVector[indexCount]);
+             if(voltage[0] == GGRIDS){
+                 for(int i = indexCount+1 ; i<= (indexCount+stoi(voltage[1])) ;i++){
+                     vector<string> gridvec = splitString(contentVector[i]);
+                     Grid grid;
+                     grid.setRowIndx(stoi(gridvec[0]));
+                     grid.setColIndx(stoi(gridvec[1]));
+                     gridVector.push_back(grid);
+                 };
+                 voltageArea.setGridVector(gridVector);
+                indexCount = indexCount+stoi(voltage[1])-1;
+             }else if(voltage[0] == INSTANCES){
+                 for(int i = indexCount+1 ; i<= (indexCount+stoi(voltage[1])) ;i++){
+                     vector<string> insvec = splitString(contentVector[i]);
+                     instanceVector.push_back(insvec[0]);
+                 };
+                 voltageArea.setInstance(instanceVector);
+                 (*voltageAreaMap).insert(pair<string,VoltageArea>(areaName,voltageArea));
+                 (*index) = indexCount+stoi(voltage[1]);
+                 break;
+             }
+             indexCount++;
+         }
     }
+
 
     int getInsertIndex(vector<double> powerFactorVec, double number){
         if(powerFactorVec.size() == 0){

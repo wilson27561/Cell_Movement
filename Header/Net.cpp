@@ -60,3 +60,11 @@ const vector<CellInstance> &Net::getConnectCell() const {
 void Net::setConnectCell(const vector<CellInstance> &connectCell) {
     Net::connectCell = connectCell;
 }
+
+const map<string, int> &Net::getBoundaryMap() const {
+    return boundaryMap;
+}
+
+void Net::setBoundaryMap(const map<string, int> &boundaryMap) {
+    Net::boundaryMap = boundaryMap;
+}

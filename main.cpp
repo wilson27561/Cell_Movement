@@ -42,8 +42,9 @@ int main() {
     map<string, int> boundaryMap;
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
-    map<string, vector<string>> blockageCellMap;
+//    map<string, vector<string>> blockageCellMap;
     map<string,CellInstance> numMoveCellInstMap;
+    map<string, map <string, Blockage>> blockageCellMap;
 
 
     if (fin) {
@@ -53,12 +54,15 @@ int main() {
     }
     fin.close();
 
-    //TODO 調整讀檔方式
-    //TODO bug case1 cell 沒有連接在對的層
+    //TODO 調整讀檔方式  --> 已調整
+    //TODO 調整boundary map 改為每條線經過的 -->
+    //TODO blockage 這部分要改一下
+    //TODO bug case1 cell 沒有連接在對的層 via部分改過
     //TODO bug case3
+    //TODO random route
     //TODO 多執行緒 讀檔
     //TODO two pin 做 cell move
-    //TODO 是否要將via 放到兩條線中間
+    //TODO 是否要將via 放到兩條線中間 ->不用
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
     //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
 
@@ -90,35 +94,44 @@ int main() {
 //            cout << "-----BlockageCell end-----" << endl;
         } else if (lineVector[0] == CELLINST) {
             cout << "-----CellInstance start-----" << endl;
-            cellInstanceMap = readFile.readCellInstance(lineVector, cellInstanceMap);
+            readFile.readCellInstance(lineVector, &cellInstanceMap,&masterCellMap,&blockageCellMap);
             cout << "-----CellInstance end-----" << endl;
-            cout << "-----BlockageCell start-----" << endl;
-            blockageCellMap = readFile.readBlockageCell(lineVector, blockageCellMap);
-            cout << "-----BlockageCell end-----" << endl;
-            boundaryMap = readFile.readBoundary(lineVector, boundaryMap);
+//            cout << "-----BlockageCell start-----" << endl;
+//            blockageCellMap = readFile.readBlockageCell(lineVector, blockageCellMap);
+//            cout << "-----BlockageCell end-----" << endl;
+//            boundaryMap = readFile.readBoundary(lineVector, boundaryMap);
             cout << "-----Boundary end-----" << endl;
         } else if (lineVector[0] == NET) {
             cout << "-----net start-----" << endl;
-            netMap = readFile.readNet(contentvector, lineVector, netMap, masterCellMap, cellInstanceMap, i);
+            //TODO 這裏使用boundaryMap
+            readFile.readNet(contentvector, lineVector, &netMap, masterCellMap, cellInstanceMap, &i);
             cout << "-----net end-----" << endl;
         } else if (lineVector[0] == NUMROUTES) {
             cout << "-----route start-----" << endl;
-            netMap = readFile.readRoute(contentvector, lineVector, netMap, i);
+            readFile.readRoute(contentvector, lineVector, &netMap, &i);
             cout << "-----route end-----" << endl;
-        } else if (lineVector[0] == NUMVOLTAGEAREA) {
+        } else if (lineVector[0] == NAME) {
             cout << "-----voltage start-----" << endl;
-            voltageAreaMap = readFile.readVoltageArea(contentvector, lineVector, voltageAreaMap, i);
+            readFile.readVoltageArea( contentvector,  &voltageAreaMap, &i);
             cout << "-----voltage end-----" << endl;
         };
     }
+
+    for(auto const &item : netMap){
+        cout << item.first << endl;
+        for(auto const &bound:item.second.getBoundaryMap())
+        {
+            cout << bound.first << " " << bound.second << endl;
+        }
+    }
+
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
     gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector, numNonDefaultSupplyVector,blockageCellMap,cellInstanceMap,masterCellMap);
     gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
 
 
 
-
-//    netMap = reRoute.boundaryReroute(netMap, boundaryMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
+    netMap = reRoute.boundaryReroute(netMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
 
 
