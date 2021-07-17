@@ -292,15 +292,15 @@ public :
 
 
         //實際位置開頭由1開始readBlockageCell
-        for (int layer = 0; layer < layerSize; layer++) {
-            for (int row = rowGridEnd - 1; row >= 0; row--) {
-                for (int col = 0; col < colGridEnd; col++) {
-                    std::cout << gridVector[layer][row][col] << "\t";
-                }
-                std::cout << "" << std::endl;
-            }
-            std::cout << "" << std::endl;
-        }
+//        for (int layer = 0; layer < layerSize; layer++) {
+//            for (int row = rowGridEnd - 1; row >= 0; row--) {
+//                for (int col = 0; col < colGridEnd; col++) {
+//                    std::cout << gridVector[layer][row][col] << "\t";
+//                }
+//                std::cout << "" << std::endl;
+//            }
+//            std::cout << "" << std::endl;
+//        }
 
         return gridVector;
     }

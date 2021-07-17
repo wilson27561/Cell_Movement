@@ -35,7 +35,7 @@ int main() {
     map<string, CellInstance> cellInstanceMap;
     map<string, VoltageArea> voltageAreaMap;
     map<string, Net> netMap;
-    map<string, int> boundaryMap;
+//    map<string, int> boundaryMap;
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
     map<string,CellInstance> numMoveCellInstMap;
@@ -49,11 +49,12 @@ int main() {
     }
     fin.close();
 
-    //TODO 調整讀檔方式  --> 已調整
+    //TODO 調整讀檔方式  --> case3 voltage有bug
     //TODO 調整boundary map 改為每條線經過的 --> 已調整
     //TODO blockage 這部分要改一下 -> 已調整
     //TODO net supply 寫在 讀檔內 -> 已調整
-    //TODO bug case1 cell 沒有連接在對的層 via部分改過
+    //TODO bug case1 cell 沒有連接在對的層 via部分改過 ->
+    //TODO 若是直線繞不行的話，需要另外走pattern route ->
     //TODO output file
     //TODO bug case3
     //TODO random route
@@ -62,8 +63,7 @@ int main() {
     //TODO 是否要將via 放到兩條線中間 ->不用
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
     //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
-
-
+    
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = util.splitString(contentvector[i]);
         if (lineVector[0] == MAXCELLMOVE) {
@@ -79,6 +79,7 @@ int main() {
             readFile.readLayer(contentvector, &i, lineVector[1],&layerMap);
             cout << "-----layerMap end-----" << endl;
             gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector);
+
         } else if (lineVector[0] == NUMNONDEFAULTSUPPLYGGRID) {
             cout << "-----NumNonDefaultSupply start-----" << endl;
             readFile.readNumNonDefaultSupply(contentvector,&gridVector,&i,lineVector[1]);
@@ -107,7 +108,20 @@ int main() {
     }
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
 //    gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
-    netMap = reRoute.boundaryReroute(netMap, layerMap, cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
+    //    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
+//    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
+//    int layerSize = layerMap.size();
+//    for (int layer = 0; layer < layerSize; layer++) {
+//        for (int row = rowGridEnd - 1; row >= 0; row--) {
+//            for (int col = 0; col < colGridEnd; col++) {
+//                std::cout << gridVector[layer][row][col] << "\t";
+//            }
+//            std::cout << "" << std::endl;
+//        }
+//        std::cout << "" << std::endl;
+//    }
+
+    netMap = reRoute.boundaryReroute(netMap,  cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
 
 
 
@@ -123,18 +137,6 @@ int main() {
     cout << endl << "程式執行所花費：" << (double)clock()/CLOCKS_PER_SEC << " S";
     cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;
 
-//    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
-//    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
-//    int layerSize = layerMap.size();
-//    for (int layer = 0; layer < layerSize; layer++) {
-//        for (int row = rowGridEnd - 1; row >= 0; row--) {
-//            for (int col = 0; col < colGridEnd; col++) {
-//                std::cout << gridVector[layer][row][col] << "\t";
-//            }
-//            std::cout << "" << std::endl;
-//        }
-//        std::cout << "" << std::endl;
-//    }
 
 
 
