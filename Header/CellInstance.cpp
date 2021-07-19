@@ -37,8 +37,6 @@ void CellInstance::setMovalbe(const string &movalbe) {
     CellInstance::movalbe = movalbe;
 }
 
-
-
 const string &CellInstance::getMasterCellName() const {
     return masterCellName;
 }

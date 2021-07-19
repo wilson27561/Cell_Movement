@@ -281,56 +281,107 @@ public:
             }
         }
 
-        // log
-//        for(auto const item : layerSteinerMap){
-//            for(auto stei : item.second){
-//                cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow() << " " << stei.getSteinerPointCol() << " " << stei.getLayer() <<endl;
-//            }
-//        }
-//            cout << "log : " << endl;
-//             for(auto const item : pointMap){
-//                 for(auto const str : item.second){
-//                     cout << item.first << " "  << str.first << endl;
-//                 }
-//             }
+
+        // layerMap
+        cout << "layerMap :" << endl;
+        for (auto const item : layerSteinerMap) {
+            for (auto stei : item.second) {
+                cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow()
+                     << " " << stei.getSteinerPointCol() << " " << stei.getLayer() << endl;
+            }
+        }
+        cout << "" << endl;
+
+        cout << "point Map " << endl;
+        for (auto const item : pointMap) {
+            for (auto const str : item.second) {
+                cout << item.first << " " << str.first << endl;
+            }
+        }
+        cout << "" << endl;
+
+        cout << "before route " << endl;
+        for (Route route: (*routeVector)) {
+            cout << "route line : " << route.getStartRowIndx() << " "
+                 << route.getStartColIndx() << " " << route.getStartLayIndx()
+                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx() << " "
+                 << route.getNetName()
+                 << endl;
+        }
+        cout << "" << endl;
 
 
+//        map<string, vector<SteinerPoint> > layerSteinerMap
+//                map<string, map<string, string>> pointMap;
+        set<string> viaSet;
 
+        //每一層
         for (auto const layerMap : layerSteinerMap) {
-            int layer = stoi(layerMap.first);
-            for (int i = 1; i < layerMap.second.size(); i++) {
+            string layer = layerMap.first;
+            bool getVia = false;
+            //每一層的線或cell
+            for (int i = 0; i < layerMap.second.size(); i++) {
                 SteinerPoint steiner = layerMap.second[i];
                 string steinerCoordinate =
                         to_string(steiner.getSteinerPointRow()) + "_" + to_string(steiner.getSteinerPointCol());
                 string cellCoordinate =
                         to_string(steiner.getCellPointRow()) + "_" + to_string(steiner.getCellPointCol());
-                for (auto const coordinateMap: pointMap) {
-                    if (coordinateMap.second.count(steinerCoordinate) > 0) {
-                        Route route;
-                        route.setStartLayIndx(stoi(layerMap.first));
-                        route.setEndlayIndx(stoi(coordinateMap.first));
-                        route.setStartRowIndx(steiner.getSteinerPointRow());
-                        route.setEndRowIndx(steiner.getSteinerPointRow());
-                        route.setStartColIndx(steiner.getSteinerPointCol());
-                        route.setEndColIndx(steiner.getSteinerPointCol());
-                        (*routeVector).push_back(route);
-                        break;
-                    } else if (coordinateMap.second.count(steinerCoordinate) > 0) {
-                        Route route;
-                        route.setStartLayIndx(stoi(layerMap.first));
-                        route.setEndlayIndx(stoi(coordinateMap.first));
-                        route.setStartRowIndx(steiner.getCellPointRow());
-                        route.setEndRowIndx(steiner.getCellPointRow());
-                        route.setStartColIndx(steiner.getCellPointCol());
-                        route.setEndColIndx(steiner.getCellPointCol());
-                        (*routeVector).push_back(route);
-                        break;
+                cout << "steinerCoordinate : " << steinerCoordinate << "cellCoordinate : " << cellCoordinate << endl;
+                //point map 從第二層開始
+                for (auto const pointGridMap : pointMap) {
+                    int pointLayer = stoi(pointGridMap.first);
+
+                    if (pointLayer == steiner.getLayer()) {
+                        continue;
+                    }
+                    //point 跟 layer同一層不用判斷
+                    if (pointMap[to_string(pointLayer)].count(steinerCoordinate) > 0) {
+                        string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
+                        if (isRepeatVia(steinerCoordinate, layer , to_string(pointLayer),  &viaSet) == false) {
+                            Route route;
+                            route.setStartLayIndx(stoi(layer));
+                            route.setEndlayIndx(pointLayer);
+                            route.setStartRowIndx(steiner.getSteinerPointRow());
+                            route.setEndRowIndx(steiner.getSteinerPointRow());
+                            route.setStartColIndx(steiner.getSteinerPointCol());
+                            route.setEndColIndx(steiner.getSteinerPointCol());
+                            route.setNetName(reRouteNet);
+                            (*routeVector).push_back(route);
+                            cout << "route line : " << route.getStartRowIndx() << " "
+                                 << route.getStartColIndx() << " " << route.getStartLayIndx()
+                                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
+                                 << route.getEndlayIndx() << " "
+                                 << route.getNetName()
+                                 << endl;
+                            break;
+                        }
+                    } else if (pointMap[to_string(pointLayer)].count(cellCoordinate) > 0) {
+                        if (isRepeatVia(cellCoordinate, layer , to_string(pointLayer),  &viaSet) == false) {
+                            Route route;
+                            route.setStartLayIndx(stoi(layer));
+                            route.setEndlayIndx(pointLayer);
+                            route.setStartRowIndx(steiner.getCellPointRow());
+                            route.setEndRowIndx(steiner.getCellPointRow());
+                            route.setStartColIndx(steiner.getCellPointCol());
+                            route.setEndColIndx(steiner.getCellPointCol());
+                            route.setNetName(reRouteNet);
+                            (*routeVector).push_back(route);
+                            cout << "route line : " << route.getStartRowIndx() << " "
+                                 << route.getStartColIndx() << " " << route.getStartLayIndx()
+                                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
+                                 << route.getEndlayIndx() << " "
+                                 << route.getNetName()
+                                 << endl;
+                            break;
+                        }
                     } else {
-                        cout << "has some exception " << endl;
+//                    cout << "has some exception " << endl;
                     }
                 }
             }
+
         }
+
         cout << "End route line : " << endl;
         for (Route route: (*routeVector)) {
             cout << "route line : " << route.getStartRowIndx() << " "
@@ -415,6 +466,20 @@ public:
 //                 << route.getNetName()
 //                 << endl;
 //        }
+    }
+
+    //判斷是否有重複的via
+//    string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
+    bool isRepeatVia(string coordinate,string upLayer , string downLayer, set<string> *viaSet) {
+        string viaUp = coordinate + "_" + upLayer + "_" + downLayer;
+        string viaDown = coordinate + "_"+downLayer+"_"+upLayer;
+        if ((*viaSet).count(viaUp) > 0 or (*viaSet).count(viaDown)>0) {
+            return true;
+        } else {
+            (*viaSet).insert(viaUp);
+            (*viaSet).insert(viaDown);
+            return false;
+        }
     }
 
     vector<vector<vector<int> > >

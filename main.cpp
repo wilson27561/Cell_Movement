@@ -79,7 +79,6 @@ int main() {
             readFile.readLayer(contentvector, &i, lineVector[1],&layerMap);
             cout << "-----layerMap end-----" << endl;
             gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector);
-
         } else if (lineVector[0] == NUMNONDEFAULTSUPPLYGGRID) {
             cout << "-----NumNonDefaultSupply start-----" << endl;
             readFile.readNumNonDefaultSupply(contentvector,&gridVector,&i,lineVector[1]);
