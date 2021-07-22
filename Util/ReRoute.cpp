@@ -163,14 +163,23 @@ public:
     void getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map<string, Net> netMap,
                          vector<vector<vector<int> > > gridVector,
                          map<string, vector<int>> powerFactorMap) {
+
         int row[MAXD];
         int col[MAXD];
         int index = 0;
+        set<string> cellSet;
+        cout << "reRoute Net Name : "<<  reRouteNet << endl;
         //-------  steiner tree  start -------
         for (auto const &cell : netMap[reRouteNet].getConnectCell()) {
+            string cellString = to_string(cell.getRowIndx())+"_"+ to_string(cell.getColIndx());
+            cellSet.insert(cellString);
             row[index] = cell.getRowIndx();
             col[index] = cell.getColIndx();
             index += 1;
+        }
+
+        if(cellSet.size() <= 1 ){
+            return ;
         }
         readLUT();
         Tree flutetree = flute(index, row, col, ACCURACY);
@@ -187,8 +196,9 @@ public:
         //點
         map<string, map<string, string>> pointMap;
 
+
         vector<SteinerPoint> steinerLine = getSteinerPointRoute(flutetree, gridVector, powerFactorMap,
-                                                                minimumRoutingConstraint, &layerSteinerMap);
+                                                                minimumRoutingConstraint, &layerSteinerMap, reRouteNet);
 //        cout << " check steiner start " << endl;
 //        for(auto const stei : steinerLine){
 //                cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow() << " " << stei.getSteinerPointCol() << " " << stei.getLayer() <<endl;
@@ -196,284 +206,214 @@ public:
 //        }
 //        cout << " check steiner end " << endl;
         //-------  steiner point route end -------
-
-
-        //steiner Line
-        for (auto const steinerPoint : steinerLine) {
-            //線放入route vector
-            Route route;
-            route.setStartLayIndx(steinerPoint.getLayer());
-            route.setEndlayIndx(steinerPoint.getLayer());
-            route.setStartRowIndx(steinerPoint.getCellPointRow());
-            route.setEndRowIndx(steinerPoint.getSteinerPointRow());
-            route.setStartColIndx(steinerPoint.getCellPointCol());
-            route.setEndColIndx(steinerPoint.getSteinerPointCol());
-            route.setNetName(reRouteNet);
-            (*routeVector).push_back(route);
-            //線
-            if (layerSteinerMap.find(to_string(steinerPoint.getLayer())) == layerSteinerMap.end()) {
-                vector<SteinerPoint> lineVector;
-                lineVector.push_back(steinerPoint);
-                layerSteinerMap.insert(
-                        pair<string, vector<SteinerPoint> >(to_string(steinerPoint.getLayer()), lineVector));
-            } else {
-                layerSteinerMap[to_string(steinerPoint.getLayer())].push_back(steinerPoint);
-            }
-            //點
-            string startCoordinate =
-                    to_string(steinerPoint.getCellPointRow()) + "_" + to_string(steinerPoint.getCellPointCol());
-            string endCoordinate =
-                    to_string(steinerPoint.getSteinerPointRow()) + "_" + to_string(steinerPoint.getSteinerPointCol());
-            if (pointMap.find(to_string(steinerPoint.getLayer())) == pointMap.end()) {
-                map<string, string> coordinateMap;
-                coordinateMap.insert(pair<string, string>(startCoordinate, startCoordinate));
-                coordinateMap.insert(pair<string, string>(endCoordinate, endCoordinate));
-                pointMap.insert(pair<string, map<string, string>>(to_string(steinerPoint.getLayer()), coordinateMap));
-            } else {
-                pointMap[to_string(steinerPoint.getLayer())].insert(
-                        pair<string, string>(startCoordinate, startCoordinate));
-                pointMap[to_string(steinerPoint.getLayer())].insert(pair<string, string>(endCoordinate, endCoordinate));
-            }
-        };
-
-
-
-        // cell
-        for (auto const cell:  netMap[reRouteNet].getConnectCell()) {
-            int layer = cell.getLayerName();
-            int rowIndx = cell.getRowIndx();
-            int colIndx = cell.getColIndx();
-            bool isInside = false;
-            for (SteinerPoint steiner : layerSteinerMap[to_string(layer)]) {
-                int isHorizontal = layer % 2;
-                //vertical
-                if (isHorizontal == 0) {
-                    if (steiner.getCellPointCol() > steiner.getSteinerPointCol()) {
-                        if (colIndx <= steiner.getCellPointCol() or colIndx >= steiner.getSteinerPointCol()) {
-                            bool isInside = true;
-                            break;
-                        }
-                    } else {
-                        if (colIndx >= steiner.getCellPointCol() or colIndx <= steiner.getSteinerPointCol()) {
-                            bool isInside = true;
-                            break;
-                        }
-                    }
-                    //horizontal
+        if(steinerLine.size() > 0) {
+            //steiner Line
+            for (auto const steinerPoint : steinerLine) {
+                //線放入route vector
+                Route route;
+                route.setStartLayIndx(steinerPoint.getLayer());
+                route.setEndlayIndx(steinerPoint.getLayer());
+                route.setStartRowIndx(steinerPoint.getCellPointRow());
+                route.setEndRowIndx(steinerPoint.getSteinerPointRow());
+                route.setStartColIndx(steinerPoint.getCellPointCol());
+                route.setEndColIndx(steinerPoint.getSteinerPointCol());
+                route.setNetName(reRouteNet);
+                (*routeVector).push_back(route);
+                //線
+                if (layerSteinerMap.find(to_string(steinerPoint.getLayer())) == layerSteinerMap.end()) {
+                    vector<SteinerPoint> lineVector;
+                    lineVector.push_back(steinerPoint);
+                    layerSteinerMap.insert(
+                            pair<string, vector<SteinerPoint> >(to_string(steinerPoint.getLayer()), lineVector));
                 } else {
-                    if (steiner.getCellPointRow() > steiner.getSteinerPointRow()) {
-                        if (rowIndx <= steiner.getCellPointRow() or rowIndx >= steiner.getSteinerPointRow()) {
-                            bool isInside = true;
-                            break;
-                        }
-                    } else {
-                        if (rowIndx >= steiner.getCellPointRow() or rowIndx <= steiner.getSteinerPointRow()) {
-                            bool isInside = true;
-                            break;
-                        }
-                    }
-
+                    layerSteinerMap[to_string(steinerPoint.getLayer())].push_back(steinerPoint);
+                }
+                //點
+                string startCoordinate =
+                        to_string(steinerPoint.getCellPointRow()) + "_" + to_string(steinerPoint.getCellPointCol());
+                string endCoordinate =
+                        to_string(steinerPoint.getSteinerPointRow()) + "_" +
+                        to_string(steinerPoint.getSteinerPointCol());
+                if (pointMap.find(to_string(steinerPoint.getLayer())) == pointMap.end()) {
+                    map<string, string> coordinateMap;
+                    coordinateMap.insert(pair<string, string>(startCoordinate, startCoordinate));
+                    coordinateMap.insert(pair<string, string>(endCoordinate, endCoordinate));
+                    pointMap.insert(
+                            pair<string, map<string, string>>(to_string(steinerPoint.getLayer()), coordinateMap));
+                } else {
+                    pointMap[to_string(steinerPoint.getLayer())].insert(
+                            pair<string, string>(startCoordinate, startCoordinate));
+                    pointMap[to_string(steinerPoint.getLayer())].insert(
+                            pair<string, string>(endCoordinate, endCoordinate));
                 }
             };
-            if (isInside == false) {
-                SteinerPoint steinerPoint(rowIndx, colIndx, rowIndx, colIndx, layer);
-                layerSteinerMap[to_string(steinerPoint.getLayer())].push_back(steinerPoint);
+
+
+
+            // cell
+            for (auto const cell:  netMap[reRouteNet].getConnectCell()) {
+                int layer = cell.getLayerName();
+                int rowIndx = cell.getRowIndx();
+                int colIndx = cell.getColIndx();
+                bool isInside = false;
+                for (SteinerPoint steiner : layerSteinerMap[to_string(layer)]) {
+                    int isHorizontal = layer % 2;
+                    //vertical
+                    if (isHorizontal == 0) {
+                        if (steiner.getCellPointCol() > steiner.getSteinerPointCol()) {
+                            if (colIndx <= steiner.getCellPointCol() or colIndx >= steiner.getSteinerPointCol()) {
+                                bool isInside = true;
+                                break;
+                            }
+                        } else {
+                            if (colIndx >= steiner.getCellPointCol() or colIndx <= steiner.getSteinerPointCol()) {
+                                bool isInside = true;
+                                break;
+                            }
+                        }
+                        //horizontal
+                    } else {
+                        if (steiner.getCellPointRow() > steiner.getSteinerPointRow()) {
+                            if (rowIndx <= steiner.getCellPointRow() or rowIndx >= steiner.getSteinerPointRow()) {
+                                bool isInside = true;
+                                break;
+                            }
+                        } else {
+                            if (rowIndx >= steiner.getCellPointRow() or rowIndx <= steiner.getSteinerPointRow()) {
+                                bool isInside = true;
+                                break;
+                            }
+                        }
+
+                    }
+                };
+                if (isInside == false) {
+                    SteinerPoint steinerPoint(rowIndx, colIndx, rowIndx, colIndx, layer);
+                    layerSteinerMap[to_string(steinerPoint.getLayer())].push_back(steinerPoint);
+                }
             }
-        }
 
 
-        // layerMap
-        cout << "layerMap :" << endl;
-        for (auto const item : layerSteinerMap) {
-            for (auto stei : item.second) {
-                cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow()
-                     << " " << stei.getSteinerPointCol() << " " << stei.getLayer() << endl;
-            }
-        }
-        cout << "" << endl;
-
-        cout << "point Map " << endl;
-        for (auto const item : pointMap) {
-            for (auto const str : item.second) {
-                cout << item.first << " " << str.first << endl;
-            }
-        }
-        cout << "" << endl;
-
-        cout << "before route " << endl;
-        for (Route route: (*routeVector)) {
-            cout << "route line : " << route.getStartRowIndx() << " "
-                 << route.getStartColIndx() << " " << route.getStartLayIndx()
-                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx() << " "
-                 << route.getNetName()
-                 << endl;
-        }
-        cout << "" << endl;
+//            // layerMap
+//            cout << "layerMap :" << endl;
+//            for (auto const item : layerSteinerMap) {
+//                for (auto stei : item.second) {
+//                    cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow()
+//                         << " " << stei.getSteinerPointCol() << " " << stei.getLayer() << endl;
+//                }
+//            }
+//            cout << "" << endl;
+//
+//            cout << "point Map " << endl;
+//            for (auto const item : pointMap) {
+//                for (auto const str : item.second) {
+//                    cout << item.first << " " << str.first << endl;
+//                }
+//            }
+//            cout << "" << endl;
+//
+//            cout << "before route " << endl;
+//            for (Route route: (*routeVector)) {
+//                cout << "route line : " << route.getStartRowIndx() << " "
+//                     << route.getStartColIndx() << " " << route.getStartLayIndx()
+//                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()
+//                     << " "
+//                     << route.getNetName()
+//                     << endl;
+//            }
+//            cout << "" << endl;
 
 
 //        map<string, vector<SteinerPoint> > layerSteinerMap
 //                map<string, map<string, string>> pointMap;
-        set<string> viaSet;
+            set<string> viaSet;
 
-        //每一層
-        for (auto const layerMap : layerSteinerMap) {
-            string layer = layerMap.first;
-            bool getVia = false;
-            //每一層的線或cell
-            for (int i = 0; i < layerMap.second.size(); i++) {
-                SteinerPoint steiner = layerMap.second[i];
-                string steinerCoordinate =
-                        to_string(steiner.getSteinerPointRow()) + "_" + to_string(steiner.getSteinerPointCol());
-                string cellCoordinate =
-                        to_string(steiner.getCellPointRow()) + "_" + to_string(steiner.getCellPointCol());
-                cout << "steinerCoordinate : " << steinerCoordinate << "cellCoordinate : " << cellCoordinate << endl;
-                //point map 從第二層開始
-                for (auto const pointGridMap : pointMap) {
-                    int pointLayer = stoi(pointGridMap.first);
+            //每一層
+            for (auto const layerMap : layerSteinerMap) {
+                string layer = layerMap.first;
+                bool getVia = false;
+                //每一層的線或cell
+                for (int i = 0; i < layerMap.second.size(); i++) {
+                    SteinerPoint steiner = layerMap.second[i];
+                    string steinerCoordinate =
+                            to_string(steiner.getSteinerPointRow()) + "_" + to_string(steiner.getSteinerPointCol());
+                    string cellCoordinate =
+                            to_string(steiner.getCellPointRow()) + "_" + to_string(steiner.getCellPointCol());
+//                    cout << "steinerCoordinate : " << steinerCoordinate << "cellCoordinate : " << cellCoordinate
+//                         << endl;
+                    //point map 從第二層開始
+                    for (auto const pointGridMap : pointMap) {
+                        int pointLayer = stoi(pointGridMap.first);
 
-                    if (pointLayer == steiner.getLayer()) {
-                        continue;
-                    }
-                    //point 跟 layer同一層不用判斷
-                    if (pointMap[to_string(pointLayer)].count(steinerCoordinate) > 0) {
-                        string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
-                        if (isRepeatVia(steinerCoordinate, layer , to_string(pointLayer),  &viaSet) == false) {
-                            Route route;
-                            route.setStartLayIndx(stoi(layer));
-                            route.setEndlayIndx(pointLayer);
-                            route.setStartRowIndx(steiner.getSteinerPointRow());
-                            route.setEndRowIndx(steiner.getSteinerPointRow());
-                            route.setStartColIndx(steiner.getSteinerPointCol());
-                            route.setEndColIndx(steiner.getSteinerPointCol());
-                            route.setNetName(reRouteNet);
-                            (*routeVector).push_back(route);
-                            cout << "route line : " << route.getStartRowIndx() << " "
-                                 << route.getStartColIndx() << " " << route.getStartLayIndx()
-                                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
-                                 << route.getEndlayIndx() << " "
-                                 << route.getNetName()
-                                 << endl;
-                            break;
+                        if (pointLayer == steiner.getLayer()) {
+                            continue;
                         }
-                    } else if (pointMap[to_string(pointLayer)].count(cellCoordinate) > 0) {
-                        if (isRepeatVia(cellCoordinate, layer , to_string(pointLayer),  &viaSet) == false) {
-                            Route route;
-                            route.setStartLayIndx(stoi(layer));
-                            route.setEndlayIndx(pointLayer);
-                            route.setStartRowIndx(steiner.getCellPointRow());
-                            route.setEndRowIndx(steiner.getCellPointRow());
-                            route.setStartColIndx(steiner.getCellPointCol());
-                            route.setEndColIndx(steiner.getCellPointCol());
-                            route.setNetName(reRouteNet);
-                            (*routeVector).push_back(route);
-                            cout << "route line : " << route.getStartRowIndx() << " "
-                                 << route.getStartColIndx() << " " << route.getStartLayIndx()
-                                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
-                                 << route.getEndlayIndx() << " "
-                                 << route.getNetName()
-                                 << endl;
-                            break;
-                        }
-                    } else {
+                        //point 跟 layer同一層不用判斷
+                        if (pointMap[to_string(pointLayer)].count(steinerCoordinate) > 0) {
+                            string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
+                            if (isRepeatVia(steinerCoordinate, layer, to_string(pointLayer), &viaSet) == false) {
+                                Route route;
+                                route.setStartLayIndx(stoi(layer));
+                                route.setEndlayIndx(pointLayer);
+                                route.setStartRowIndx(steiner.getSteinerPointRow());
+                                route.setEndRowIndx(steiner.getSteinerPointRow());
+                                route.setStartColIndx(steiner.getSteinerPointCol());
+                                route.setEndColIndx(steiner.getSteinerPointCol());
+                                route.setNetName(reRouteNet);
+                                (*routeVector).push_back(route);
+//                                cout << "route line : " << route.getStartRowIndx() << " "
+//                                     << route.getStartColIndx() << " " << route.getStartLayIndx()
+//                                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
+//                                     << route.getEndlayIndx() << " "
+//                                     << route.getNetName()
+//                                     << endl;
+                                break;
+                            }
+                        } else if (pointMap[to_string(pointLayer)].count(cellCoordinate) > 0) {
+                            if (isRepeatVia(cellCoordinate, layer, to_string(pointLayer), &viaSet) == false) {
+                                Route route;
+                                route.setStartLayIndx(stoi(layer));
+                                route.setEndlayIndx(pointLayer);
+                                route.setStartRowIndx(steiner.getCellPointRow());
+                                route.setEndRowIndx(steiner.getCellPointRow());
+                                route.setStartColIndx(steiner.getCellPointCol());
+                                route.setEndColIndx(steiner.getCellPointCol());
+                                route.setNetName(reRouteNet);
+                                (*routeVector).push_back(route);
+//                                cout << "route line : " << route.getStartRowIndx() << " "
+//                                     << route.getStartColIndx() << " " << route.getStartLayIndx()
+//                                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
+//                                     << route.getEndlayIndx() << " "
+//                                     << route.getNetName()
+//                                     << endl;
+                                break;
+                            }
+                        } else {
 //                    cout << "has some exception " << endl;
+                        }
                     }
                 }
+
             }
 
-        }
-
-        cout << "End route line : " << endl;
-        for (Route route: (*routeVector)) {
-            cout << "route line : " << route.getStartRowIndx() << " "
-                 << route.getStartColIndx() << " " << route.getStartLayIndx()
-                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx() << " "
-                 << route.getNetName()
-                 << endl;
-        }
-
-
-
-
-//        for(auto const item : layerSteinerMap){
-//             for(auto const s : item.second){
-//                 cout << "line : " << s.getCellPointRow() << " "
-//                      << s.getCellPointCol() << " " << item.first
-//                      << " " << s.getSteinerPointRow() << " " << s.getSteinerPointCol() << " " << item.first << endl;
-//             }
-//        }
-//         for(auto const item:pointMap){
-//             cout << item.second.size() << endl;
-//         }
-
-
-
-
-        //-------  route via start -------
-//        cout << "----- steiner point start -----" << endl;
-//        for (int index = 0; index < steinerLine.size(); index++) {
-//            cout << steinerLine[index].getCellPointRow() << " " << steinerLine[index].getCellPointCol() << " " << steinerLine[index].getSteinerPointRow() << " "<<steinerLine[index].getSteinerPointCol() << " "
-//            << steinerLine[index].getLayer() << endl;
-//        }
-//        cout << "----- steiner point end -----" << endl;
-
-//        set<string> viaSet;
-//        for (int index = 0; index < steinerLine.size(); index++) {
-//            SteinerPoint steinerPoint = steinerLine[index];
-////            gridVector = reduceSupply(gridVector, steinerPoint);
-//            //-------  minRoutingLayConstraint start -------
-//            if (index == 0 and minimumRoutingConstraint != "NoCstr") {
-////                cout << "put in minimumRoutingContraint : " << endl;
-//                getMinRoutingConstraint(&(*routeVector), steinerPoint, minimumRoutingConstraint, reRouteNet);
+//            cout << "End route line : " << endl;
+//            for (Route route: (*routeVector)) {
+//                cout << "route line : " << route.getStartRowIndx() << " "
+//                     << route.getStartColIndx() << " " << route.getStartLayIndx()
+//                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()
+//                     << " "
+//                     << route.getNetName()
+//                     << endl;
 //            }
-//            //-------  minRoutingLayConstraint end -------
-//            Route route;
-//            route.setStartRowIndx(steinerPoint.getCellPointRow());
-//            route.setStartColIndx(steinerPoint.getCellPointCol());
-//            route.setEndRowIndx(steinerPoint.getSteinerPointRow());
-//            route.setEndColIndx(steinerPoint.getSteinerPointCol());
-//            route.setStartLayIndx(steinerPoint.getLayer());
-//            route.setEndlayIndx(steinerPoint.getLayer());
-//            route.setNetName(reRouteNet);
-//            (*routeVector).push_back(route);
-//            //think Point
-//            //step 1 : 統計每個Layer 有多少個 steiner point 包括 cell
-//            //step 2 : 檢查每一層往上接該層的steiner point，有接到的就移除該point及該point在該線段另一頭的point
-//
-//            //----- 兩條線via 接在一起 start 前後皆再一起-----
-//            if (index != 0) {
-//                int lastLayer = steinerLine[(index - 1)].getLayer();
-//                int layer = steinerLine[index].getLayer();
-//                if (layer != lastLayer) {
-//                    Route route = getVia(steinerLine[(index - 1)], steinerLine[index], reRouteNet, viaSet);
-//                    string viaName = getViaName(route);
-//                    if (viaSet.count(viaName) == false) {
-//                        (*routeVector).push_back(route);
-//                        viaSet.insert(viaName);
-//                    }
-//                }
-//            }
-//            //----- 兩條線via 接在一起 end ----
-//            //----- cell point 接在一起 start -----
-//
-//            //----- cell point 接在一起 end -----
-//        }
-        //-------  route via end -------
-//        cout << "End route line : " << endl;
-//        for (Route route: (*routeVector)) {
-//            cout << "route line : " << route.getStartRowIndx() << " "
-//                 << route.getStartColIndx() << " " << route.getStartLayIndx()
-//                 << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx() << " "
-//                 << route.getNetName()
-//                 << endl;
-//        }
+        }
     }
 
     //判斷是否有重複的via
 //    string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
-    bool isRepeatVia(string coordinate,string upLayer , string downLayer, set<string> *viaSet) {
+    bool isRepeatVia(string coordinate, string upLayer, string downLayer, set<string> *viaSet) {
         string viaUp = coordinate + "_" + upLayer + "_" + downLayer;
-        string viaDown = coordinate + "_"+downLayer+"_"+upLayer;
-        if ((*viaSet).count(viaUp) > 0 or (*viaSet).count(viaDown)>0) {
+        string viaDown = coordinate + "_" + downLayer + "_" + upLayer;
+        if ((*viaSet).count(viaUp) > 0 or (*viaSet).count(viaDown) > 0) {
             return true;
         } else {
             (*viaSet).insert(viaUp);
@@ -641,33 +581,47 @@ public:
     vector<SteinerPoint>
     getSteinerPointRoute(Tree t, vector<vector<vector<int> > > gridVector,
                          map<string, vector<int>> powerFactorMap, string minRoutingConstraint,
-                         map<string, vector<SteinerPoint>> *layerSteinerVector) {
-        vector<int> layerPowerVectorH = powerFactorMap[HORIZONTAL];
-        vector<int> layerPowerVectorV = powerFactorMap[VERTICAL];
+                         map<string, vector<SteinerPoint>> *layerSteinerVector,string reRoute) {
+        vector<int> layerPowerVectorH;
+        vector<int> layerPowerVectorV;
 
         //-------  miniRoutingConstraint  start -------
         if (minRoutingConstraint != "NoCstr") {
             minRoutingConstraint.erase(std::remove(minRoutingConstraint.begin(), minRoutingConstraint.end(), 'M'),
                                        minRoutingConstraint.end());
             int constraint = stoi(minRoutingConstraint);
-            for (int i = 0; i < layerPowerVectorH.size(); i++) {
-                if (layerPowerVectorH[i] < constraint) {
-                    layerPowerVectorH.erase(layerPowerVectorH.begin() + i);
+            for (int i = 0; i < powerFactorMap[HORIZONTAL].size(); i++) {
+                if (powerFactorMap[HORIZONTAL][i] >= constraint) {
+                    layerPowerVectorH.push_back(powerFactorMap[HORIZONTAL][i]);
                 }
             }
-            for (int i = 0; i < layerPowerVectorV.size(); i++) {
-                if (layerPowerVectorV[i] < constraint) {
-                    layerPowerVectorV.erase(layerPowerVectorV.begin() + i);
+            for (int i = 0; i < powerFactorMap[VERTICAL].size(); i++) {
+                if (powerFactorMap[VERTICAL][i] >= constraint) {
+                    layerPowerVectorV.push_back(powerFactorMap[VERTICAL][i]);
                 }
             }
+        }else{
+           layerPowerVectorH = powerFactorMap[HORIZONTAL];
+           layerPowerVectorV = powerFactorMap[VERTICAL];
+
         }
         //-------  miniRoutingConstraint  end -------
+//        cout << "Net reRoute : " << reRoute <<endl;
+//        if( reRoute == "N1048"){
+//            for (int i = 0; i < layerPowerVectorH.size(); i++) {
+//                cout << layerPowerVectorH[i] << endl;
+//            }
+//            for (int i = 0; i < layerPowerVectorV.size(); i++) {
+//                cout <<layerPowerVectorV[i] << endl;
+//            }
+//        }
+
 
         //-------  routing by steiner point  start -------
 //        map<string, SteinerPoint> steinerMap;
         vector<SteinerPoint> steinerLineVector;
-        bool giveUpRoute = true;
         int i;
+        bool isValidRoute = true;
         for (i = 0; i < 2 * t.deg - 2; i++) {
 //            string coordinate = to_string(t.branch[i].x) + "_" + to_string(t.branch[i].y);
             int steinerPointRow = t.branch[t.branch[i].n].x;
@@ -687,6 +641,7 @@ public:
 //                            cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
                             if (gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
                                 canRoute = false;
+                                isValidRoute = false;
                             }
                         }
                         if (canRoute) {
@@ -698,7 +653,7 @@ public:
                             break;
                         }
                     }
-//                    cout << "" << endl;
+
                 } else {
                     for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
                         bool canRoute = true;
@@ -706,6 +661,7 @@ public:
 //                            std::cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
                             if (gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
                                 canRoute = false;
+                                isValidRoute = false;
                             }
                         }
                         if (canRoute) {
@@ -719,7 +675,7 @@ public:
                     }
 //                    cout << "" << endl;
                 }
-
+                // 如果都不能繞線，要在這裡面做give up route
             } else if (steinerPointCol == cellPointCol and steinerPointRow != cellPointRow) {
                 int colGrid = cellPointCol - 1;
                 int startRowGrid = cellPointRow - 1;
@@ -728,9 +684,9 @@ public:
                     bool canRoute = true;
                     for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
                         for (int row = startRowGrid; row <= endRowGrid; row++) {
-                            std::cout << gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] << " ";
                             if (gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
                                 canRoute = false;
+                                isValidRoute = false;
                             }
                         }
                         if (canRoute) {
@@ -742,6 +698,19 @@ public:
                             break;
                         }
                     }
+//                    //如果直線不行，這裏做U-pattern Route
+//                    if (canRoute) {
+//                        //row 部分要做重執走巷
+//                        //step 1:向左走一格做U-pattern route
+//                        // 平行線兩條 垂直線一條
+//
+//                        //step 2:向右走一格做U-pattern route
+//                        // 平行線兩條 垂直線一條
+//
+//                    }
+//                    //如果Upattern 都無法 就放棄該次繞線 (直接把steinerLineVector 清空) 然後 return
+
+
 //                    cout << "" << endl;
                 } else {
                     for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
@@ -750,6 +719,7 @@ public:
 //                            std::cout << gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] << " ";
                             if (gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
                                 canRoute = false;
+                                isValidRoute = false;
                             }
                         }
                         if (canRoute) {
@@ -764,9 +734,10 @@ public:
 //                    cout << "" << endl;
                 }
             } else if (steinerPointCol == cellPointCol and steinerPointRow == cellPointRow) {
-                cout << "cellPointCol and steinerPointCol is on same Point" << endl;
+                //之後可以使用pointMap 這個點去做
+//                cout << "cellPointCol and steinerPointCol is on same Point" << endl;
             } else {
-
+                // Z-pattern route L-pattern route
 //                cout << "get in side z pattern " << endl;
                 int startRowGrid = cellPointRow - 1;
                 int startColGrid = cellPointCol - 1;
@@ -776,35 +747,41 @@ public:
 //                     << steinerPointCol << endl;
 //                cout << " Cell to SteinerPoint" << endl;
                 if (steinerPointRow > cellPointRow and steinerPointCol > cellPointCol) {
-                    cout << "bottomLeftToTopRight" << endl;
+//                    cout << "bottomLeftToTopRight" << endl;
                     //左下到右上
                     steinerLineVector = bottomLeftToTopRight(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
                 } else if (steinerPointRow > cellPointRow and steinerPointCol < cellPointCol) {
-                    cout << "bottomRightToTopLeft" << endl;
+//                    cout << "bottomRightToTopLeft" << endl;
                     //右下到左上
                     steinerLineVector = bottomRightToTopLeft(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
 
                 } else if (steinerPointRow < cellPointRow and steinerPointCol > cellPointCol) {
-                    cout << "topLeftToBottomRight" << endl;
+//                    cout << "topLeftToBottomRight" << endl;
                     //左上到右下
                     steinerLineVector = topLeftToBottomRight(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
 
                 } else {
-                    cout << "topRightToBottomLeft" << endl;
+//                    cout << "topRightToBottomLeft" << endl;
                     //右上到左下
                     steinerLineVector = topRightToBottomLeft(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
                                                              gridVector);
                 }
+                if(steinerLineVector.size() == 0){
+                    isValidRoute = false;
+                }
             }
         }
         //-------  routing by steiner point  end -------
+        if(isValidRoute == false){
+            steinerLineVector.clear();
+        }
 
         return steinerLineVector;
     }
@@ -1031,6 +1008,69 @@ public:
         }
 
         return steinerLineVector;
+    }
+
+//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+//        bool lackSupply = false;
+//        for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
+////                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
+////                             << endl;
+//            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
+//                lackSupply = true;
+//            }
+//        }
+//        if (lackSupply == false) {
+//            steinerPointThird.setLayer(layerPowerVectorH[layer]);
+//            steinerPointThird.setCellPointRow(endRowGrid + 1);
+//            steinerPointThird.setCellPointCol(tempCol + 1);
+//            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+//            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+////                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+////                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+////                             << " "
+////                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+//            lineThird = true;
+//            break;
+//        }
+//
+//    }
+
+    void UPatternRouteV(int startRow, int endRow, int col, vector<SteinerPoint> *steinerLineVector,
+                        vector<vector<vector<int>>> gridVector, vector<int> layerPowerVectorV,
+                        vector<int> layerPowerVectorH) {
+        //不用減 1 已經減好了
+        bool canRoute = true;
+
+        //右 start U-pattern
+        for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+
+        }
+
+        //右 end U-pattern
+
+        //左 start U-pattern
+
+        //左 end U-pattern
+
+        //直 U-pattern
+        for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
+            if(startRow < endRow){
+                for (int row = startRow; row <= endRow ; row++) {
+                    if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
+                        canRoute = false;
+                    }
+                }
+            }else{
+                for (int row = endRow; row <= startRow ; row++) {
+                    if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
+                        canRoute = false;
+                    }
+                }
+
+            }
+        }
+
+
     }
 
     vector<SteinerPoint>
@@ -1540,7 +1580,7 @@ public:
                     bool lackSupply = false;
                     for (int col = startColGrid; col <= endColGrid; col++) {
 //                        cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
-                        if (gridVector[layerPowerVectorH[layer]][tempRow][col] <= 0) {
+                        if (gridVector[(layerPowerVectorH[layer]-1)][tempRow][col] <= 0) {
                             lackSupply = true;
                         }
                     }
@@ -1585,7 +1625,7 @@ public:
                     }
                 }
             }
-            cout << "" << endl;
+//            cout << "" << endl;
             if (lineFirst == true and lineSecond == true and lineThird == true) {
                 if (countDistance(steinerPointFirst) > 1) {
                     steinerLineVector.push_back(steinerPointFirst);
@@ -1717,15 +1757,6 @@ public:
         return steinerLineVector;
     }
 
-    void insertLayerSteinerMap(SteinerPoint steinerPoint) {
-
-    }
-
-
-    string transferIndexToName(int layIndex) {
-        string M = "M";
-        return M + to_string(layIndex);
-    }
 
 };
 

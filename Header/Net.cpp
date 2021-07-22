@@ -68,3 +68,7 @@ const map<string, int> &Net::getBoundaryMap() const {
 void Net::setBoundaryMap(const map<string, int> &boundaryMap) {
     Net::boundaryMap = boundaryMap;
 }
+
+Net::~Net() {
+
+}

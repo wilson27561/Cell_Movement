@@ -15,10 +15,25 @@
 
 using namespace std;
 
+void printGridVector( vector<vector<vector<int> > > gridVector){
+//     ----- supply cout start -----
+    for (int layer = 1; layer <= gridVector.size(); layer++) {
+        cout << "Layer Name : " << layer << endl;
+        for (int row = gridVector[1].size(); row >= 1; row--) {
+            for (int col = 1; col <= gridVector[1][1].size() ; col++) {
+                cout << gridVector[layer-1][row-1][col-1] << "\t";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+//     ----- supply cout end -----
+}
+
 
 int main() {
 
-    double START,END;
+    double START, END;
     START = clock();
 
     Util util;
@@ -38,8 +53,10 @@ int main() {
 //    map<string, int> boundaryMap;
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
-    map<string,CellInstance> numMoveCellInstMap;
-    map<string, map <string, Blockage>> blockageCellMap;
+    map<string, CellInstance> numMoveCellInstMap;
+    map<string, map<string, Blockage>> blockageCellMap;
+    //reduce Supply
+    map<string,set<string>> reducePointMap;
 
     ifstream fin(FILEPATH);
     if (fin) {
@@ -49,21 +66,23 @@ int main() {
     }
     fin.close();
 
-    //TODO 調整讀檔方式  --> case3 voltage有bug
+    //TODO 調整讀檔方式  --> 已調整
     //TODO 調整boundary map 改為每條線經過的 --> 已調整
     //TODO blockage 這部分要改一下 -> 已調整
     //TODO net supply 寫在 讀檔內 -> 已調整
-    //TODO bug case1 cell 沒有連接在對的層 via部分改過 ->
-    //TODO 若是直線繞不行的話，需要另外走pattern route ->
-    //TODO output file
-    //TODO bug case3
-    //TODO random route
+    //TODO bug case1 cell 沒有連接在對的層 via部分改過 -> 已調整
+    //TODO 若是直線繞不行的話，需要另外走 U - pattern route ->
+    //TODO 建立pattern route 失敗的部分 -> 已調整
+    //TODO output file -> 已調整
+    //TODO bug case3 ->
+    //TODO random route ->
+    //TODO via 部分 重構 ->
     //TODO 多執行緒 讀檔
     //TODO two pin 做 cell move
-    //TODO 是否要將via 放到兩條線中間 ->不用
+    //TODO 確定set 生命週期 reduce supply時可以改寫
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
     //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
-    
+
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = util.splitString(contentvector[i]);
         if (lineVector[0] == MAXCELLMOVE) {
@@ -76,64 +95,65 @@ int main() {
             cout << "GridBoundary end " << endl;
         } else if (lineVector[0] == NUMLAYER) {
             cout << "-----layerMap start-----" << endl;
-            readFile.readLayer(contentvector, &i, lineVector[1],&layerMap);
+            readFile.readLayer(&contentvector, &i, lineVector[1], &layerMap);
             cout << "-----layerMap end-----" << endl;
-            gridVector = readFile.getLayerGrid(ggridBoundaryIndex, layerMap, gridVector);
+            readFile.getLayerGrid(ggridBoundaryIndex, &layerMap, &gridVector);
         } else if (lineVector[0] == NUMNONDEFAULTSUPPLYGGRID) {
             cout << "-----NumNonDefaultSupply start-----" << endl;
-            readFile.readNumNonDefaultSupply(contentvector,&gridVector,&i,lineVector[1]);
+            readFile.readNumNonDefaultSupply(&contentvector, &gridVector, &i, lineVector[1]);
             cout << "-----NumNonDefaultSupply end-----" << endl;
         } else if (lineVector[0] == MASTERCELL) {
             cout << "-----MasterCell start-----" << endl;
-            readFile.readMasterCell(contentvector, lineVector, &masterCellMap, &i);
+            readFile.readMasterCell(&contentvector, &lineVector, &masterCellMap, &i);
             cout << "-----MasterCell end-----" << endl;
         } else if (lineVector[0] == CELLINST) {
             cout << "-----CellInstance start-----" << endl;
-            readFile.readCellInstance(lineVector, &cellInstanceMap,&masterCellMap,&blockageCellMap,&gridVector);
+            readFile.readCellInstance(lineVector, &cellInstanceMap, &masterCellMap, &blockageCellMap, &gridVector);
             cout << "-----CellInstance end-----" << endl;
         } else if (lineVector[0] == NET) {
             cout << "-----net start-----" << endl;
-            readFile.readNet(contentvector, lineVector, &netMap, masterCellMap, cellInstanceMap, &i);
+            readFile.readNet(&contentvector, &lineVector, &netMap, &masterCellMap, &cellInstanceMap, &i);
             cout << "-----net end-----" << endl;
         } else if (lineVector[0] == NUMROUTES) {
             cout << "-----route start-----" << endl;
-            readFile.readRoute(contentvector, lineVector, &netMap,&gridVector,&i);
+            readFile.readRoute(&contentvector, &lineVector, &netMap, &gridVector, &i,&reducePointMap);
             cout << "-----route end-----" << endl;
         } else if (lineVector[0] == NAME) {
             cout << "-----voltage start-----" << endl;
-            readFile.readVoltageArea( contentvector,  &voltageAreaMap, &i);
+            readFile.readVoltageArea(&contentvector, &voltageAreaMap, &i);
             cout << "-----voltage end-----" << endl;
-        };
+        }
     }
+
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
-//    gridVector = readFile.reduceRouteGridVector(gridVector, netMap);
-    //    int rowGridEnd = ggridBoundaryIndex.getRowEndIdx();
-//    int colGridEnd = ggridBoundaryIndex.getColEndIdx();
-//    int layerSize = layerMap.size();
-//    for (int layer = 0; layer < layerSize; layer++) {
-//        for (int row = rowGridEnd - 1; row >= 0; row--) {
-//            for (int col = 0; col < colGridEnd; col++) {
-//                std::cout << gridVector[layer][row][col] << "\t";
-//            }
-//            std::cout << "" << std::endl;
-//        }
-//        std::cout << "" << std::endl;
-//    }
-
-    netMap = reRoute.boundaryReroute(netMap,  cellInstanceMap, masterCellMap, gridVector,powerFactorMap);
-
-
+    netMap = reRoute.boundaryReroute(netMap, cellInstanceMap, masterCellMap, gridVector, powerFactorMap);
+    printGridVector(gridVector);
 
 //    ofstream myfile;
-//    myfile.open ("output.txt");
-//    myfile << "Writing this to a file.\n";
+//    myfile.open("output_"+FILEPATH+".txt");
+//    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
+//    for (auto const cellMove : numMoveCellInstMap) {
+//        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
+//               << cellMove.second.getColIndx() << endl;
+//    };
+//    int numRoute = 0;
+//    for (auto const net : netMap) {
+//            numRoute+=net.second.getNumRoute().size();
+//    };
+//
+//    myfile << "NumRoutes" << " " << numRoute << endl;
+//    for (auto const net : netMap) {
+//        for (auto const route : net.second.getNumRoute()) {
+//            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
+//                   << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
+//                   << route.getNetName() << endl;
+//        };
+//    };
 //    myfile.close();
 
 
-
-
     END = clock();
-    cout << endl << "程式執行所花費：" << (double)clock()/CLOCKS_PER_SEC << " S";
+    cout << endl << "程式執行所花費：" << (double) clock() / CLOCKS_PER_SEC << " S";
     cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;
 
 
@@ -213,7 +233,6 @@ int main() {
 //    int LAYER = layerSize + 1;
 //    int maze [LAYER][ROWS][COLUMNS];
 //
-//
 //    for (int layer = 0; layer < LAYER; layer++) {
 //        for (int row = rowGridBegin; row < ROWS; row++) {
 //            for (int col = colGridBegin; col < COLUMNS; col++) {
@@ -221,6 +240,8 @@ int main() {
 //            }
 //        }
 //    }
+
+
 //    for (auto const &numNonDefaultSupply : numNonDefaultSupplyVector) {
 ////        cout << item.getLayIndx() << " " << item.getRowIndx() << " " << item.getCollndx() << " " << item.getIncrOrDecrValue() << endl;
 //        maze[numNonDefaultSupply.getLayIndx()][numNonDefaultSupply.getRowIndx()][numNonDefaultSupply.getCollndx()] = maze[numNonDefaultSupply.getLayIndx()][numNonDefaultSupply.getRowIndx()][numNonDefaultSupply.getCollndx()] +  numNonDefaultSupply.getIncrOrDecrValue();
@@ -236,3 +257,16 @@ int main() {
 //        }
 //        std::cout << "" << std::endl;
 //    }
+
+//for(auto const item:voltageAreaMap){
+//string voltageName =  item.first;
+//cout << voltageName << endl;
+//cout << "GGrid "<< endl;
+//for (int i = 0; i < item.second.getGridVector().size(); ++i) {
+//cout <<  item.second.getGridVector()[i].getRowIndx() << " " <<  item.second.getGridVector()[i].getColIndx() << endl;
+//}
+//cout << "Instance "<< endl;
+//for (int i = 0; i < item.second.getInstance().size(); ++i) {
+//cout << item.second.getInstance()[i] << endl;
+//}
+//}

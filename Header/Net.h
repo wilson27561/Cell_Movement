@@ -24,6 +24,10 @@ private :
     vector<CellInstance> connectCell;
     vector<Route> numRoute;
 public:
+    virtual ~Net();
+
+
+public:
     const vector<CellInstance> &getConnectCell() const;
 
     void setConnectCell(const vector<CellInstance> &connectCell);
