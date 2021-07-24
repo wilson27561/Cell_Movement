@@ -24,6 +24,18 @@ class Util;
 
 class flute;
 
+//cout << "before grid : " << item.first << endl;
+//for (int layer = 1; layer <= (*gridVector).size(); layer++) {
+//cout << "Layer Name : " << layer << endl;
+//for (int row = gridVector[1].size(); row >= 1; row--) {
+//for (int col = 1; col <= (*gridVector)[1][1].size() ; col++) {
+//cout << (*gridVector)[layer-1][row-1][col-1] << "\t";
+//}
+//cout << endl;
+//}
+//cout << endl;
+//}
+
 class ReRoute {
 
 public:
@@ -40,9 +52,7 @@ public:
         //TODO 多執行緒
         //TODO 是否要將via 放到兩條線中間
 
-
         for (auto const &item : (*netMap)) {
-//            cout << "net  Name : " << item.first << endl;
             vector<Route> routeVec = item.second.getNumRoute();
             bool isNeedReroute = false;
             //判斷net 是否 需要重繞
@@ -60,24 +70,42 @@ public:
             //-------  check bounding route start -------
             if (isNeedReroute) {
                 //拔掉線段 supply add
-                vector<vector<vector<int> > > addGridVector = (*gridVector);
+//                vector<vector<vector<int> > > addGridVector = (*gridVector);
+
                 vector<Route> numRoute = item.second.getNumRoute();
 
+                int ori_score = (*gridVector)[3 - 1][5 - 1][3 - 1];
+//                        if (item.first == "N68" or item.first == "N646" or item.first == "N656" or item.first == "N716" or
+//                                          item.first == "N825" or item.first == "N1374" or item.first == "N1376" or item.first == "N1379"
+//                                          or item.first == "N1400" or item.first == "N1416" or item.first == "N1500" or item.first == "N1543" or
+//                                          item.first == "N1588" or item.first == "N1597" or item.first == "N1598") {
+//                    cout << "netName : " << item.first << endl;
+//                    cout << "after (4,26,2) : " << (*gridVector)[2 - 1][4 - 1][26 - 1] << endl;
+//                }
+
                 //加上原來的線段grid
-                reviseRouteSupply(&addGridVector, &numRoute, ADD);
+                reviseRouteSupply(&(*gridVector), &numRoute, ADD,item.first);
 
                 vector<Route> routeVector;
-                getSteinerRoute(&routeVector, item.first, (*netMap), addGridVector, (*powerFactorMap));
-
+                getSteinerRoute(&routeVector, item.first, (*netMap), (*gridVector), (*powerFactorMap));
                 if (routeVector.size() > 0) {
                     (*netMap)[item.first].setNumRoute(routeVector);
                     //減掉新的線段
-                    reviseRouteSupply(&addGridVector, &routeVector, REDUCE);
-                    (*gridVector) = addGridVector;
+                    reviseRouteSupply(&(*gridVector), &routeVector, REDUCE,item.first);
+                } else {
+                    reviseRouteSupply(&(*gridVector), &numRoute, REDUCE,item.first);
                 }
+
+                if(ori_score != (*gridVector)[3 - 1][5 - 1][3 - 1]){
+                    cout << "net Name : " <<  item.first << endl;
+                    cout << "ori_score " << ori_score << endl;
+                    cout << "after_score " << (*gridVector)[3 - 1][5 - 1][3 - 1] << endl;
+                }
+
+
+
             }
             //-------  check bounding route end -------
-
         }
 
     }
@@ -326,7 +354,7 @@ public:
 //        map<string, vector<SteinerPoint> > layerSteinerMap
 //                map<string, map<string, string>> pointMap;
             set<string> viaSet;
-
+            bool isValidVia = true;
             //每一層
             for (auto const layerMap : layerSteinerMap) {
                 string layer = layerMap.first;
@@ -343,7 +371,6 @@ public:
                     //point map 從第二層開始
                     for (auto const pointGridMap : pointMap) {
                         int pointLayer = stoi(pointGridMap.first);
-
                         if (pointLayer == steiner.getLayer()) {
                             continue;
                         }
@@ -351,49 +378,74 @@ public:
                         if (pointMap[to_string(pointLayer)].count(steinerCoordinate) > 0) {
                             string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
                             if (isRepeatVia(steinerCoordinate, layer, to_string(pointLayer), &viaSet) == false) {
-                                Route route;
-                                route.setStartLayIndx(stoi(layer));
-                                route.setEndlayIndx(pointLayer);
-                                route.setStartRowIndx(steiner.getSteinerPointRow());
-                                route.setEndRowIndx(steiner.getSteinerPointRow());
-                                route.setStartColIndx(steiner.getSteinerPointCol());
-                                route.setEndColIndx(steiner.getSteinerPointCol());
-                                route.setNetName(reRouteNet);
-                                (*routeVector).push_back(route);
-//                                cout << "route line : " << route.getStartRowIndx() << " "
+                                //確認中間via 是否有supply 不足的情況
+                                if( isViaSupplyValid( stoi(layer), pointLayer, steiner.getSteinerPointRow(), steiner.getSteinerPointCol(),gridVector) == true){
+                                    Route route;
+                                    route.setStartLayIndx(stoi(layer));
+                                    route.setEndlayIndx(pointLayer);
+                                    route.setStartRowIndx(steiner.getSteinerPointRow());
+                                    route.setEndRowIndx(steiner.getSteinerPointRow());
+                                    route.setStartColIndx(steiner.getSteinerPointCol());
+                                    route.setEndColIndx(steiner.getSteinerPointCol());
+                                    route.setNetName(reRouteNet);
+                                    (*routeVector).push_back(route);
+                                    //                                cout << "route line : " << route.getStartRowIndx() << " "
 //                                     << route.getStartColIndx() << " " << route.getStartLayIndx()
 //                                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
 //                                     << route.getEndlayIndx() << " "
 //                                     << route.getNetName()
 //                                     << endl;
-                                break;
+                                    break;
+                                } else{
+                                    isValidVia = false;
+                                }
                             }
                         } else if (pointMap[to_string(pointLayer)].count(cellCoordinate) > 0) {
                             if (isRepeatVia(cellCoordinate, layer, to_string(pointLayer), &viaSet) == false) {
-                                Route route;
-                                route.setStartLayIndx(stoi(layer));
-                                route.setEndlayIndx(pointLayer);
-                                route.setStartRowIndx(steiner.getCellPointRow());
-                                route.setEndRowIndx(steiner.getCellPointRow());
-                                route.setStartColIndx(steiner.getCellPointCol());
-                                route.setEndColIndx(steiner.getCellPointCol());
-                                route.setNetName(reRouteNet);
-                                (*routeVector).push_back(route);
-//                                cout << "route line : " << route.getStartRowIndx() << " "
-//                                     << route.getStartColIndx() << " " << route.getStartLayIndx()
-//                                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " "
-//                                     << route.getEndlayIndx() << " "
-//                                     << route.getNetName()
-//                                     << endl;
-                                break;
+                                //確認中間via 是否有supply 不足的情況
+                                if(isViaSupplyValid(stoi(layer),pointLayer,steiner.getCellPointRow(),steiner.getCellPointCol(),gridVector)){
+                                    Route route;
+                                    route.setStartLayIndx(stoi(layer));
+                                    route.setEndlayIndx(pointLayer);
+                                    route.setStartRowIndx(steiner.getCellPointRow());
+                                    route.setEndRowIndx(steiner.getCellPointRow());
+                                    route.setStartColIndx(steiner.getCellPointCol());
+                                    route.setEndColIndx(steiner.getCellPointCol());
+                                    route.setNetName(reRouteNet);
+                                    (*routeVector).push_back(route);
+                                    break;
+                                }else{
+                                    isValidVia = false;
+                                }
                             }
                         } else {
-//                    cout << "has some exception " << endl;
+//                             cout << "has some exception " << endl;
                         }
                     }
+                    if(isValidVia == false){
+                        break;
+                    }
                 }
-
+                if(isValidVia == false){
+                    break;
+                }
             }
+            if(isValidVia == false){
+                (*routeVector).clear();
+            }
+
+            //打完via 後確認是否可行，若不可及放棄該線段
+            //            for (Route route: (*routeVector)) {
+//                cout << "route line : " << route.getStartRowIndx() << " "
+//                     << route.getStartColIndx() << " " << route.getStartLayIndx()
+//                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()
+//                     << " "
+//                     << route.getNetName()
+//                     << endl;
+//            }
+
+
+
 
 //            cout << "End route line : " << endl;
 //            for (Route route: (*routeVector)) {
@@ -406,6 +458,29 @@ public:
 //            }
         }
     }
+
+    bool isViaSupplyValid(int startLayer,int endLayer,int row,int col,vector<vector<vector<int> > > gridVector){
+        bool isViaSupplyValid = true;
+        if(startLayer < endLayer){
+            for(int layerIndex = startLayer; layerIndex <= endLayer ; layerIndex++ ){
+                if(gridVector[layerIndex-1][row-1][col-1] <= 0){
+                    isViaSupplyValid = false;
+                    break;
+                }
+            }
+        }else{
+            for(int layerIndex = endLayer; layerIndex <= startLayer ; layerIndex++ ){
+                if(gridVector[layerIndex-1][row-1][col-1] <= 0){
+                    isViaSupplyValid = false;
+                    break;
+                }
+
+            }
+
+        }
+        return isViaSupplyValid;
+    }
+
 
     //判斷是否有重複的via
 //    string via = steinerCoordinate + "_" + layer + "_" + to_string(pointLayer);
@@ -430,8 +505,7 @@ public:
         }
     }
 
-    void reviseRouteSupply(vector<vector<vector<int> > > *gridVector, vector<Route> *numRoute, string revise) {
-
+    void reviseRouteSupply(vector<vector<vector<int> > > *gridVector, vector<Route> *numRoute, string revise ,string netName) {
         set<string> routeSet;
         for (int i = 0; i < (*numRoute).size(); i++) {
             int startLayIndex = (*numRoute)[i].getStartLayIndx();
@@ -446,12 +520,12 @@ public:
                         string point =
                                 to_string(rowIndex) + "_" + to_string(startColIndex) + "_" + to_string(startLayIndex);
                         if (revise == REDUCE) {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
                             }
                         } else {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
                             }
@@ -463,12 +537,12 @@ public:
                         string point =
                                 to_string(rowIndex) + "_" + to_string(startColIndex) + "_" + to_string(startLayIndex);
                         if (revise == REDUCE) {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
                             }
                         } else {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
                             }
@@ -482,12 +556,12 @@ public:
                         string point =
                                 to_string(startRowIndex) + "_" + to_string(colIndex) + "_" + to_string(startLayIndex);
                         if (revise == REDUCE) {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
                             }
                         } else {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
                             }
@@ -499,12 +573,12 @@ public:
                         string point =
                                 to_string(startRowIndex) + "_" + to_string(colIndex) + "_" + to_string(startLayIndex);
                         if (revise == REDUCE) {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
                             }
                         } else {
-                            if (isRevise(point, &routeSet)) {
+                            if (isRevise(point, &routeSet) == false) {
                                 (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
                                         (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
                             }
@@ -513,29 +587,32 @@ public:
                 }
             }
             if (startLayIndex != endLayIndex) {
-                string pointStart =
-                        to_string(startRowIndex) + "_" + to_string(startColIndex) + "_" + to_string(startLayIndex);
-                string pointEnd = to_string(endRowIndex) + "_" + to_string(endColIndex) + "_" + to_string(endLayIndex);
-                if (revise == REDUCE) {
-                    if (isRevise(pointStart, &routeSet)) {
-                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex - 1] =
-                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex] - 1;
+                  if(startLayIndex < endLayIndex ){
+                    for(int layIndex = startLayIndex; layIndex <= endLayIndex; layIndex++){
+                        string point = to_string(startRowIndex) + "_" + to_string(startColIndex) + "_" + to_string(layIndex);
+                        if (isRevise(point, &routeSet) == false) {
+                            if(revise == REDUCE){
+                                (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] =  (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] -1;
+                            }else{
+                                (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] =  (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] +1;
+                            }
+                        }
                     }
-                    if (isRevise(pointEnd, &routeSet)) {
-                        (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex - 1] =
-                                (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex] - 1;
-                    }
-                } else {
-                    if (isRevise(pointStart, &routeSet)) {
-                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex - 1] =
-                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex - 1] + 1;
-                    }
-                    if (isRevise(pointEnd, &routeSet)) {
-                        (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex - 1] =
-                                (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex - 1] + 1;
-                    }
-                }
+                  }else{
+                      for(int layIndex = endLayIndex; layIndex <= startLayIndex ; layIndex++){
+                          string point = to_string(startRowIndex) + "_" + to_string(startColIndex) + "_" + to_string(layIndex);
+                          if (isRevise(point, &routeSet) == false) {
+                              if(revise == REDUCE){
+                                  (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] = (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] -1;
+                              }else{
+                                  (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] = (*gridVector)[layIndex-1][startRowIndex-1][startColIndex-1] +1;
+                              }
+                          }
+                      }
+                  }
             }
+
+
         }
     }
 

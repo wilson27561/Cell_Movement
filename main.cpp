@@ -15,13 +15,13 @@
 
 using namespace std;
 
-void printGridVector( vector<vector<vector<int> > > gridVector){
+void printGridVector( vector<vector<vector<int> > > *gridVector){
 //     ----- supply cout start -----
-    for (int layer = 1; layer <= gridVector.size(); layer++) {
+    for (int layer = 1; layer <= (*gridVector).size(); layer++) {
         cout << "Layer Name : " << layer << endl;
-        for (int row = gridVector[1].size(); row >= 1; row--) {
-            for (int col = 1; col <= gridVector[1][1].size() ; col++) {
-                cout << gridVector[layer-1][row-1][col-1] << "\t";
+        for (int row = (*gridVector)[1].size(); row >= 1; row--) {
+            for (int col = 1; col <= (*gridVector)[1][1].size() ; col++) {
+                cout << (*gridVector)[layer-1][row-1][col-1] << "\t";
             }
             cout << endl;
         }
@@ -130,29 +130,30 @@ int main() {
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
     reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
 
-//    printGridVector(gridVector);
 
-//    ofstream myfile;
-//    myfile.open("output_"+FILEPATH+".txt");
-//    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
-//    for (auto const cellMove : numMoveCellInstMap) {
-//        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
-//               << cellMove.second.getColIndx() << endl;
-//    };
-//    int numRoute = 0;
-//    for (auto const net : netMap) {
-//            numRoute+=net.second.getNumRoute().size();
-//    };
-//
-//    myfile << "NumRoutes" << " " << numRoute << endl;
-//    for (auto const net : netMap) {
-//        for (auto const route : net.second.getNumRoute()) {
-//            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
-//                   << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
-//                   << route.getNetName() << endl;
-//        };
-//    };
-//    myfile.close();
+//    printGridVector(&gridVector);
+
+    ofstream myfile;
+    myfile.open("output_"+FILEPATH);
+    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
+    for (auto const cellMove : numMoveCellInstMap) {
+        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
+               << cellMove.second.getColIndx() << endl;
+    };
+    int numRoute = 0;
+    for (auto const net : netMap) {
+            numRoute+=net.second.getNumRoute().size();
+    };
+
+    myfile << "NumRoutes" << " " << numRoute << endl;
+    for (auto const net : netMap) {
+        for (auto const route : net.second.getNumRoute()) {
+            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
+                   << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
+                   << route.getNetName() << endl;
+        };
+    };
+    myfile.close();
 
 
     END = clock();
