@@ -199,7 +199,7 @@ public :
 
     void
     readNet(vector<string> *contentVector, vector<string> *lineVector, map<string, Net> *netMap,
-            map<string, MasterCell> *masterCellMap, map<string, CellInstance> *cellInstanceMap, int *index) {
+            map<string, MasterCell> *masterCellMap, map<string, CellInstance> *cellInstanceMap,set<string> *netNameSet, int *index) {
         int indexCount = *index;
         cout << "read Net Name : " << (*lineVector)[1] << endl;
         int pinCount = stoi((*lineVector)[2]);
@@ -231,18 +231,19 @@ public :
         net.setBoundaryMap(boundaryMap);
         net.setConnectCell(connectCellVector);
         (*netMap).insert(pair<string, Net>((*lineVector)[1], net));
+        (*netNameSet).insert((*lineVector)[1]);
         (*index) = indexCount + pinCount;
     }
 
     void
     readRoute(vector<string> *contentVector, vector<string> *lineVector, map<string, Net> *netMap,
-              vector<vector<vector<int> > > *gridVector, int *index, map<string, set<string>> *reducePointMap) {
+              vector<vector<vector<int> > > *gridVector, int *index, map<string, set<string>> *reducePointMap,set<string> *netNameSet) {
         int indexCount = *index;
         int numRoutes = stoi((*lineVector)[1]);
 
         for (int i = indexCount + 1; i <= indexCount + numRoutes; i++) {
             vector<string> routeVector = splitString((*contentVector)[i]);
-            if ((*netMap).count(routeVector[6])) {
+            if ((*netMap).count(routeVector[6]) > 0) {
                 Route route;
                 route.setNetName(routeVector[6]);
                 route.setStartRowIndx(stoi(routeVector[0]));
@@ -254,23 +255,20 @@ public :
                 vector<Route> routingVector = (*netMap)[routeVector[6]].getNumRoute();
                 routingVector.push_back(route);
                 (*netMap)[routeVector[6]].setNumRoute(routingVector);
+                (*netNameSet).erase(routeVector[6]);
                 reduceRoute(&(*gridVector), route.getStartLayIndx(), route.getEndlayIndx(), route.getStartRowIndx(),
                             route.getEndRowIndx(), route.getStartColIndx(), route.getEndColIndx(), &(*reducePointMap),
                             routeVector[6]);
             }
-
+        }
+        for(const auto netName : (*netNameSet)){
+            int layer = (*netMap)[netName].getConnectCell()[0].getLayerName();
+            int row  =  (*netMap)[netName].getConnectCell()[0].getRowIndx();
+            int col = (*netMap)[netName].getConnectCell()[0].getColIndx();
+            (*gridVector)[layer - 1][row - 1][col - 1]-=1;
         }
         *index = indexCount + numRoutes;
     }
-//    cout << "route Net Name : " << routeVector[6] << endl;
-//    if (routeVector[6] == "N78" or routeVector[6] == "N792" or routeVector[6] == "N1661" or
-//    routeVector[6] == "N1662" or routeVector[6] == "N1665" or routeVector[6] == "N1698" or
-//    routeVector[6] == "N1701" or routeVector[6] == "N1743" or routeVector[6] == "N1838" or
-//    routeVector[6] == "N1843" or routeVector[6] == "N1845" or routeVector[6] == "N1861" or
-//    routeVector[6] == "N1885" or routeVector[6] == "N1934") {
-//        cout << "gridSupply : " << (*gridVector)[3 - 1][2 - 1][5 - 1] << endl;
-//    }
-
     void getLayerGrid(GgridBoundaryIndex ggridBoundaryIndex, map<string, Layer> *layerMap,
                       vector<vector<vector<int> > > *gridVector) {
         int rowGridBegin = ggridBoundaryIndex.getRowBeginIdx();

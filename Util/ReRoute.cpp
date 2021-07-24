@@ -8,9 +8,7 @@
 #include <set>
 #include <stdlib.h>
 #include "../Header/GgridBoundaryIndex.h"
-#include "../Header/Layer.h"
 #include "../Header/MasterCell.h"
-#include "../Header/NumNonDefaultSupplyGgrid.h"
 #include "../Header/CellInstance.h"
 #include "../Header/VoltageArea.h"
 #include "../Header/Net.h"
@@ -29,10 +27,10 @@ class flute;
 class ReRoute {
 
 public:
-    map<string, Net>
-    boundaryReroute(map<string, Net> netMap,
-                    map<string, CellInstance> cellInstanceMap, map<string, MasterCell> masterCellMap,
-                    vector<vector<vector<int> > > gridVector, map<string, vector<int>> powerFactorMap) {
+    void
+    boundaryReroute(map<string, Net> *netMap,
+                    map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
+                    vector<vector<vector<int> > > *gridVector, map<string, vector<int>> *powerFactorMap) {
         //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
         //TODO 拔一條繞一條   ok
         //TODO 確認routingLayer按比重   ok
@@ -42,8 +40,8 @@ public:
         //TODO 多執行緒
         //TODO 是否要將via 放到兩條線中間
 
-        set<string> reRouteNet;
-        for (auto const &item : netMap) {
+
+        for (auto const &item : (*netMap)) {
 //            cout << "net  Name : " << item.first << endl;
             vector<Route> routeVec = item.second.getNumRoute();
             bool isNeedReroute = false;
@@ -59,27 +57,29 @@ public:
 //                cout << "good net" << endl;
             };
 
-
             //-------  check bounding route start -------
             if (isNeedReroute) {
                 //拔掉線段 supply add
-                vector<vector<vector<int> > > addGridVector = reviseRouteSupply(gridVector,
-                                                                                item.second.getNumRoute(), ADD);
+                vector<vector<vector<int> > > addGridVector = (*gridVector);
+                vector<Route> numRoute = item.second.getNumRoute();
+
+                //加上原來的線段grid
+                reviseRouteSupply(&addGridVector, &numRoute, ADD);
+
                 vector<Route> routeVector;
-                getSteinerRoute(&routeVector, item.first, netMap, addGridVector, powerFactorMap);
+                getSteinerRoute(&routeVector, item.first, (*netMap), addGridVector, (*powerFactorMap));
 
                 if (routeVector.size() > 0) {
-                    netMap[item.first].setNumRoute(routeVector);
-                    gridVector = reviseRouteSupply(addGridVector,
-                                                   item.second.getNumRoute(), REDUCE);
-
+                    (*netMap)[item.first].setNumRoute(routeVector);
+                    //減掉新的線段
+                    reviseRouteSupply(&addGridVector, &routeVector, REDUCE);
+                    (*gridVector) = addGridVector;
                 }
             }
             //-------  check bounding route end -------
 
         }
 
-        return netMap;
     }
 
     int countDistance(SteinerPoint steinerPoint) {
@@ -168,18 +168,18 @@ public:
         int col[MAXD];
         int index = 0;
         set<string> cellSet;
-        cout << "reRoute Net Name : "<<  reRouteNet << endl;
+        cout << "reRoute Net Name : " << reRouteNet << endl;
         //-------  steiner tree  start -------
         for (auto const &cell : netMap[reRouteNet].getConnectCell()) {
-            string cellString = to_string(cell.getRowIndx())+"_"+ to_string(cell.getColIndx());
+            string cellString = to_string(cell.getRowIndx()) + "_" + to_string(cell.getColIndx());
             cellSet.insert(cellString);
             row[index] = cell.getRowIndx();
             col[index] = cell.getColIndx();
             index += 1;
         }
 
-        if(cellSet.size() <= 1 ){
-            return ;
+        if (cellSet.size() <= 1) {
+            return;
         }
         readLUT();
         Tree flutetree = flute(index, row, col, ACCURACY);
@@ -196,8 +196,7 @@ public:
         //點
         map<string, map<string, string>> pointMap;
 
-
-        vector<SteinerPoint> steinerLine = getSteinerPointRoute(flutetree, gridVector, powerFactorMap,
+        vector<SteinerPoint> steinerLine = getSteinerPointRoute(flutetree, &gridVector, powerFactorMap,
                                                                 minimumRoutingConstraint, &layerSteinerMap, reRouteNet);
 //        cout << " check steiner start " << endl;
 //        for(auto const stei : steinerLine){
@@ -206,7 +205,7 @@ public:
 //        }
 //        cout << " check steiner end " << endl;
         //-------  steiner point route end -------
-        if(steinerLine.size() > 0) {
+        if (steinerLine.size() > 0) {
             //steiner Line
             for (auto const steinerPoint : steinerLine) {
                 //線放入route vector
@@ -422,166 +421,284 @@ public:
         }
     }
 
-    vector<vector<vector<int> > >
-    reviseRouteSupply(vector<vector<vector<int> > > gridVector, vector<Route> numRoute, string revise) {
+    bool isRevise(string point, set<string> *routeSet) {
+        if ((*routeSet).count(point) > 0) {
+            return true;
+        } else {
+            (*routeSet).insert(point);
+            return false;
+        }
+    }
 
-        for (int i = 0; i < numRoute.size(); i++) {
-            int startLayIndex = numRoute[i].getStartLayIndx();
-            int endLayIndex = numRoute[i].getEndlayIndx();
-            int startRowIndex = numRoute[i].getStartRowIndx();
-            int endRowIndex = numRoute[i].getEndRowIndx();
-            int startColIndex = numRoute[i].getStartColIndx();
-            int endColIndex = numRoute[i].getEndColIndx();
-//          cout <<  startRowIndex << " " << startColIndex << " " << startLayIndex << " " << endRowIndex << " " << endColIndex << " "<< endLayIndex << " " <<  numRoute[i].getNetName()<<endl;
+    void reviseRouteSupply(vector<vector<vector<int> > > *gridVector, vector<Route> *numRoute, string revise) {
+
+        set<string> routeSet;
+        for (int i = 0; i < (*numRoute).size(); i++) {
+            int startLayIndex = (*numRoute)[i].getStartLayIndx();
+            int endLayIndex = (*numRoute)[i].getEndlayIndx();
+            int startRowIndex = (*numRoute)[i].getStartRowIndx();
+            int endRowIndex = (*numRoute)[i].getEndRowIndx();
+            int startColIndex = (*numRoute)[i].getStartColIndx();
+            int endColIndex = (*numRoute)[i].getEndColIndx();
             if (startLayIndex == endLayIndex and startColIndex == endColIndex) {
-                if (startRowIndex > endRowIndex) {
+                if (startRowIndex < endRowIndex) {
                     for (int rowIndex = startRowIndex; rowIndex <= endRowIndex; rowIndex++) {
+                        string point =
+                                to_string(rowIndex) + "_" + to_string(startColIndex) + "_" + to_string(startLayIndex);
                         if (revise == REDUCE) {
-                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
-                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
+                            }
                         } else {
-                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
-                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
+                            }
                         }
 
                     }
                 } else {
-                    for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--) {
+                    for (int rowIndex = endRowIndex; rowIndex <= startRowIndex; rowIndex++) {
+                        string point =
+                                to_string(rowIndex) + "_" + to_string(startColIndex) + "_" + to_string(startLayIndex);
                         if (revise == REDUCE) {
-                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
-                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
+                            }
                         } else {
-                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
-                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
+                            }
                         }
                     }
                 }
             }
             if (startLayIndex == endLayIndex and startRowIndex == endRowIndex) {
-                for (int colIndex = startColIndex; colIndex <= endColIndex; colIndex++) {
-                    if (revise == REDUCE) {
-                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
-                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
-                    } else {
-                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
-                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
+                if (startColIndex < endColIndex) {
+                    for (int colIndex = startColIndex; colIndex <= endColIndex; colIndex++) {
+                        string point =
+                                to_string(startRowIndex) + "_" + to_string(colIndex) + "_" + to_string(startLayIndex);
+                        if (revise == REDUCE) {
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
+                            }
+                        } else {
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
+                            }
+
+                        }
+                    }
+                } else {
+                    for (int colIndex = endColIndex; colIndex <= startColIndex; colIndex++) {
+                        string point =
+                                to_string(startRowIndex) + "_" + to_string(colIndex) + "_" + to_string(startLayIndex);
+                        if (revise == REDUCE) {
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
+                            }
+                        } else {
+                            if (isRevise(point, &routeSet)) {
+                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+                                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
+                            }
+                        }
                     }
                 }
-            } else {
-                for (int colIndex = endColIndex; colIndex >= startColIndex; colIndex--) {
-                    if (revise == REDUCE) {
-                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
-                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
-                    } else {
-                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
-                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
+            }
+            if (startLayIndex != endLayIndex) {
+                string pointStart =
+                        to_string(startRowIndex) + "_" + to_string(startColIndex) + "_" + to_string(startLayIndex);
+                string pointEnd = to_string(endRowIndex) + "_" + to_string(endColIndex) + "_" + to_string(endLayIndex);
+                if (revise == REDUCE) {
+                    if (isRevise(pointStart, &routeSet)) {
+                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex - 1] =
+                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex] - 1;
+                    }
+                    if (isRevise(pointEnd, &routeSet)) {
+                        (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex - 1] =
+                                (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex] - 1;
+                    }
+                } else {
+                    if (isRevise(pointStart, &routeSet)) {
+                        (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex - 1] =
+                                (*gridVector)[startLayIndex - 1][startRowIndex - 1][startColIndex - 1] + 1;
+                    }
+                    if (isRevise(pointEnd, &routeSet)) {
+                        (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex - 1] =
+                                (*gridVector)[endLayIndex - 1][endRowIndex - 1][endColIndex - 1] + 1;
                     }
                 }
             }
         }
-        return gridVector;
     }
 
-
-    void
-    getMinRoutingConstraint(vector<Route> *routeVector, SteinerPoint steinerPoint, string minimumRoutingConstraint,
-                            string netName) {
-        Route route;
-        minimumRoutingConstraint.erase(
-                std::remove(minimumRoutingConstraint.begin(), minimumRoutingConstraint.end(), 'M'),
-                minimumRoutingConstraint.end());
-        route.setStartRowIndx(steinerPoint.getCellPointRow());
-        route.setStartColIndx(steinerPoint.getCellPointCol());
-        route.setEndRowIndx(steinerPoint.getCellPointRow());
-        route.setEndColIndx(steinerPoint.getCellPointCol());
-        route.setStartLayIndx(stoi(minimumRoutingConstraint));
-        route.setEndlayIndx(steinerPoint.getLayer());
-        route.setNetName(netName);
-        (*routeVector).push_back(route);
-    }
-
-    Route getVia(SteinerPoint lastSteinerPoint, SteinerPoint steinerPoint, string netName, set<string> viaSet) {
-        Route route;
-        int lastSteinerPointRow = lastSteinerPoint.getSteinerPointRow();
-        int lastSteinerPointCol = lastSteinerPoint.getSteinerPointCol();
-        int lastCellRow = lastSteinerPoint.getCellPointRow();
-        int lastCellCol = lastSteinerPoint.getCellPointCol();
-        int cellRow = steinerPoint.getCellPointRow();
-        int cellCol = steinerPoint.getCellPointCol();
-        int steinerPointRow = steinerPoint.getSteinerPointRow();
-        int steinerPointCol = steinerPoint.getSteinerPointCol();
-        if (cellRow == lastCellRow and cellCol == lastCellCol) {
-            route.setNetName(netName);
-            route.setStartRowIndx(lastCellRow);
-            route.setStartColIndx(lastCellCol);
-            route.setEndRowIndx(cellRow);
-            route.setEndColIndx(cellCol);
-            route.setStartLayIndx(lastSteinerPoint.getLayer());
-            route.setEndlayIndx(steinerPoint.getLayer());
-
-        } else if (cellRow == lastSteinerPointRow and cellCol == lastSteinerPointCol) {
-            route.setNetName(netName);
-            route.setStartRowIndx(lastSteinerPointRow);
-            route.setStartColIndx(lastSteinerPointCol);
-            route.setEndRowIndx(cellRow);
-            route.setEndColIndx(cellCol);
-            route.setStartLayIndx(lastSteinerPoint.getLayer());
-            route.setEndlayIndx(steinerPoint.getLayer());
-
-        } else if (steinerPointRow == lastCellRow and steinerPointCol == lastCellCol) {
-            route.setNetName(netName);
-            route.setStartRowIndx(lastCellRow);
-            route.setStartColIndx(lastCellCol);
-            route.setEndRowIndx(steinerPointRow);
-            route.setEndColIndx(steinerPointCol);
-            route.setStartLayIndx(lastSteinerPoint.getLayer());
-            route.setEndlayIndx(steinerPoint.getLayer());
-
-        } else if (steinerPointRow == lastSteinerPointRow and steinerPointCol == lastSteinerPointCol) {
-            route.setNetName(netName);
-            route.setStartRowIndx(lastSteinerPointRow);
-            route.setStartColIndx(lastSteinerPointCol);
-            route.setEndRowIndx(steinerPointRow);
-            route.setEndColIndx(steinerPointCol);
-            route.setStartLayIndx(lastSteinerPoint.getLayer());
-            route.setEndlayIndx(steinerPoint.getLayer());
-
-        } else if (steinerPointRow == lastCellRow and steinerPointCol == lastCellCol) {
-            route.setNetName(netName);
-            route.setStartRowIndx(lastCellRow);
-            route.setStartColIndx(lastCellCol);
-            route.setEndRowIndx(steinerPointRow);
-            route.setEndColIndx(steinerPointCol);
-            route.setStartLayIndx(lastSteinerPoint.getLayer());
-            route.setEndlayIndx(steinerPoint.getLayer());
-        } else {
-            cout << "via has some exception" << endl;
-        }
+//    vector<vector<vector<int> > >
+//    reviseRouteSupply(vector<vector<vector<int> > > gridVector, vector<Route> numRoute, string revise) {
+//
+//        for (int i = 0; i < numRoute.size(); i++) {
+//            int startLayIndex = numRoute[i].getStartLayIndx();
+//            int endLayIndex = numRoute[i].getEndlayIndx();
+//            int startRowIndex = numRoute[i].getStartRowIndx();
+//            int endRowIndex = numRoute[i].getEndRowIndx();
+//            int startColIndex = numRoute[i].getStartColIndx();
+//            int endColIndex = numRoute[i].getEndColIndx();
+////          cout <<  startRowIndex << " " << startColIndex << " " << startLayIndex << " " << endRowIndex << " " << endColIndex << " "<< endLayIndex << " " <<  numRoute[i].getNetName()<<endl;
+//            if (startLayIndex == endLayIndex and startColIndex == endColIndex) {
+//                if (startRowIndex > endRowIndex) {
+//                    for (int rowIndex = startRowIndex; rowIndex <= endRowIndex; rowIndex++) {
+//                        if (revise == REDUCE) {
+//                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+//                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
+//                        } else {
+//                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+//                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
+//                        }
+//
+//                    }
+//                } else {
+//                    for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--) {
+//                        if (revise == REDUCE) {
+//                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+//                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] - 1;
+//                        } else {
+//                            gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] =
+//                                    gridVector[startLayIndex - 1][rowIndex - 1][startColIndex - 1] + 1;
+//                        }
+//                    }
+//                }
+//            }
+//            if (startLayIndex == endLayIndex and startRowIndex == endRowIndex) {
+//                for (int colIndex = startColIndex; colIndex <= endColIndex; colIndex++) {
+//                    if (revise == REDUCE) {
+//                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+//                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
+//                    } else {
+//                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+//                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
+//                    }
+//                }
+//            } else {
+//                for (int colIndex = endColIndex; colIndex >= startColIndex; colIndex--) {
+//                    if (revise == REDUCE) {
+//                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+//                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] - 1;
+//                    } else {
+//                        gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] =
+//                                gridVector[startLayIndex - 1][startRowIndex - 1][colIndex - 1] + 1;
+//                    }
+//                }
+//            }
+//        }
+//        return gridVector;
+//    }
 
 
-        return route;
-    }
+//    void
+//    getMinRoutingConstraint(vector<Route> *routeVector, SteinerPoint steinerPoint, string minimumRoutingConstraint,
+//                            string netName) {
+//        Route route;
+//        minimumRoutingConstraint.erase(
+//                std::remove(minimumRoutingConstraint.begin(), minimumRoutingConstraint.end(), 'M'),
+//                minimumRoutingConstraint.end());
+//        route.setStartRowIndx(steinerPoint.getCellPointRow());
+//        route.setStartColIndx(steinerPoint.getCellPointCol());
+//        route.setEndRowIndx(steinerPoint.getCellPointRow());
+//        route.setEndColIndx(steinerPoint.getCellPointCol());
+//        route.setStartLayIndx(stoi(minimumRoutingConstraint));
+//        route.setEndlayIndx(steinerPoint.getLayer());
+//        route.setNetName(netName);
+//        (*routeVector).push_back(route);
+//    }
 
-    string getViaName(Route route) {
-        int startLayIndex = route.getStartLayIndx();
-        int endLayIndex = route.getEndlayIndx();
-        string viaName;
-        if (route.getStartLayIndx() > route.getEndlayIndx()) {
-            viaName = to_string(route.getStartRowIndx()) + "_" + to_string(route.getStartColIndx()) + "_" +
-                      to_string(startLayIndex) + "_" + to_string(endLayIndex);
-        } else {
-            viaName = to_string(route.getStartRowIndx()) + "_" + to_string(route.getStartColIndx()) + "_" +
-                      to_string(endLayIndex) + "_" + to_string(startLayIndex);
-        }
-        return viaName;
-    }
+//    Route getVia(SteinerPoint lastSteinerPoint, SteinerPoint steinerPoint, string netName, set<string> viaSet) {
+//        Route route;
+//        int lastSteinerPointRow = lastSteinerPoint.getSteinerPointRow();
+//        int lastSteinerPointCol = lastSteinerPoint.getSteinerPointCol();
+//        int lastCellRow = lastSteinerPoint.getCellPointRow();
+//        int lastCellCol = lastSteinerPoint.getCellPointCol();
+//        int cellRow = steinerPoint.getCellPointRow();
+//        int cellCol = steinerPoint.getCellPointCol();
+//        int steinerPointRow = steinerPoint.getSteinerPointRow();
+//        int steinerPointCol = steinerPoint.getSteinerPointCol();
+//        if (cellRow == lastCellRow and cellCol == lastCellCol) {
+//            route.setNetName(netName);
+//            route.setStartRowIndx(lastCellRow);
+//            route.setStartColIndx(lastCellCol);
+//            route.setEndRowIndx(cellRow);
+//            route.setEndColIndx(cellCol);
+//            route.setStartLayIndx(lastSteinerPoint.getLayer());
+//            route.setEndlayIndx(steinerPoint.getLayer());
+//
+//        } else if (cellRow == lastSteinerPointRow and cellCol == lastSteinerPointCol) {
+//            route.setNetName(netName);
+//            route.setStartRowIndx(lastSteinerPointRow);
+//            route.setStartColIndx(lastSteinerPointCol);
+//            route.setEndRowIndx(cellRow);
+//            route.setEndColIndx(cellCol);
+//            route.setStartLayIndx(lastSteinerPoint.getLayer());
+//            route.setEndlayIndx(steinerPoint.getLayer());
+//
+//        } else if (steinerPointRow == lastCellRow and steinerPointCol == lastCellCol) {
+//            route.setNetName(netName);
+//            route.setStartRowIndx(lastCellRow);
+//            route.setStartColIndx(lastCellCol);
+//            route.setEndRowIndx(steinerPointRow);
+//            route.setEndColIndx(steinerPointCol);
+//            route.setStartLayIndx(lastSteinerPoint.getLayer());
+//            route.setEndlayIndx(steinerPoint.getLayer());
+//
+//        } else if (steinerPointRow == lastSteinerPointRow and steinerPointCol == lastSteinerPointCol) {
+//            route.setNetName(netName);
+//            route.setStartRowIndx(lastSteinerPointRow);
+//            route.setStartColIndx(lastSteinerPointCol);
+//            route.setEndRowIndx(steinerPointRow);
+//            route.setEndColIndx(steinerPointCol);
+//            route.setStartLayIndx(lastSteinerPoint.getLayer());
+//            route.setEndlayIndx(steinerPoint.getLayer());
+//
+//        } else if (steinerPointRow == lastCellRow and steinerPointCol == lastCellCol) {
+//            route.setNetName(netName);
+//            route.setStartRowIndx(lastCellRow);
+//            route.setStartColIndx(lastCellCol);
+//            route.setEndRowIndx(steinerPointRow);
+//            route.setEndColIndx(steinerPointCol);
+//            route.setStartLayIndx(lastSteinerPoint.getLayer());
+//            route.setEndlayIndx(steinerPoint.getLayer());
+//        } else {
+//            cout << "via has some exception" << endl;
+//        }
+//
+//
+//        return route;
+//    }
+
+//    string getViaName(Route route) {
+//        int startLayIndex = route.getStartLayIndx();
+//        int endLayIndex = route.getEndlayIndx();
+//        string viaName;
+//        if (route.getStartLayIndx() > route.getEndlayIndx()) {
+//            viaName = to_string(route.getStartRowIndx()) + "_" + to_string(route.getStartColIndx()) + "_" +
+//                      to_string(startLayIndex) + "_" + to_string(endLayIndex);
+//        } else {
+//            viaName = to_string(route.getStartRowIndx()) + "_" + to_string(route.getStartColIndx()) + "_" +
+//                      to_string(endLayIndex) + "_" + to_string(startLayIndex);
+//        }
+//        return viaName;
+//    }
 
 
     //取得Steiner point cellpoint 為起點 steinerPoint 為終點
     vector<SteinerPoint>
-    getSteinerPointRoute(Tree t, vector<vector<vector<int> > > gridVector,
+    getSteinerPointRoute(Tree t, vector<vector<vector<int> > > *gridVector,
                          map<string, vector<int>> powerFactorMap, string minRoutingConstraint,
-                         map<string, vector<SteinerPoint>> *layerSteinerVector,string reRoute) {
+                         map<string, vector<SteinerPoint>> *layerSteinerVector, string reRoute) {
         vector<int> layerPowerVectorH;
         vector<int> layerPowerVectorV;
 
@@ -600,21 +717,12 @@ public:
                     layerPowerVectorV.push_back(powerFactorMap[VERTICAL][i]);
                 }
             }
-        }else{
-           layerPowerVectorH = powerFactorMap[HORIZONTAL];
-           layerPowerVectorV = powerFactorMap[VERTICAL];
+        } else {
+            layerPowerVectorH = powerFactorMap[HORIZONTAL];
+            layerPowerVectorV = powerFactorMap[VERTICAL];
 
         }
         //-------  miniRoutingConstraint  end -------
-//        cout << "Net reRoute : " << reRoute <<endl;
-//        if( reRoute == "N1048"){
-//            for (int i = 0; i < layerPowerVectorH.size(); i++) {
-//                cout << layerPowerVectorH[i] << endl;
-//            }
-//            for (int i = 0; i < layerPowerVectorV.size(); i++) {
-//                cout <<layerPowerVectorV[i] << endl;
-//            }
-//        }
 
 
         //-------  routing by steiner point  start -------
@@ -629,6 +737,7 @@ public:
             int cellPointRow = t.branch[i].x;
             int cellPointCol = t.branch[i].y;
             int routeLayer;
+
 //            cout << "steiner point : " << cellPointRow << " " << cellPointCol  << " " << steinerPointRow << " " << steinerPointCol  << endl;
             if (steinerPointRow == cellPointRow and steinerPointCol != cellPointCol) {
                 int rowGrid = steinerPointRow - 1;
@@ -639,7 +748,7 @@ public:
                         bool canRoute = true;
                         for (int col = startColGrid; col <= endColGrid; col++) {
 //                            cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
+                            if ((*gridVector)[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
                                 canRoute = false;
                                 isValidRoute = false;
                             }
@@ -659,7 +768,7 @@ public:
                         bool canRoute = true;
                         for (int col = startColGrid; col >= endColGrid; col--) {
 //                            std::cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
+                            if ((*gridVector)[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
                                 canRoute = false;
                                 isValidRoute = false;
                             }
@@ -684,7 +793,7 @@ public:
                     bool canRoute = true;
                     for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
                         for (int row = startRowGrid; row <= endRowGrid; row++) {
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
+                            if ((*gridVector)[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
                                 canRoute = false;
                                 isValidRoute = false;
                             }
@@ -698,26 +807,12 @@ public:
                             break;
                         }
                     }
-//                    //如果直線不行，這裏做U-pattern Route
-//                    if (canRoute) {
-//                        //row 部分要做重執走巷
-//                        //step 1:向左走一格做U-pattern route
-//                        // 平行線兩條 垂直線一條
-//
-//                        //step 2:向右走一格做U-pattern route
-//                        // 平行線兩條 垂直線一條
-//
-//                    }
-//                    //如果Upattern 都無法 就放棄該次繞線 (直接把steinerLineVector 清空) 然後 return
-
-
-//                    cout << "" << endl;
                 } else {
                     for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
                         bool canRoute = true;
                         for (int row = startRowGrid; row >= endRowGrid; row--) {
 //                            std::cout << gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] << " ";
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
+                            if ((*gridVector)[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
                                 canRoute = false;
                                 isValidRoute = false;
                             }
@@ -749,37 +844,53 @@ public:
                 if (steinerPointRow > cellPointRow and steinerPointCol > cellPointCol) {
 //                    cout << "bottomLeftToTopRight" << endl;
                     //左下到右上
+                    int oriSize = steinerLineVector.size();
                     steinerLineVector = bottomLeftToTopRight(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             gridVector);
+                                                             (*gridVector));
+                    int afterSize = steinerLineVector.size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
                 } else if (steinerPointRow > cellPointRow and steinerPointCol < cellPointCol) {
 //                    cout << "bottomRightToTopLeft" << endl;
                     //右下到左上
+                    int oriSize = steinerLineVector.size();
                     steinerLineVector = bottomRightToTopLeft(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             gridVector);
-
+                                                             (*gridVector));
+                    int afterSize = steinerLineVector.size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
                 } else if (steinerPointRow < cellPointRow and steinerPointCol > cellPointCol) {
 //                    cout << "topLeftToBottomRight" << endl;
                     //左上到右下
+                    int oriSize = steinerLineVector.size();
                     steinerLineVector = topLeftToBottomRight(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             gridVector);
+                                                             (*gridVector));
+                    int afterSize = steinerLineVector.size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
 
                 } else {
 //                    cout << "topRightToBottomLeft" << endl;
                     //右上到左下
+                    int oriSize = steinerLineVector.size();
                     steinerLineVector = topRightToBottomLeft(steinerLineVector, startRowGrid, endRowGrid, startColGrid,
                                                              endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             gridVector);
-                }
-                if(steinerLineVector.size() == 0){
-                    isValidRoute = false;
+                                                             (*gridVector));
+                    int afterSize = steinerLineVector.size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
                 }
             }
         }
         //-------  routing by steiner point  end -------
-        if(isValidRoute == false){
+        if (isValidRoute == false) {
             steinerLineVector.clear();
         }
 
@@ -807,7 +918,7 @@ public:
                     for (int upCol = startColGrid; upCol >= tempCol; upCol--) {
 //                        cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] << endl;
                         if (gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] <= 0) {
-                            lackSupply = false;
+                            lackSupply = true;
                         }
                     }
                     if (lackSupply == false) {
@@ -936,7 +1047,7 @@ public:
                         for (int col = startColGrid; col >= endColGrid; col--) {
 //                            cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
                             if (gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] <= 0) {
-                                lackSupply = false;
+                                lackSupply = true;
                             }
                         }
                         if (lackSupply == false) {
@@ -1010,68 +1121,6 @@ public:
         return steinerLineVector;
     }
 
-//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-//        bool lackSupply = false;
-//        for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
-////                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
-////                             << endl;
-//            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
-//                lackSupply = true;
-//            }
-//        }
-//        if (lackSupply == false) {
-//            steinerPointThird.setLayer(layerPowerVectorH[layer]);
-//            steinerPointThird.setCellPointRow(endRowGrid + 1);
-//            steinerPointThird.setCellPointCol(tempCol + 1);
-//            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-//            steinerPointThird.setSteinerPointCol(endColGrid + 1);
-////                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-////                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-////                             << " "
-////                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
-//            lineThird = true;
-//            break;
-//        }
-//
-//    }
-
-    void UPatternRouteV(int startRow, int endRow, int col, vector<SteinerPoint> *steinerLineVector,
-                        vector<vector<vector<int>>> gridVector, vector<int> layerPowerVectorV,
-                        vector<int> layerPowerVectorH) {
-        //不用減 1 已經減好了
-        bool canRoute = true;
-
-        //右 start U-pattern
-        for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-
-        }
-
-        //右 end U-pattern
-
-        //左 start U-pattern
-
-        //左 end U-pattern
-
-        //直 U-pattern
-        for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-            if(startRow < endRow){
-                for (int row = startRow; row <= endRow ; row++) {
-                    if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
-                        canRoute = false;
-                    }
-                }
-            }else{
-                for (int row = endRow; row <= startRow ; row++) {
-                    if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
-                        canRoute = false;
-                    }
-                }
-
-            }
-        }
-
-
-    }
 
     vector<SteinerPoint>
     topLeftToBottomRight(vector<SteinerPoint> steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
@@ -1119,7 +1168,7 @@ public:
                     for (int row = startRowGrid; row >= endRowGrid; row--) {
 //                        cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
                         if (gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] <= 0) {
-                            lackSupply = false;
+                            lackSupply = true;
                         }
                     }
                     if (lackSupply == false) {
@@ -1434,7 +1483,7 @@ public:
 //                            cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol]
 //                                 << endl;
                             if (gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol] <= 0) {
-                                lackSupply = false;
+                                lackSupply = true;
                             }
                         }
                         if (lackSupply == false) {
@@ -1488,7 +1537,7 @@ public:
                         for (int upCol = tempCol; upCol >= endColGrid; upCol--) {
 //                            cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] << endl;
                             if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] <= 0) {
-                                lackSupply = false;
+                                lackSupply = true;
                             }
                         }
 
@@ -1580,7 +1629,7 @@ public:
                     bool lackSupply = false;
                     for (int col = startColGrid; col <= endColGrid; col++) {
 //                        cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
-                        if (gridVector[(layerPowerVectorH[layer]-1)][tempRow][col] <= 0) {
+                        if (gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] <= 0) {
                             lackSupply = true;
                         }
                     }
@@ -1761,72 +1810,76 @@ public:
 };
 
 
-//    vector<vector<vector<int> > > reduceSupply(vector<vector<vector<int> > > gridVector, SteinerPoint steinerPoint) {
-//        int steinerPointRow = steinerPoint.getSteinerPointRow();
-//        int steinerPointCol = steinerPoint.getSteinerPointCol();
-//        int cellPointRow = steinerPoint.getCellPointRow();
-//        int cellPointCol = steinerPoint.getCellPointCol();
-//        int layer = steinerPoint.getLayer() - 1;
-//        int startCol = cellPointCol - 1;
-//        int endCol = steinerPointCol - 1;
-//        int startRow = cellPointRow - 1;
-//        int endRow = cellPointRow - 1;
-//        //Horizontal direction
-//        if (steinerPointRow == cellPointRow and steinerPointCol != cellPointCol) {
-//            if (steinerPointCol > cellPointCol) {
-//                for (int col = startCol; col <= endCol; col++) {
-//                    gridVector[layer][startRow][col] = gridVector[layer][startRow][col] - 1;
-//                };
-//            } else {
-//                for (int col = startCol; col >= endCol; col--) {
-//                    gridVector[layer][startRow][col] = gridVector[layer][startRow][col] - 1;
-//                }
-//            }
-//            //Vertical direction
-//        } else {
-//            if (steinerPointRow > cellPointRow) {
-//                for (int row = startRow; row <= endRow; row++) {
-//                    gridVector[layer][row][startCol] = gridVector[layer][row][startCol] - 1;
-//                }
-//            } else {
-//                for (int row = startRow; row >= endRow; row++) {
-//                    gridVector[layer][row][startCol] = gridVector[layer][row][startCol] - 1;
-//                }
+
+
+
+//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+//        bool lackSupply = false;
+//        for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
+////                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
+////                             << endl;
+//            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
+//                lackSupply = true;
 //            }
 //        }
-//        return gridVector;
-//    }
-//Route
-//minRoutingConstraintRoute(int minRoutingConstraint, CellInstance cell, map<string, SteinerPoint> steinerMap,
-//                          map<string, Layer> layerMap, string reRouteNet, vector<Route> reRouteVector) {
-//    Route route;
-//    route.setStartRowIndx(cell.getRowIndx());
-//    route.setStartColIndx(cell.getColIndx());
-//    route.setStartLayIndx(1);
-//    route.setEndRowIndx(cell.getRowIndx());
-//    route.setEndColIndx(cell.getColIndx());
-//    int startLayer = startMinRoutingConstraint(cell, minRoutingConstraint, steinerMap, layerMap);
-//    route.setEndlayIndx(startLayer);
-//    route.setNetName(reRouteNet);
-//    return route;
-//}
+//        if (lackSupply == false) {
+//            steinerPointThird.setLayer(layerPowerVectorH[layer]);
+//            steinerPointThird.setCellPointRow(endRowGrid + 1);
+//            steinerPointThird.setCellPointCol(tempCol + 1);
+//            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+//            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+////                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+////                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+////                             << " "
+////                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+//            lineThird = true;
+//            break;
+//        }
 //
-////TODO 之後要處理 MinRoutingConstraint
-//int startMinRoutingConstraint(CellInstance cell, int minRoutingConstraint, map<string, SteinerPoint> steinerMap,
-//                              map<string, Layer> layerMap) {
-//    if (minRoutingConstraint > cell.getColIndx()) {
-//        return minRoutingConstraint;
-//    } else if (minRoutingConstraint < cell.getColIndx()) {
-//        return cell.getColIndx();
-//    } else {
-//        return cell.getColIndx();
 //    }
+
+//void UPatternRouteV(int startRow, int endRow, int col, vector<SteinerPoint> *steinerLineVector,
+//                    vector<vector<vector<int>>> gridVector, vector<int> layerPowerVectorV,
+//                    vector<int> layerPowerVectorH) {
+//    //不用減 1 已經減好了
+//    bool canRoute = true;
+//
+//    //右 start U-pattern
+//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+//
+//    }
+//
+//    //右 end U-pattern
+//
+//    //左 start U-pattern
+//
+//    //左 end U-pattern
+//
+//    //直 U-pattern
+//    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
+//        if (startRow < endRow) {
+//            for (int row = startRow; row <= endRow; row++) {
+//                if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
+//                    canRoute = false;
+//                }
+//            }
+//        } else {
+//            for (int row = endRow; row <= startRow; row++) {
+//                if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
+//                    canRoute = false;
+//                }
+//            }
+//
+//        }
+//    }
+//
+//
 //}
-////    TODO 確認routingLayer
-//int getRouteLayer(map<string, Layer> layerMap, CellInstance cell, string direction) {
-//    if (direction == HORIZONTAL) {
-//        return 3;
-//    } else {
-//        return 2;
-//    }
+
+//if (item.first == "N78" or item.first == "N792" or item.first == "N1661" or
+//item.first == "N1662" or item.first == "N1665" or item.first == "N1698" or
+//item.first == "N1701" or item.first == "N1743" or item.first == "N1838" or
+//item.first == "N1843" or item.first == "N1845" or item.first == "N1861" or
+//item.first== "N1885" or item.first == "N1934") {
+//myfile << "gridSupply : " << (*gridVector)[1 - 1][2 - 1][5 - 1] << endl;
 //}

@@ -55,6 +55,7 @@ int main() {
     vector<vector<vector<int> > > gridVector;
     map<string, CellInstance> numMoveCellInstMap;
     map<string, map<string, Blockage>> blockageCellMap;
+    set<string> netNameSet;
     //reduce Supply
     map<string,set<string>> reducePointMap;
 
@@ -76,6 +77,7 @@ int main() {
     //TODO output file -> 已調整
     //TODO bug case3 ->
     //TODO random route ->
+    //TODO pattern route 部分 重構 ->
     //TODO via 部分 重構 ->
     //TODO 多執行緒 讀檔
     //TODO two pin 做 cell move
@@ -112,11 +114,11 @@ int main() {
             cout << "-----CellInstance end-----" << endl;
         } else if (lineVector[0] == NET) {
             cout << "-----net start-----" << endl;
-            readFile.readNet(&contentvector, &lineVector, &netMap, &masterCellMap, &cellInstanceMap, &i);
+            readFile.readNet(&contentvector, &lineVector, &netMap, &masterCellMap, &cellInstanceMap,&netNameSet, &i);
             cout << "-----net end-----" << endl;
         } else if (lineVector[0] == NUMROUTES) {
             cout << "-----route start-----" << endl;
-            readFile.readRoute(&contentvector, &lineVector, &netMap, &gridVector, &i,&reducePointMap);
+            readFile.readRoute(&contentvector, &lineVector, &netMap, &gridVector, &i,&reducePointMap,&netNameSet);
             cout << "-----route end-----" << endl;
         } else if (lineVector[0] == NAME) {
             cout << "-----voltage start-----" << endl;
@@ -126,8 +128,9 @@ int main() {
     }
 
     powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
-    netMap = reRoute.boundaryReroute(netMap, cellInstanceMap, masterCellMap, gridVector, powerFactorMap);
-    printGridVector(gridVector);
+    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
+
+//    printGridVector(gridVector);
 
 //    ofstream myfile;
 //    myfile.open("output_"+FILEPATH+".txt");
@@ -155,6 +158,31 @@ int main() {
     END = clock();
     cout << endl << "程式執行所花費：" << (double) clock() / CLOCKS_PER_SEC << " S";
     cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;
+
+
+//        int d=0;
+//    int x[MAXD], y[MAXD];
+//    Tree flutetree;
+//    int flutewl;
+//    while (!feof(stdin)) {
+//        scanf("%d %d\n", &x[d], &y[d]);
+//        std::cout<< "pin" << x[d]  << y[d] <<std::endl;
+//        d++;
+//    }
+//    x[0] = 12;
+//    y[0] = 25;
+//    x[1] = 13;
+//    y[1] = 31;
+//    x[2] = 14;
+//    y[2] = 33;
+//    d=3;
+//    readLUT();
+//    flutetree = flute(d, x, y, ACCURACY);
+//  std::cout<< "wirelength" << flutetree.length   <<std::endl;
+//    printf("FLUTE wirelength = %d\n", flutetree.length);
+//    plottree(flutetree);
+//    flutewl = flute_wl(d, x, y, ACCURACY);
+//    printf("FLUTE wirelength (without RSMT construction) = %d\n", flutewl);
 
 
 
