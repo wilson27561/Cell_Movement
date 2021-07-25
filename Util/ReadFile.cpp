@@ -52,12 +52,12 @@ public :
         *index = mapSize;
     }
 
-    map<string, vector<int>> getLayerFacotr(map<string, Layer> layerMap, map<string, vector<int>> powerFactorMap) {
+    void getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<int>> *powerFactorMap) {
         vector<int> horizontalVector;
         vector<int> verticalVector;
         vector<double> H_PowerFactorVec;
         vector<double> V_PowerFactorVec;
-        for (auto const &item : layerMap) {
+        for (auto const &item : (*layerMap)) {
             Layer layer = item.second;
             if (layer.getRoutingDirection() == HORIZONTAL) {
                 int index = getInsertIndex(H_PowerFactorVec, item.second.getPowerFactor());
@@ -69,10 +69,9 @@ public :
                 verticalVector.insert(verticalVector.begin() + index, item.second.getIndex());
             }
         }
-        powerFactorMap.insert(pair<string, vector<int>>(HORIZONTAL, horizontalVector));
-        powerFactorMap.insert(pair<string, vector<int>>(VERTICAL, verticalVector));
+        (*powerFactorMap).insert(pair<string, vector<int>>(HORIZONTAL, horizontalVector));
+        (*powerFactorMap).insert(pair<string, vector<int>>(VERTICAL, verticalVector));
 
-        return powerFactorMap;
     };
 
     void readNumNonDefaultSupply(vector<string> *contentVector, vector<vector<vector<int> > > *gridVector, int *index,

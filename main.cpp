@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <fstream>
 #include "flute/flute.h"
 #include "Util/Constant.h"
 #include "Util/Util.cpp"
@@ -72,18 +73,19 @@ int main() {
     //TODO blockage 這部分要改一下 -> 已調整
     //TODO net supply 寫在 讀檔內 -> 已調整
     //TODO bug case1 cell 沒有連接在對的層 via部分改過 -> 已調整
-    //TODO 若是直線繞不行的話，需要另外走 U - pattern route ->
     //TODO 建立pattern route 失敗的部分 -> 已調整
     //TODO output file -> 已調整
-    //TODO bug case3 ->
-    //TODO random route ->
+    //TODO bug case3 -> 已調整
+    //TODO 改成使用pointer ->
     //TODO pattern route 部分 重構 ->
     //TODO via 部分 重構 ->
+    //TODO 減少多於線段的code->
+    //TODO two pin 做 cell move by 面積 ->
+    //TODO random route ->
+    //TODO 若是直線繞不行的話，需要另外走 U - pattern route ->
     //TODO 多執行緒 讀檔
-    //TODO two pin 做 cell move
     //TODO 確定set 生命週期 reduce supply時可以改寫
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
-    //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
 
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = util.splitString(contentvector[i]);
@@ -127,11 +129,13 @@ int main() {
         }
     }
 
-    powerFactorMap = readFile.getLayerFacotr(layerMap, powerFactorMap);
+    readFile.getLayerFacotr(&layerMap, &powerFactorMap);
+
     reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
 
 
-//    printGridVector(&gridVector);
+
+    printGridVector(&gridVector);
 
     ofstream myfile;
     myfile.open("output_"+FILEPATH);
