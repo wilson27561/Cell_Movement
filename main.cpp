@@ -76,15 +76,17 @@ int main() {
     //TODO 建立pattern route 失敗的部分 -> 已調整
     //TODO output file -> 已調整
     //TODO bug case3 -> 已調整
-    //TODO 改成使用pointer ->
-    //TODO pattern route 部分 重構 ->
+    //TODO 改成使用pointer -> 已調整
+    //TODO pattern route 部分 重構 -> 已調整
+
     //TODO via 部分 重構 ->
     //TODO 減少多於線段的code->
+
     //TODO two pin 做 cell move by 面積 ->
     //TODO random route ->
     //TODO 若是直線繞不行的話，需要另外走 U - pattern route ->
     //TODO 多執行緒 讀檔
-    //TODO 確定set 生命週期 reduce supply時可以改寫
+    //TODO 確定set 生命週期 reduce supply時可以改寫 ，減少記憶體使用 ->
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
 
     for (int i = 0; i < contentvector.size(); i++) {
@@ -130,12 +132,11 @@ int main() {
     }
 
     readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-
     reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
 
 
 
-    printGridVector(&gridVector);
+//    printGridVector(&gridVector);
 
     ofstream myfile;
     myfile.open("output_"+FILEPATH);

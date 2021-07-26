@@ -57,8 +57,10 @@ public:
             bool isNeedReroute = false;
             //判斷net 是否 需要重繞
             if (isOutOfBoundary(routeVec, item.second.getBoundaryMap())) {
+                cout << "is Out Of Boundary : " << endl;
                 isNeedReroute = true;
             } else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
+                cout << "is Over Flow Half Perimeter : " << endl;
                 isNeedReroute = true;
             } else {
                 isNeedReroute = false;
@@ -200,7 +202,7 @@ public:
         vector<SteinerPoint> steinerLine;
 
         string minimumRoutingConstraint = (*netMap)[reRouteNet].getMinRoutingConstraint();
-        getSteinerPointRoute(flutetree,&steinerLine , &(*gridVector), (*powerFactorMap),
+        getSteinerPointRoute(flutetree,&steinerLine , &(*gridVector), &(*powerFactorMap),
                                                                 minimumRoutingConstraint, &layerSteinerMap, reRouteNet);
 
         //-------  steiner point route end -------
@@ -542,6 +544,1211 @@ public:
         }
     }
 
+    //取得Steiner point cellpoint 為起點 steinerPoint 為終點
+    void getSteinerPointRoute(Tree t, vector<SteinerPoint> *steinerLine ,vector<vector<vector<int> > > *gridVector,
+                         map<string, vector<int>> *powerFactorMap, string minRoutingConstraint,
+                         map<string, vector<SteinerPoint>> *layerSteinerVector, string reRoute) {
+        vector<int> layerPowerVectorH;
+        vector<int> layerPowerVectorV;
+
+        //-------  miniRoutingConstraint  start -------
+        if (minRoutingConstraint != "NoCstr") {
+            minRoutingConstraint.erase(std::remove(minRoutingConstraint.begin(), minRoutingConstraint.end(), 'M'),
+                                       minRoutingConstraint.end());
+            int constraint = stoi(minRoutingConstraint);
+            for (int i = 0; i < (*powerFactorMap)[HORIZONTAL].size(); i++) {
+                if ((*powerFactorMap)[HORIZONTAL][i] >= constraint) {
+                    layerPowerVectorH.push_back((*powerFactorMap)[HORIZONTAL][i]);
+                }
+            }
+            for (int i = 0; i < (*powerFactorMap)[VERTICAL].size(); i++) {
+                if ((*powerFactorMap)[VERTICAL][i] >= constraint) {
+                    layerPowerVectorV.push_back((*powerFactorMap)[VERTICAL][i]);
+                }
+            }
+        } else {
+            layerPowerVectorH = (*powerFactorMap)[HORIZONTAL];
+            layerPowerVectorV = (*powerFactorMap)[VERTICAL];
+        }
+        //-------  miniRoutingConstraint  end -------
+
+
+        //-------  routing by steiner point  start -------
+        bool isValidRoute = true;
+        for (int i = 0; i < 2 * t.deg - 2; i++) {
+//            string coordinate = to_string(t.branch[i].x) + "_" + to_string(t.branch[i].y);
+            int steinerPointRow = t.branch[t.branch[i].n].x;
+            int steinerPointCol = t.branch[t.branch[i].n].y;
+            int cellPointRow = t.branch[i].x;
+            int cellPointCol = t.branch[i].y;
+            int routeLayer;
+
+//            cout << "steiner point : " << cellPointRow << " " << cellPointCol  << " " << steinerPointRow << " " << steinerPointCol  << endl;
+            if (steinerPointRow == cellPointRow and steinerPointCol != cellPointCol) {
+                int rowGrid = steinerPointRow - 1;
+                int startColGrid = cellPointCol - 1;
+                int endColGrid = steinerPointCol - 1;
+                if (startColGrid < endColGrid) {
+                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+                        bool canRoute = true;
+                        for (int col = startColGrid; col <= endColGrid; col++) {
+//                            cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
+                            if ((*gridVector)[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
+                                canRoute = false;
+                                isValidRoute = false;
+                            }
+                        }
+                        if (canRoute) {
+                            routeLayer = layerPowerVectorH[layer];
+                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
+                                                      cellPointCol, routeLayer);
+//                           steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
+                            (*steinerLine).push_back(steinerPoint);
+                            break;
+                        }
+                    }
+
+                } else {
+                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+                        bool canRoute = true;
+                        for (int col = startColGrid; col >= endColGrid; col--) {
+//                            std::cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
+                            if ((*gridVector)[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
+                                canRoute = false;
+                                isValidRoute = false;
+                            }
+                        }
+                        if (canRoute) {
+                            routeLayer = layerPowerVectorH[layer];
+                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
+                                                      cellPointCol, routeLayer);
+//                            steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
+                            (*steinerLine).push_back(steinerPoint);
+                            break;
+                        }
+                    }
+//                    cout << "" << endl;
+                }
+                // 如果都不能繞線，要在這裡面做give up route
+            } else if (steinerPointCol == cellPointCol and steinerPointRow != cellPointRow) {
+                int colGrid = cellPointCol - 1;
+                int startRowGrid = cellPointRow - 1;
+                int endRowGrid = steinerPointRow - 1;
+                if (startRowGrid < endRowGrid) {
+                    bool canRoute = true;
+                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
+                        for (int row = startRowGrid; row <= endRowGrid; row++) {
+                            if ((*gridVector)[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
+                                canRoute = false;
+                                isValidRoute = false;
+                            }
+                        }
+                        if (canRoute) {
+                            routeLayer = layerPowerVectorV[layer];
+                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
+                                                      cellPointCol, routeLayer);
+//                            steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
+                            (*steinerLine).push_back(steinerPoint);
+                            break;
+                        }
+                    }
+                } else {
+                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
+                        bool canRoute = true;
+                        for (int row = startRowGrid; row >= endRowGrid; row--) {
+//                            std::cout << gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] << " ";
+                            if ((*gridVector)[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
+                                canRoute = false;
+                                isValidRoute = false;
+                            }
+                        }
+                        if (canRoute) {
+                            routeLayer = layerPowerVectorV[layer];
+                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
+                                                      cellPointCol, routeLayer);
+//                            steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
+                            (*steinerLine).push_back(steinerPoint);
+                            break;
+                        }
+                    }
+//                    cout << "" << endl;
+                }
+            } else if (steinerPointCol == cellPointCol and steinerPointRow == cellPointRow) {
+                //之後可以使用pointMap 這個點去做
+//                cout << "cellPointCol and steinerPointCol is on same Point" << endl;
+            } else {
+                // Z-pattern route L-pattern route
+//                cout << "get in side z pattern " << endl;
+                int startRowGrid = cellPointRow - 1;
+                int startColGrid = cellPointCol - 1;
+                int endRowGrid = steinerPointRow - 1;
+                int endColGrid = steinerPointCol - 1;
+//                cout << "cell : " << cellPointRow << " " << cellPointCol << " steinerPoint : " << steinerPointRow << " "
+//                     << steinerPointCol << endl;
+//                cout << " Cell to SteinerPoint" << endl;
+                if (steinerPointRow > cellPointRow and steinerPointCol > cellPointCol) {
+//                    cout << "bottomLeftToTopRight" << endl;
+                    //左下到右上
+                    int oriSize = (*steinerLine).size();
+                    bottomLeftToTopRight(&(*steinerLine), startRowGrid, endRowGrid, startColGrid,
+                                                             endColGrid, &layerPowerVectorV, &layerPowerVectorH,
+                                                             &(*gridVector));
+                    int afterSize = (*steinerLine).size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
+                } else if (steinerPointRow > cellPointRow and steinerPointCol < cellPointCol) {
+//                    cout << "bottomRightToTopLeft" << endl;
+                    //右下到左上
+                    int oriSize = (*steinerLine).size();
+                    bottomRightToTopLeft(&(*steinerLine), startRowGrid, endRowGrid, startColGrid,
+                                                             endColGrid, &layerPowerVectorV, &layerPowerVectorH,
+                                                             &(*gridVector));
+                    int afterSize = (*steinerLine).size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
+                } else if (steinerPointRow < cellPointRow and steinerPointCol > cellPointCol) {
+//                    cout << "topLeftToBottomRight" << endl;
+                    //左上到右下
+                    int oriSize = (*steinerLine).size();
+                    topLeftToBottomRight(&(*steinerLine), startRowGrid, endRowGrid, startColGrid,
+                                                             endColGrid, &layerPowerVectorV, &layerPowerVectorH,
+                                                             &(*gridVector));
+                    int afterSize = (*steinerLine).size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
+
+                } else {
+//                    cout << "topRightToBottomLeft" << endl;
+                    //右上到左下
+                    int oriSize = (*steinerLine).size();
+                     topRightToBottomLeft(&(*steinerLine), startRowGrid, endRowGrid, startColGrid,
+                                                             endColGrid, &layerPowerVectorV, &layerPowerVectorH,
+                                                             &(*gridVector));
+                    int afterSize = (*steinerLine).size();
+                    if (oriSize == afterSize) {
+                        isValidRoute = false;
+                    }
+                }
+            }
+        }
+        //-------  routing by steiner point  end -------
+        if (isValidRoute == false) {
+            (*steinerLine).clear();
+        }
+    }
+
+
+    void
+    topRightToBottomLeft(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
+                         int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
+                         vector<vector<vector<int> > > *gridVector) {
+        SteinerPoint steinerPointFirst;
+        SteinerPoint steinerPointSecond;
+        SteinerPoint steinerPointThird;
+        bool foundRoute = false;
+        //down-left-down
+        for (int tempCol = startColGrid; tempCol >= endColGrid; tempCol--) {
+            bool lineFirst = false;
+            bool lineSecond = false;
+            bool lineThird = false;
+
+            if (lineFirst == false) {
+                for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int upCol = startColGrid; upCol >= tempCol; upCol--) {
+//                        cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] << endl;
+                        if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][startRowGrid][upCol] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointFirst.setLayer((*layerPowerVectorH)[layer]);
+                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                        steinerPointFirst.setCellPointCol(startColGrid + 1);
+                        steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
+                        steinerPointFirst.setSteinerPointCol(tempCol + 1);
+                        lineFirst = true;
+//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
+                        break;
+                    }
+                }
+            }
+
+            if (lineSecond == false) {
+                for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int row = startRowGrid; row >= endRowGrid; row--) {
+//                        cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
+                        if ((*gridVector)[( (*layerPowerVectorV)[layer] - 1)][row][tempCol] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointSecond.setLayer((*layerPowerVectorV)[layer]);
+                        steinerPointSecond.setCellPointRow(startRowGrid + 1);
+                        steinerPointSecond.setCellPointCol(tempCol + 1);
+                        steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
+                        steinerPointSecond.setSteinerPointCol(tempCol + 1);
+//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
+                        lineSecond = true;
+                        break;
+                    }
+                }
+            }
+            if (lineThird == false) {
+                for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
+//                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
+//                             << endl;
+                        if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][endRowGrid][downCol] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointThird.setLayer((*layerPowerVectorH)[layer]);
+                        steinerPointThird.setCellPointRow(endRowGrid + 1);
+                        steinerPointThird.setCellPointCol(tempCol + 1);
+                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+                        lineThird = true;
+                        break;
+                    }
+
+                }
+            }
+            if (lineFirst == true and lineSecond == true and lineThird == true) {
+                if (countDistance(steinerPointFirst) > 1) {
+                    (*steinerLineVector).push_back(steinerPointFirst);
+                }
+                if (countDistance(steinerPointSecond) > 1) {
+                    (*steinerLineVector).push_back(steinerPointSecond);
+                }
+                if (countDistance(steinerPointThird) > 1) {
+                    (*steinerLineVector).push_back(steinerPointThird);
+                }
+                foundRoute = true;
+//                cout << "Steiner line vector :" << endl;
+//                for (int i = 0; i < steinerLineVector.size(); i++) {
+//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer() << endl;
+//                }
+                break;
+            }
+        }
+        if (foundRoute == false) {
+            //Right-H-Right
+            for (int tempRow = startRowGrid; tempRow >= endRowGrid; tempRow--) {
+                bool lineFirst = false;
+                bool lineSecond = false;
+                bool lineThird = false;
+
+                if (lineFirst == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int rightRow = startRowGrid; rightRow >= tempRow; rightRow--) {
+//                            cout << "left :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][startColGrid]
+//                                 << endl;
+                            if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][rightRow][startColGrid] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointFirst.setLayer((*layerPowerVectorV)[layer]);
+                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                            steinerPointFirst.setCellPointCol(startColGrid + 1);
+                            steinerPointFirst.setSteinerPointRow(tempRow + 1);
+                            steinerPointFirst.setSteinerPointCol(startColGrid + 1);
+                            lineFirst = true;
+//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
+//                                 << endl;
+                            break;
+                        }
+                    }
+                }
+
+                if (lineSecond == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int col = startColGrid; col >= endColGrid; col--) {
+//                            cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
+                            if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][tempRow][col] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointSecond.setLayer((*layerPowerVectorH)[layer]);
+                            steinerPointSecond.setCellPointRow(tempRow + 1);
+                            steinerPointSecond.setCellPointCol(startColGrid + 1);
+                            steinerPointSecond.setSteinerPointRow(tempRow + 1);
+                            steinerPointSecond.setSteinerPointCol(endColGrid + 1);
+//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                                 << steinerPointSecond.getCellPointCol() << " "
+//                                 << steinerPointSecond.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
+//                                 << endl;
+                            lineSecond = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (lineThird == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int leftRow = tempRow; leftRow >= endRowGrid; leftRow--) {
+//                            cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][leftRow][endColGrid]
+//                                 << endl;
+                            if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][leftRow][endColGrid] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointThird.setLayer((*layerPowerVectorV)[layer]);
+                            steinerPointThird.setCellPointRow(tempRow + 1);
+                            steinerPointThird.setCellPointCol(endColGrid + 1);
+                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
+//                                 << endl;
+                            lineThird = true;
+                            break;
+                        }
+                    }
+                }
+//                cout << "" << endl;
+                if (lineFirst == true and lineSecond == true and lineThird == true) {
+                    if (countDistance(steinerPointFirst) > 1) {
+                        (*steinerLineVector).push_back(steinerPointFirst);
+                    }
+                    if (countDistance(steinerPointSecond) > 1) {
+                        (*steinerLineVector).push_back(steinerPointSecond);
+                    }
+                    if (countDistance(steinerPointThird) > 1) {
+                        (*steinerLineVector).push_back(steinerPointThird);
+                    }
+                    foundRoute = true;
+//                    cout << "Steiner line vector :" << endl;
+//                    for (int i = 0; i < steinerLineVector.size(); i++) {
+//                        cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                             << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                             << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
+//                             << endl;
+//                    }
+                    break;
+                }
+            }
+        }
+    }
+
+
+    void
+    topLeftToBottomRight(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
+                         int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
+                         vector<vector<vector<int>>> *gridVector) {
+        SteinerPoint steinerPointFirst;
+        SteinerPoint steinerPointSecond;
+        SteinerPoint steinerPointThird;
+        bool foundRoute = false;
+
+        //Right-down-Right
+        for (int tempCol = startColGrid; tempCol <= endColGrid; tempCol++) {
+            bool lineFirst = false;
+            bool lineSecond = false;
+            bool lineThird = false;
+            //
+            if (lineFirst == false) {
+                for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int upCol = startColGrid; upCol <= tempCol; upCol++) {
+//                        cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] << endl;
+                        if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][startRowGrid][upCol] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointFirst.setLayer((*layerPowerVectorH)[layer]);
+                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                        steinerPointFirst.setCellPointCol(startColGrid + 1);
+                        steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
+                        steinerPointFirst.setSteinerPointCol(tempCol + 1);
+                        lineFirst = true;
+//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
+                        break;
+                    }
+                }
+            }
+
+            if (lineSecond == false) {
+                for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int row = startRowGrid; row >= endRowGrid; row--) {
+//                        cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
+                        if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][row][tempCol] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointSecond.setLayer((*layerPowerVectorV)[layer]);
+                        steinerPointSecond.setCellPointRow(startRowGrid + 1);
+                        steinerPointSecond.setCellPointCol(tempCol + 1);
+                        steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
+                        steinerPointSecond.setSteinerPointCol(tempCol + 1);
+//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
+                        lineSecond = true;
+                        break;
+                    }
+                }
+            }
+
+            if (lineThird == false) {
+                for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int downCol = tempCol; downCol <= endColGrid; downCol++) {
+//                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
+//                             << endl;
+                        if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][endRowGrid][downCol] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointThird.setLayer((*layerPowerVectorH)[layer]);
+                        steinerPointThird.setCellPointRow(endRowGrid + 1);
+                        steinerPointThird.setCellPointCol(tempCol + 1);
+                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+                        lineThird = true;
+                        break;
+                    }
+                }
+            }
+//            cout << "" << endl;
+            if (lineFirst == true and lineSecond == true and lineThird == true) {
+                if (countDistance(steinerPointFirst) > 1) {
+                    (*steinerLineVector).push_back(steinerPointFirst);
+                }
+                if (countDistance(steinerPointSecond) > 1) {
+                    (*steinerLineVector).push_back(steinerPointSecond);
+                }
+                if (countDistance(steinerPointThird) > 1) {
+                    (*steinerLineVector).push_back(steinerPointThird);
+                }
+                foundRoute = true;
+//                cout << "Steiner line vector :" << endl;
+//                for (int i = 0; i < steinerLineVector.size(); i++) {
+//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
+//                         << endl;
+//                }
+                break;
+            }
+        }
+
+
+        if (foundRoute == false) {
+            //down-Right-down
+            for (int tempRow = startRowGrid; tempRow >= endRowGrid; tempRow--) {
+                bool lineFirst = false;
+                bool lineSecond = false;
+                bool lineThird = false;
+                if (lineFirst == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int leftRow = startRowGrid; leftRow >= tempRow; leftRow--) {
+//                            cout << "left :" << gridVector[(layerPowerVectorV[layer] - 1)][leftRow][startColGrid]
+//                                 << endl;
+                            if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][leftRow][startColGrid] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointFirst.setLayer((*layerPowerVectorV)[layer]);
+                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                            steinerPointFirst.setCellPointCol(startColGrid + 1);
+                            steinerPointFirst.setSteinerPointRow(tempRow + 1);
+                            steinerPointFirst.setSteinerPointCol(startColGrid + 1);
+                            lineFirst = true;
+//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
+//                                 << endl;
+                            break;
+                        }
+                    }
+                }
+
+
+                if (lineSecond == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int col = startColGrid; col <= endColGrid; col++) {
+//                            cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
+                            if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][tempRow][col] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointSecond.setLayer((*layerPowerVectorH)[layer]);
+                            steinerPointSecond.setCellPointRow(startRowGrid + 1);
+                            steinerPointSecond.setCellPointCol(startColGrid + 1);
+                            steinerPointSecond.setSteinerPointRow(tempRow + 1);
+                            steinerPointSecond.setSteinerPointCol(endColGrid + 1);
+//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                                 << steinerPointSecond.getCellPointCol() << " "
+//                                 << steinerPointSecond.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
+//                                 << endl;
+                            lineSecond = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (lineThird == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int rightRow = tempRow; rightRow >= endRowGrid; rightRow--) {
+//                            cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][endColGrid]
+//                                 << endl;
+                            if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][rightRow][endColGrid] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointThird.setLayer((*layerPowerVectorV)[layer]);
+                            steinerPointThird.setCellPointRow(tempRow + 1);
+                            steinerPointThird.setCellPointCol(endColGrid + 1);
+                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
+//                                 << endl;
+                            lineThird = true;
+                            break;
+                        }
+                    }
+                    if (lineFirst == true and lineSecond == true and lineThird == true) {
+                        if (countDistance(steinerPointFirst) > 1) {
+                            (*steinerLineVector).push_back(steinerPointFirst);
+                        }
+                        if (countDistance(steinerPointSecond) > 1) {
+                            (*steinerLineVector).push_back(steinerPointSecond);
+                        }
+                        if (countDistance(steinerPointThird) > 1) {
+                            (*steinerLineVector).push_back(steinerPointThird);
+                        }
+                        foundRoute = true;
+//                        cout << "Steiner line vector :" << endl;
+//                        for (int i = 0; i < steinerLineVector.size(); i++) {
+//                            cout << steinerLineVector[i].getCellPointRow() << " "
+//                                 << steinerLineVector[i].getCellPointCol()
+//                                 << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                                 << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
+//                                 << endl;
+//                        }
+                        break;
+                    }
+                }
+//                cout << "" << endl;
+            }
+        }
+    }
+
+
+    void bottomRightToTopLeft(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
+                         int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
+                         vector<vector<vector<int>>> *gridVector) {
+        SteinerPoint steinerPointFirst;
+        SteinerPoint steinerPointSecond;
+        SteinerPoint steinerPointThird;
+        bool foundRoute = false;
+        //右下到左上
+//        cout << " Bottom right to top left" << endl;
+        //Up-Right-Up
+        for (int tempRow = startRowGrid; tempRow <= endRowGrid; tempRow++) {
+            bool lineFirst = false;
+            bool lineSecond = false;
+            bool lineThird = false;
+            if (lineFirst == false) {
+                for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int rightRow = startRowGrid; rightRow <= tempRow; rightRow++) {
+//                        cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][startColGrid]
+//                             << endl;
+                        if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][rightRow][startColGrid] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointFirst.setLayer((*layerPowerVectorV)[layer]);
+                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                        steinerPointFirst.setCellPointCol(startColGrid + 1);
+                        steinerPointFirst.setSteinerPointRow(tempRow + 1);
+                        steinerPointFirst.setSteinerPointCol(startColGrid + 1);
+                        lineFirst = true;
+//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
+                        break;
+                    }
+                }
+            }
+
+            if (lineSecond == false) {
+                for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int col = startColGrid; col >= endColGrid; col--) {
+//                        cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
+                        if ((*gridVector)[( (*layerPowerVectorH)[layer] - 1)][tempRow][col] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointSecond.setLayer( (*layerPowerVectorH)[layer]);
+                        steinerPointSecond.setCellPointRow(tempRow + 1);
+                        steinerPointSecond.setCellPointCol(startColGrid + 1);
+                        steinerPointSecond.setSteinerPointRow(tempRow + 1);
+                        steinerPointSecond.setSteinerPointCol(endColGrid + 1);
+//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
+                        lineSecond = true;
+                        break;
+                    }
+                }
+            }
+
+            if (lineThird == false) {
+                for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int leftRow = tempRow; leftRow <= endRowGrid; leftRow++) {
+//                        cout << "left :" << gridVector[(layerPowerVectorV[layer] - 1)][leftRow][endColGrid]
+//                             << endl;
+                        if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][leftRow][endColGrid] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointThird.setLayer((*layerPowerVectorV)[layer]);
+                        steinerPointThird.setCellPointRow(tempRow + 1);
+                        steinerPointThird.setCellPointCol(endColGrid + 1);
+                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+                        lineThird = true;
+                        break;
+                    }
+                }
+            }
+
+//            cout << "" << endl;
+            if (lineFirst == true and lineSecond == true and lineThird == true) {
+                if (countDistance(steinerPointFirst) > 1) {
+                    (*steinerLineVector).push_back(steinerPointFirst);
+                }
+                if (countDistance(steinerPointSecond) > 1) {
+                    (*steinerLineVector).push_back(steinerPointSecond);
+                }
+                if (countDistance(steinerPointThird) > 1) {
+                    (*steinerLineVector).push_back(steinerPointThird);
+                }
+                foundRoute = true;
+//                cout << "Steiner line vector :" << endl;
+//                for (int i = 0; i < steinerLineVector.size(); i++) {
+//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer() << endl;
+//                }
+                break;
+            }
+        }
+
+        if (foundRoute == false) {
+            //Right-Up-Right
+            for (int tempCol = startColGrid; tempCol >= endColGrid; tempCol--) {
+                bool lineFirst = false;
+                bool lineSecond = false;
+                bool lineThird = false;
+
+                if (lineFirst == false) {
+                    for (int layer = 0; layer <  (*layerPowerVectorH).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int downCol = startColGrid; downCol >= tempCol; downCol--) {
+//                            cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol]
+//                                 << endl;
+                            if ((*gridVector)[( (*layerPowerVectorH)[layer] - 1)][startRowGrid][downCol] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointFirst.setLayer( (*layerPowerVectorH)[layer]);
+                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                            steinerPointFirst.setCellPointCol(startColGrid + 1);
+                            steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
+                            steinerPointFirst.setSteinerPointCol(tempCol + 1);
+                            lineFirst = true;
+//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
+//                                 << endl;
+                            break;
+                        }
+                    }
+                }
+
+                if (lineSecond == false) {
+                    bool lackSupply = false;
+                    for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                        for (int row = startRowGrid; row <= endRowGrid; row++) {
+//                            cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
+                            if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][row][tempCol] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointSecond.setLayer((*layerPowerVectorV)[layer]);
+                            steinerPointSecond.setCellPointRow(startRowGrid + 1);
+                            steinerPointSecond.setCellPointCol(tempCol + 1);
+                            steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
+                            steinerPointSecond.setSteinerPointCol(tempCol + 1);
+//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                                 << steinerPointSecond.getCellPointCol() << " "
+//                                 << steinerPointSecond.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
+//                                 << endl;
+                            lineSecond = true;
+                            break;
+                        }
+                    }
+                }
+
+
+                if (lineThird == false) {
+                    bool lackSupply = false;
+                    for (int layer = 0; layer <  (*layerPowerVectorH).size(); layer++) {
+                        for (int upCol = tempCol; upCol >= endColGrid; upCol--) {
+//                            cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] << endl;
+                            if ((*gridVector)[( (*layerPowerVectorH)[layer] - 1)][endRowGrid][upCol] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+
+                        if (lackSupply == false) {
+                            steinerPointThird.setLayer( (*layerPowerVectorH)[layer]);
+                            steinerPointThird.setCellPointRow(endRowGrid + 1);
+                            steinerPointThird.setCellPointCol(tempCol + 1);
+                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
+//                                 << endl;
+                            lineThird = true;
+                            break;
+                        }
+                    }
+                }
+//                cout << "" << endl;
+                if (lineFirst == true and lineSecond == true and lineThird == true) {
+                    if (countDistance(steinerPointFirst) > 1) {
+                        (*steinerLineVector).push_back(steinerPointFirst);
+                    }
+                    if (countDistance(steinerPointSecond) > 1) {
+                        (*steinerLineVector).push_back(steinerPointSecond);
+                    }
+                    if (countDistance(steinerPointThird) > 1) {
+                        (*steinerLineVector).push_back(steinerPointThird);
+                    }
+                    foundRoute = true;
+//                    cout << "Steiner line vector :" << endl;
+//                    for (int i = 0; i < steinerLineVector.size(); i++) {
+//                        cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                             << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                             << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
+//                             << endl;
+//                    }
+                    break;
+                }
+            }
+        }
+    }
+
+
+    void bottomLeftToTopRight(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
+                         int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
+                         vector<vector<vector<int>>> *gridVector) {
+        SteinerPoint steinerPointFirst;
+        SteinerPoint steinerPointSecond;
+        SteinerPoint steinerPointThird;
+        bool foundRoute = false;
+        //Up-Right-Up
+        //向上走 每換一次Row 代表 換不同的 pattern route 的 方法
+        for (int tempRow = startRowGrid; tempRow <= endRowGrid; tempRow++) {
+            bool lineFirst = false;
+            bool lineSecond = false;
+            bool lineThird = false;
+            //當此pattern 可以找到不同層的線，即可完成pattern Route
+            if (lineFirst == false) {
+                for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int leftRow = startRowGrid; leftRow <= tempRow; leftRow++) {
+//                        cout << "left :" << gridVector[(layerPowerVectorV[layer]) - 1][leftRow][startColGrid] << endl;
+                        if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][leftRow][startColGrid] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointFirst.setLayer((*layerPowerVectorV)[layer]);
+                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                        steinerPointFirst.setCellPointCol(startColGrid + 1);
+                        steinerPointFirst.setSteinerPointRow(tempRow + 1);
+                        steinerPointFirst.setSteinerPointCol(startColGrid + 1);
+                        lineFirst = true;
+//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
+                        break;
+                    }
+                }
+            }
+            //向右走
+            if (lineSecond == false) {
+                for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int col = startColGrid; col <= endColGrid; col++) {
+//                        cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
+                        if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][tempRow][col] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointSecond.setLayer((*layerPowerVectorH)[layer]);
+                        steinerPointSecond.setCellPointRow(tempRow + 1);
+                        steinerPointSecond.setCellPointCol(startColGrid + 1);
+                        steinerPointSecond.setSteinerPointRow(tempRow + 1);
+                        steinerPointSecond.setSteinerPointCol(endColGrid + 1);
+//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
+                        lineSecond = true;
+                        break;
+                    }
+                }
+            }
+            //向上走
+            if (lineThird == false) {
+                for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                    bool lackSupply = false;
+                    for (int rightRow = tempRow; rightRow <= endRowGrid; rightRow++) {
+//                        cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][endColGrid]
+//                             << endl;
+                        if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][rightRow][endColGrid] <= 0) {
+                            lackSupply = true;
+                        }
+                    }
+                    if (lackSupply == false) {
+                        steinerPointThird.setLayer((*layerPowerVectorV)[layer]);
+                        steinerPointThird.setCellPointRow(tempRow + 1);
+                        steinerPointThird.setCellPointCol(endColGrid + 1);
+                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                             << " "
+//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+                        lineThird = true;
+                        break;
+                    }
+                }
+            }
+//            cout << "" << endl;
+            if (lineFirst == true and lineSecond == true and lineThird == true) {
+                if (countDistance(steinerPointFirst) > 1) {
+                    (*steinerLineVector).push_back(steinerPointFirst);
+                }
+                if (countDistance(steinerPointSecond) > 1) {
+                    (*steinerLineVector).push_back(steinerPointSecond);
+                }
+                if (countDistance(steinerPointThird) > 1) {
+                    (*steinerLineVector).push_back(steinerPointThird);
+                }
+                foundRoute = true;
+//                cout << "Steiner line vector :" << endl;
+//                for (int i = 0; i < steinerLineVector.size(); i++) {
+//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer() << endl;
+//                }
+                break;
+            }
+        }
+
+        if (foundRoute == false) {
+            // Right-Up-Right
+            for (int tempCol = startColGrid; tempCol <= endColGrid; tempCol++) {
+                bool lineFirst = false;
+                bool lineSecond = false;
+                bool lineThird = false;
+                if (lineFirst == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int downCol = startColGrid; downCol <= tempCol; downCol++) {
+//                            cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol]
+//                                 << endl;
+                            if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][startRowGrid][downCol] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointFirst.setLayer((*layerPowerVectorH)[layer]);
+                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
+                            steinerPointFirst.setCellPointCol(startColGrid + 1);
+                            steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
+                            steinerPointFirst.setSteinerPointCol(tempCol + 1);
+                            lineFirst = true;
+//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
+//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
+//                                 << endl;
+                            break;
+                        }
+                    }
+                }
+                if (lineSecond == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorV).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int row = startRowGrid; row <= endRowGrid; row++) {
+//                            cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
+                            if ((*gridVector)[((*layerPowerVectorV)[layer] - 1)][row][tempCol] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointSecond.setLayer((*layerPowerVectorV)[layer]);
+                            steinerPointSecond.setCellPointRow(startRowGrid + 1);
+                            steinerPointSecond.setCellPointCol(tempCol + 1);
+                            steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
+                            steinerPointSecond.setSteinerPointCol(tempCol + 1);
+//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
+//                                 << steinerPointSecond.getCellPointCol() << " "
+//                                 << steinerPointSecond.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
+//                                 << endl;
+                            lineSecond = true;
+                            break;
+                        }
+                    }
+                }
+                if (lineThird == false) {
+                    for (int layer = 0; layer < (*layerPowerVectorH).size(); layer++) {
+                        bool lackSupply = false;
+                        for (int upCol = tempCol; upCol <= endColGrid; upCol++) {
+//                            cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] << endl;
+                            if ((*gridVector)[((*layerPowerVectorH)[layer] - 1)][endRowGrid][upCol] <= 0) {
+                                lackSupply = true;
+                            }
+                        }
+                        if (lackSupply == false) {
+                            steinerPointThird.setLayer((*layerPowerVectorH)[layer]);
+                            steinerPointThird.setCellPointRow(endRowGrid + 1);
+                            steinerPointThird.setCellPointCol(tempCol + 1);
+                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+//                                 << " "
+//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
+//                                 << endl;
+                            lineThird = true;
+                            break;
+                        }
+                    }
+                }
+//                cout << "" << endl;
+                if (lineFirst == true and lineSecond == true and lineThird == true) {
+                    if (countDistance(steinerPointFirst) > 1) {
+                        (*steinerLineVector).push_back(steinerPointFirst);
+                    }
+                    if (countDistance(steinerPointSecond) > 1) {
+                        (*steinerLineVector).push_back(steinerPointSecond);
+                    }
+                    if (countDistance(steinerPointThird) > 1) {
+                        (*steinerLineVector).push_back(steinerPointThird);
+                    }
+                    foundRoute = true;
+//                    cout << "Steiner line vector :" << endl;
+//                    for (int i = 0; i < steinerLineVector.size(); i++) {
+//                        cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
+//                             << " " << steinerLineVector[i].getSteinerPointRow() << " "
+//                             << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
+//                             << endl;
+//                    }
+                    break;
+                }
+
+            }
+        }
+    }
+};
+
+
+
+
+
+//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+//        bool lackSupply = false;
+//        for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
+////                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
+////                             << endl;
+//            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
+//                lackSupply = true;
+//            }
+//        }
+//        if (lackSupply == false) {
+//            steinerPointThird.setLayer(layerPowerVectorH[layer]);
+//            steinerPointThird.setCellPointRow(endRowGrid + 1);
+//            steinerPointThird.setCellPointCol(tempCol + 1);
+//            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
+//            steinerPointThird.setSteinerPointCol(endColGrid + 1);
+////                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
+////                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
+////                             << " "
+////                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
+//            lineThird = true;
+//            break;
+//        }
+//
+//    }
+
+//void UPatternRouteV(int startRow, int endRow, int col, vector<SteinerPoint> *steinerLineVector,
+//                    vector<vector<vector<int>>> gridVector, vector<int> layerPowerVectorV,
+//                    vector<int> layerPowerVectorH) {
+//    //不用減 1 已經減好了
+//    bool canRoute = true;
+//
+//    //右 start U-pattern
+//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
+//
+//    }
+//
+//    //右 end U-pattern
+//
+//    //左 start U-pattern
+//
+//    //左 end U-pattern
+//
+//    //直 U-pattern
+//    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
+//        if (startRow < endRow) {
+//            for (int row = startRow; row <= endRow; row++) {
+//                if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
+//                    canRoute = false;
+//                }
+//            }
+//        } else {
+//            for (int row = endRow; row <= startRow; row++) {
+//                if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
+//                    canRoute = false;
+//                }
+//            }
+//
+//        }
+//    }
+//
+//
+//}
+
+//if (item.first == "N78" or item.first == "N792" or item.first == "N1661" or
+//item.first == "N1662" or item.first == "N1665" or item.first == "N1698" or
+//item.first == "N1701" or item.first == "N1743" or item.first == "N1838" or
+//item.first == "N1843" or item.first == "N1845" or item.first == "N1861" or
+//item.first== "N1885" or item.first == "N1934") {
+//myfile << "gridSupply : " << (*gridVector)[1 - 1][2 - 1][5 - 1] << endl;
+//}
+
+
+//            // layerMap
+//            cout << "layerMap :" << endl;
+//            for (auto const item : layerSteinerMap) {
+//                for (auto stei : item.second) {
+//                    cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow()
+//                         << " " << stei.getSteinerPointCol() << " " << stei.getLayer() << endl;
+//                }
+//            }
+//            cout << "" << endl;
+//
+//            cout << "point Map " << endl;
+//            for (auto const item : pointMap) {
+//                for (auto const str : item.second) {
+//                    cout << item.first << " " << str.first << endl;
+//                }
+//            }
+//            cout << "" << endl;
+//
+//            cout << "before route " << endl;
+//            for (Route route: (*routeVector)) {
+//                cout << "route line : " << route.getStartRowIndx() << " "
+//                     << route.getStartColIndx() << " " << route.getStartLayIndx()
+//                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()
+//                     << " "
+//                     << route.getNetName()
+//                     << endl;
+//            }
+//            cout << "" << endl;
+
+
+//        map<string, vector<SteinerPoint> > layerSteinerMap
+//                map<string, map<string, string>> pointMap;
+
+
 //    vector<vector<vector<int> > >
 //    reviseRouteSupply(vector<vector<vector<int> > > gridVector, vector<Route> numRoute, string revise) {
 //
@@ -696,1220 +1903,3 @@ public:
 //        return viaName;
 //    }
 
-
-    //取得Steiner point cellpoint 為起點 steinerPoint 為終點
-    void getSteinerPointRoute(Tree t, vector<SteinerPoint> *steinerLine ,vector<vector<vector<int> > > *gridVector,
-                         map<string, vector<int>> powerFactorMap, string minRoutingConstraint,
-                         map<string, vector<SteinerPoint>> *layerSteinerVector, string reRoute) {
-        vector<int> layerPowerVectorH;
-        vector<int> layerPowerVectorV;
-
-        //-------  miniRoutingConstraint  start -------
-        if (minRoutingConstraint != "NoCstr") {
-            minRoutingConstraint.erase(std::remove(minRoutingConstraint.begin(), minRoutingConstraint.end(), 'M'),
-                                       minRoutingConstraint.end());
-            int constraint = stoi(minRoutingConstraint);
-            for (int i = 0; i < powerFactorMap[HORIZONTAL].size(); i++) {
-                if (powerFactorMap[HORIZONTAL][i] >= constraint) {
-                    layerPowerVectorH.push_back(powerFactorMap[HORIZONTAL][i]);
-                }
-            }
-            for (int i = 0; i < powerFactorMap[VERTICAL].size(); i++) {
-                if (powerFactorMap[VERTICAL][i] >= constraint) {
-                    layerPowerVectorV.push_back(powerFactorMap[VERTICAL][i]);
-                }
-            }
-        } else {
-            layerPowerVectorH = powerFactorMap[HORIZONTAL];
-            layerPowerVectorV = powerFactorMap[VERTICAL];
-        }
-        //-------  miniRoutingConstraint  end -------
-
-
-        //-------  routing by steiner point  start -------
-        bool isValidRoute = true;
-        for (int i = 0; i < 2 * t.deg - 2; i++) {
-//            string coordinate = to_string(t.branch[i].x) + "_" + to_string(t.branch[i].y);
-            int steinerPointRow = t.branch[t.branch[i].n].x;
-            int steinerPointCol = t.branch[t.branch[i].n].y;
-            int cellPointRow = t.branch[i].x;
-            int cellPointCol = t.branch[i].y;
-            int routeLayer;
-
-//            cout << "steiner point : " << cellPointRow << " " << cellPointCol  << " " << steinerPointRow << " " << steinerPointCol  << endl;
-            if (steinerPointRow == cellPointRow and steinerPointCol != cellPointCol) {
-                int rowGrid = steinerPointRow - 1;
-                int startColGrid = cellPointCol - 1;
-                int endColGrid = steinerPointCol - 1;
-                if (startColGrid < endColGrid) {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool canRoute = true;
-                        for (int col = startColGrid; col <= endColGrid; col++) {
-//                            cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
-                            if ((*gridVector)[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
-                                canRoute = false;
-                                isValidRoute = false;
-                            }
-                        }
-                        if (canRoute) {
-                            routeLayer = layerPowerVectorH[layer];
-                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
-                                                      cellPointCol, routeLayer);
-//                           steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
-                            (*steinerLine).push_back(steinerPoint);
-                            break;
-                        }
-                    }
-
-                } else {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool canRoute = true;
-                        for (int col = startColGrid; col >= endColGrid; col--) {
-//                            std::cout << gridVector[(layerPowerVectorH[layer] - 1)][rowGrid][col] << " ";
-                            if ((*gridVector)[(layerPowerVectorH[layer] - 1)][rowGrid][col] <= 0) {
-                                canRoute = false;
-                                isValidRoute = false;
-                            }
-                        }
-                        if (canRoute) {
-                            routeLayer = layerPowerVectorH[layer];
-                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
-                                                      cellPointCol, routeLayer);
-//                            steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
-                            (*steinerLine).push_back(steinerPoint);
-                            break;
-                        }
-                    }
-//                    cout << "" << endl;
-                }
-                // 如果都不能繞線，要在這裡面做give up route
-            } else if (steinerPointCol == cellPointCol and steinerPointRow != cellPointRow) {
-                int colGrid = cellPointCol - 1;
-                int startRowGrid = cellPointRow - 1;
-                int endRowGrid = steinerPointRow - 1;
-                if (startRowGrid < endRowGrid) {
-                    bool canRoute = true;
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        for (int row = startRowGrid; row <= endRowGrid; row++) {
-                            if ((*gridVector)[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
-                                canRoute = false;
-                                isValidRoute = false;
-                            }
-                        }
-                        if (canRoute) {
-                            routeLayer = layerPowerVectorV[layer];
-                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
-                                                      cellPointCol, routeLayer);
-//                            steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
-                            (*steinerLine).push_back(steinerPoint);
-                            break;
-                        }
-                    }
-                } else {
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        bool canRoute = true;
-                        for (int row = startRowGrid; row >= endRowGrid; row--) {
-//                            std::cout << gridVector[(layerPowerVectorV[layer] - 1)][row][colGrid] << " ";
-                            if ((*gridVector)[(layerPowerVectorV[layer] - 1)][row][colGrid] <= 0) {
-                                canRoute = false;
-                                isValidRoute = false;
-                            }
-                        }
-                        if (canRoute) {
-                            routeLayer = layerPowerVectorV[layer];
-                            SteinerPoint steinerPoint(steinerPointRow, steinerPointCol, cellPointRow,
-                                                      cellPointCol, routeLayer);
-//                            steinerMap.insert(pair<string, SteinerPoint>(coordinate, steinerPoint));
-                            (*steinerLine).push_back(steinerPoint);
-                            break;
-                        }
-                    }
-//                    cout << "" << endl;
-                }
-            } else if (steinerPointCol == cellPointCol and steinerPointRow == cellPointRow) {
-                //之後可以使用pointMap 這個點去做
-//                cout << "cellPointCol and steinerPointCol is on same Point" << endl;
-            } else {
-                // Z-pattern route L-pattern route
-//                cout << "get in side z pattern " << endl;
-                int startRowGrid = cellPointRow - 1;
-                int startColGrid = cellPointCol - 1;
-                int endRowGrid = steinerPointRow - 1;
-                int endColGrid = steinerPointCol - 1;
-//                cout << "cell : " << cellPointRow << " " << cellPointCol << " steinerPoint : " << steinerPointRow << " "
-//                     << steinerPointCol << endl;
-//                cout << " Cell to SteinerPoint" << endl;
-                if (steinerPointRow > cellPointRow and steinerPointCol > cellPointCol) {
-//                    cout << "bottomLeftToTopRight" << endl;
-                    //左下到右上
-                    int oriSize = (*steinerLine).size();
-                    (*steinerLine) = bottomLeftToTopRight((*steinerLine), startRowGrid, endRowGrid, startColGrid,
-                                                             endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             (*gridVector));
-                    int afterSize = (*steinerLine).size();
-                    if (oriSize == afterSize) {
-                        isValidRoute = false;
-                    }
-                } else if (steinerPointRow > cellPointRow and steinerPointCol < cellPointCol) {
-//                    cout << "bottomRightToTopLeft" << endl;
-                    //右下到左上
-                    int oriSize = (*steinerLine).size();
-                    (*steinerLine) = bottomRightToTopLeft((*steinerLine), startRowGrid, endRowGrid, startColGrid,
-                                                             endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             (*gridVector));
-                    int afterSize = (*steinerLine).size();
-                    if (oriSize == afterSize) {
-                        isValidRoute = false;
-                    }
-                } else if (steinerPointRow < cellPointRow and steinerPointCol > cellPointCol) {
-//                    cout << "topLeftToBottomRight" << endl;
-                    //左上到右下
-                    int oriSize = (*steinerLine).size();
-                    (*steinerLine) = topLeftToBottomRight((*steinerLine), startRowGrid, endRowGrid, startColGrid,
-                                                             endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             (*gridVector));
-                    int afterSize = (*steinerLine).size();
-                    if (oriSize == afterSize) {
-                        isValidRoute = false;
-                    }
-
-                } else {
-//                    cout << "topRightToBottomLeft" << endl;
-                    //右上到左下
-                    int oriSize = (*steinerLine).size();
-                    (*steinerLine) = topRightToBottomLeft((*steinerLine), startRowGrid, endRowGrid, startColGrid,
-                                                             endColGrid, layerPowerVectorV, layerPowerVectorH,
-                                                             (*gridVector));
-                    int afterSize = (*steinerLine).size();
-                    if (oriSize == afterSize) {
-                        isValidRoute = false;
-                    }
-                }
-            }
-        }
-        //-------  routing by steiner point  end -------
-        if (isValidRoute == false) {
-            (*steinerLine).clear();
-        }
-    }
-
-
-    vector<SteinerPoint>
-    topRightToBottomLeft(vector<SteinerPoint> steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
-                         int endColGrid, vector<int> layerPowerVectorV, vector<int> layerPowerVectorH,
-                         vector<vector<vector<int> > > gridVector) {
-        SteinerPoint steinerPointFirst;
-        SteinerPoint steinerPointSecond;
-        SteinerPoint steinerPointThird;
-        bool foundRoute = false;
-        //down-left-down
-        for (int tempCol = startColGrid; tempCol >= endColGrid; tempCol--) {
-            bool lineFirst = false;
-            bool lineSecond = false;
-            bool lineThird = false;
-
-            if (lineFirst == false) {
-                for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int upCol = startColGrid; upCol >= tempCol; upCol--) {
-//                        cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] << endl;
-                        if (gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointFirst.setLayer(layerPowerVectorH[layer]);
-                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                        steinerPointFirst.setCellPointCol(startColGrid + 1);
-                        steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
-                        steinerPointFirst.setSteinerPointCol(tempCol + 1);
-                        lineFirst = true;
-//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
-                        break;
-                    }
-                }
-            }
-
-            if (lineSecond == false) {
-                for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int row = startRowGrid; row >= endRowGrid; row--) {
-//                        cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
-                        if (gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointSecond.setLayer(layerPowerVectorV[layer]);
-                        steinerPointSecond.setCellPointRow(startRowGrid + 1);
-                        steinerPointSecond.setCellPointCol(tempCol + 1);
-                        steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
-                        steinerPointSecond.setSteinerPointCol(tempCol + 1);
-//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
-                        lineSecond = true;
-                        break;
-                    }
-                }
-            }
-            if (lineThird == false) {
-                for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
-//                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
-//                             << endl;
-                        if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointThird.setLayer(layerPowerVectorH[layer]);
-                        steinerPointThird.setCellPointRow(endRowGrid + 1);
-                        steinerPointThird.setCellPointCol(tempCol + 1);
-                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
-                        lineThird = true;
-                        break;
-                    }
-
-                }
-            }
-            if (lineFirst == true and lineSecond == true and lineThird == true) {
-                if (countDistance(steinerPointFirst) > 1) {
-                    steinerLineVector.push_back(steinerPointFirst);
-                }
-                if (countDistance(steinerPointSecond) > 1) {
-                    steinerLineVector.push_back(steinerPointSecond);
-                }
-                if (countDistance(steinerPointThird) > 1) {
-                    steinerLineVector.push_back(steinerPointThird);
-                }
-                foundRoute = true;
-//                cout << "Steiner line vector :" << endl;
-//                for (int i = 0; i < steinerLineVector.size(); i++) {
-//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer() << endl;
-//                }
-                break;
-            }
-        }
-        if (foundRoute == false) {
-            //Right-H-Right
-            for (int tempRow = startRowGrid; tempRow >= endRowGrid; tempRow--) {
-                bool lineFirst = false;
-                bool lineSecond = false;
-                bool lineThird = false;
-
-                if (lineFirst == false) {
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int rightRow = startRowGrid; rightRow >= tempRow; rightRow--) {
-//                            cout << "left :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][startColGrid]
-//                                 << endl;
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][rightRow][startColGrid] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointFirst.setLayer(layerPowerVectorV[layer]);
-                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                            steinerPointFirst.setCellPointCol(startColGrid + 1);
-                            steinerPointFirst.setSteinerPointRow(tempRow + 1);
-                            steinerPointFirst.setSteinerPointCol(startColGrid + 1);
-                            lineFirst = true;
-//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
-//                                 << endl;
-                            break;
-                        }
-                    }
-                }
-
-                if (lineSecond == false) {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int col = startColGrid; col >= endColGrid; col--) {
-//                            cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointSecond.setLayer(layerPowerVectorH[layer]);
-                            steinerPointSecond.setCellPointRow(tempRow + 1);
-                            steinerPointSecond.setCellPointCol(startColGrid + 1);
-                            steinerPointSecond.setSteinerPointRow(tempRow + 1);
-                            steinerPointSecond.setSteinerPointCol(endColGrid + 1);
-//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                                 << steinerPointSecond.getCellPointCol() << " "
-//                                 << steinerPointSecond.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
-//                                 << endl;
-                            lineSecond = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (lineThird == false) {
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int leftRow = tempRow; leftRow >= endRowGrid; leftRow--) {
-//                            cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][leftRow][endColGrid]
-//                                 << endl;
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][leftRow][endColGrid] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointThird.setLayer(layerPowerVectorV[layer]);
-                            steinerPointThird.setCellPointRow(tempRow + 1);
-                            steinerPointThird.setCellPointCol(endColGrid + 1);
-                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
-//                                 << endl;
-                            lineThird = true;
-                            break;
-                        }
-                    }
-                }
-//                cout << "" << endl;
-                if (lineFirst == true and lineSecond == true and lineThird == true) {
-                    if (countDistance(steinerPointFirst) > 1) {
-                        steinerLineVector.push_back(steinerPointFirst);
-                    }
-                    if (countDistance(steinerPointSecond) > 1) {
-                        steinerLineVector.push_back(steinerPointSecond);
-                    }
-                    if (countDistance(steinerPointThird) > 1) {
-                        steinerLineVector.push_back(steinerPointThird);
-                    }
-                    foundRoute = true;
-//                    cout << "Steiner line vector :" << endl;
-//                    for (int i = 0; i < steinerLineVector.size(); i++) {
-//                        cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                             << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                             << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
-//                             << endl;
-//                    }
-                    break;
-                }
-            }
-        }
-
-        return steinerLineVector;
-    }
-
-
-    vector<SteinerPoint>
-    topLeftToBottomRight(vector<SteinerPoint> steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
-                         int endColGrid, vector<int> layerPowerVectorV, vector<int> layerPowerVectorH,
-                         vector<vector<vector<int>>> gridVector) {
-        SteinerPoint steinerPointFirst;
-        SteinerPoint steinerPointSecond;
-        SteinerPoint steinerPointThird;
-        bool foundRoute = false;
-
-        //Right-down-Right
-        for (int tempCol = startColGrid; tempCol <= endColGrid; tempCol++) {
-            bool lineFirst = false;
-            bool lineSecond = false;
-            bool lineThird = false;
-            //
-            if (lineFirst == false) {
-                for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int upCol = startColGrid; upCol <= tempCol; upCol++) {
-//                        cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] << endl;
-                        if (gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][upCol] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointFirst.setLayer(layerPowerVectorH[layer]);
-                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                        steinerPointFirst.setCellPointCol(startColGrid + 1);
-                        steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
-                        steinerPointFirst.setSteinerPointCol(tempCol + 1);
-                        lineFirst = true;
-//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
-                        break;
-                    }
-                }
-            }
-
-            if (lineSecond == false) {
-                for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int row = startRowGrid; row >= endRowGrid; row--) {
-//                        cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
-                        if (gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointSecond.setLayer(layerPowerVectorV[layer]);
-                        steinerPointSecond.setCellPointRow(startRowGrid + 1);
-                        steinerPointSecond.setCellPointCol(tempCol + 1);
-                        steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
-                        steinerPointSecond.setSteinerPointCol(tempCol + 1);
-//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
-                        lineSecond = true;
-                        break;
-                    }
-                }
-            }
-
-            if (lineThird == false) {
-                for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int downCol = tempCol; downCol <= endColGrid; downCol++) {
-//                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
-//                             << endl;
-                        if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointThird.setLayer(layerPowerVectorH[layer]);
-                        steinerPointThird.setCellPointRow(endRowGrid + 1);
-                        steinerPointThird.setCellPointCol(tempCol + 1);
-                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
-                        lineThird = true;
-                        break;
-                    }
-                }
-            }
-//            cout << "" << endl;
-            if (lineFirst == true and lineSecond == true and lineThird == true) {
-                if (countDistance(steinerPointFirst) > 1) {
-                    steinerLineVector.push_back(steinerPointFirst);
-                }
-                if (countDistance(steinerPointSecond) > 1) {
-                    steinerLineVector.push_back(steinerPointSecond);
-                }
-                if (countDistance(steinerPointThird) > 1) {
-                    steinerLineVector.push_back(steinerPointThird);
-                }
-                foundRoute = true;
-//                cout << "Steiner line vector :" << endl;
-//                for (int i = 0; i < steinerLineVector.size(); i++) {
-//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
-//                         << endl;
-//                }
-                break;
-            }
-        }
-
-
-        if (foundRoute == false) {
-            //down-Right-down
-            for (int tempRow = startRowGrid; tempRow >= endRowGrid; tempRow--) {
-                bool lineFirst = false;
-                bool lineSecond = false;
-                bool lineThird = false;
-                if (lineFirst == false) {
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int leftRow = startRowGrid; leftRow >= tempRow; leftRow--) {
-//                            cout << "left :" << gridVector[(layerPowerVectorV[layer] - 1)][leftRow][startColGrid]
-//                                 << endl;
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][leftRow][startColGrid] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointFirst.setLayer(layerPowerVectorV[layer]);
-                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                            steinerPointFirst.setCellPointCol(startColGrid + 1);
-                            steinerPointFirst.setSteinerPointRow(tempRow + 1);
-                            steinerPointFirst.setSteinerPointCol(startColGrid + 1);
-                            lineFirst = true;
-//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
-//                                 << endl;
-                            break;
-                        }
-                    }
-                }
-
-
-                if (lineSecond == false) {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int col = startColGrid; col <= endColGrid; col++) {
-//                            cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointSecond.setLayer(layerPowerVectorH[layer]);
-                            steinerPointSecond.setCellPointRow(startRowGrid + 1);
-                            steinerPointSecond.setCellPointCol(startColGrid + 1);
-                            steinerPointSecond.setSteinerPointRow(tempRow + 1);
-                            steinerPointSecond.setSteinerPointCol(endColGrid + 1);
-//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                                 << steinerPointSecond.getCellPointCol() << " "
-//                                 << steinerPointSecond.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
-//                                 << endl;
-                            lineSecond = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (lineThird == false) {
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int rightRow = tempRow; rightRow >= endRowGrid; rightRow--) {
-//                            cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][endColGrid]
-//                                 << endl;
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][rightRow][endColGrid] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointThird.setLayer(layerPowerVectorV[layer]);
-                            steinerPointThird.setCellPointRow(tempRow + 1);
-                            steinerPointThird.setCellPointCol(endColGrid + 1);
-                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
-//                                 << endl;
-                            lineThird = true;
-                            break;
-                        }
-                    }
-                    if (lineFirst == true and lineSecond == true and lineThird == true) {
-                        if (countDistance(steinerPointFirst) > 1) {
-                            steinerLineVector.push_back(steinerPointFirst);
-                        }
-                        if (countDistance(steinerPointSecond) > 1) {
-                            steinerLineVector.push_back(steinerPointSecond);
-                        }
-                        if (countDistance(steinerPointThird) > 1) {
-                            steinerLineVector.push_back(steinerPointThird);
-                        }
-                        foundRoute = true;
-//                        cout << "Steiner line vector :" << endl;
-//                        for (int i = 0; i < steinerLineVector.size(); i++) {
-//                            cout << steinerLineVector[i].getCellPointRow() << " "
-//                                 << steinerLineVector[i].getCellPointCol()
-//                                 << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                                 << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
-//                                 << endl;
-//                        }
-                        break;
-                    }
-                }
-//                cout << "" << endl;
-            }
-        }
-
-        return steinerLineVector;
-
-    }
-
-
-    vector<SteinerPoint>
-    bottomRightToTopLeft(vector<SteinerPoint> steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
-                         int endColGrid, vector<int> layerPowerVectorV, vector<int> layerPowerVectorH,
-                         vector<vector<vector<int>>
-
-                         > gridVector) {
-        SteinerPoint steinerPointFirst;
-        SteinerPoint steinerPointSecond;
-        SteinerPoint steinerPointThird;
-        bool foundRoute = false;
-        //右下到左上
-//        cout << " Bottom right to top left" << endl;
-        //Up-Right-Up
-        for (int tempRow = startRowGrid; tempRow <= endRowGrid; tempRow++) {
-            bool lineFirst = false;
-            bool lineSecond = false;
-            bool lineThird = false;
-            if (lineFirst == false) {
-                for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int rightRow = startRowGrid; rightRow <= tempRow; rightRow++) {
-//                        cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][startColGrid]
-//                             << endl;
-                        if (gridVector[(layerPowerVectorV[layer] - 1)][rightRow][startColGrid] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointFirst.setLayer(layerPowerVectorV[layer]);
-                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                        steinerPointFirst.setCellPointCol(startColGrid + 1);
-                        steinerPointFirst.setSteinerPointRow(tempRow + 1);
-                        steinerPointFirst.setSteinerPointCol(startColGrid + 1);
-                        lineFirst = true;
-//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
-                        break;
-                    }
-                }
-            }
-
-            if (lineSecond == false) {
-                for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int col = startColGrid; col >= endColGrid; col--) {
-//                        cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
-                        if (gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointSecond.setLayer(layerPowerVectorH[layer]);
-                        steinerPointSecond.setCellPointRow(tempRow + 1);
-                        steinerPointSecond.setCellPointCol(startColGrid + 1);
-                        steinerPointSecond.setSteinerPointRow(tempRow + 1);
-                        steinerPointSecond.setSteinerPointCol(endColGrid + 1);
-//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
-                        lineSecond = true;
-                        break;
-                    }
-                }
-            }
-
-            if (lineThird == false) {
-                for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int leftRow = tempRow; leftRow <= endRowGrid; leftRow++) {
-//                        cout << "left :" << gridVector[(layerPowerVectorV[layer] - 1)][leftRow][endColGrid]
-//                             << endl;
-                        if (gridVector[(layerPowerVectorV[layer] - 1)][leftRow][endColGrid] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointThird.setLayer(layerPowerVectorV[layer]);
-                        steinerPointThird.setCellPointRow(tempRow + 1);
-                        steinerPointThird.setCellPointCol(endColGrid + 1);
-                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
-                        lineThird = true;
-                        break;
-                    }
-                }
-            }
-
-//            cout << "" << endl;
-            if (lineFirst == true and lineSecond == true and lineThird == true) {
-                if (countDistance(steinerPointFirst) > 1) {
-                    steinerLineVector.push_back(steinerPointFirst);
-                }
-                if (countDistance(steinerPointSecond) > 1) {
-                    steinerLineVector.push_back(steinerPointSecond);
-                }
-                if (countDistance(steinerPointThird) > 1) {
-                    steinerLineVector.push_back(steinerPointThird);
-                }
-                foundRoute = true;
-//                cout << "Steiner line vector :" << endl;
-//                for (int i = 0; i < steinerLineVector.size(); i++) {
-//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer() << endl;
-//                }
-                break;
-            }
-        }
-
-        if (foundRoute == false) {
-            //Right-Up-Right
-            for (int tempCol = startColGrid; tempCol >= endColGrid; tempCol--) {
-                bool lineFirst = false;
-                bool lineSecond = false;
-                bool lineThird = false;
-
-                if (lineFirst == false) {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int downCol = startColGrid; downCol >= tempCol; downCol--) {
-//                            cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol]
-//                                 << endl;
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointFirst.setLayer(layerPowerVectorH[layer]);
-                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                            steinerPointFirst.setCellPointCol(startColGrid + 1);
-                            steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
-                            steinerPointFirst.setSteinerPointCol(tempCol + 1);
-                            lineFirst = true;
-//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
-//                                 << endl;
-                            break;
-                        }
-                    }
-                }
-
-                if (lineSecond == false) {
-                    bool lackSupply = false;
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        for (int row = startRowGrid; row <= endRowGrid; row++) {
-//                            cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointSecond.setLayer(layerPowerVectorV[layer]);
-                            steinerPointSecond.setCellPointRow(startRowGrid + 1);
-                            steinerPointSecond.setCellPointCol(tempCol + 1);
-                            steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
-                            steinerPointSecond.setSteinerPointCol(tempCol + 1);
-//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                                 << steinerPointSecond.getCellPointCol() << " "
-//                                 << steinerPointSecond.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
-//                                 << endl;
-                            lineSecond = true;
-                            break;
-                        }
-                    }
-                }
-
-
-                if (lineThird == false) {
-                    bool lackSupply = false;
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        for (int upCol = tempCol; upCol >= endColGrid; upCol--) {
-//                            cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] << endl;
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-
-                        if (lackSupply == false) {
-                            steinerPointThird.setLayer(layerPowerVectorH[layer]);
-                            steinerPointThird.setCellPointRow(endRowGrid + 1);
-                            steinerPointThird.setCellPointCol(tempCol + 1);
-                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
-//                                 << endl;
-                            lineThird = true;
-                            break;
-                        }
-                    }
-                }
-//                cout << "" << endl;
-                if (lineFirst == true and lineSecond == true and lineThird == true) {
-                    if (countDistance(steinerPointFirst) > 1) {
-                        steinerLineVector.push_back(steinerPointFirst);
-                    }
-                    if (countDistance(steinerPointSecond) > 1) {
-                        steinerLineVector.push_back(steinerPointSecond);
-                    }
-                    if (countDistance(steinerPointThird) > 1) {
-                        steinerLineVector.push_back(steinerPointThird);
-                    }
-                    foundRoute = true;
-//                    cout << "Steiner line vector :" << endl;
-//                    for (int i = 0; i < steinerLineVector.size(); i++) {
-//                        cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                             << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                             << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
-//                             << endl;
-//                    }
-                    break;
-                }
-            }
-        }
-        return steinerLineVector;
-    }
-
-
-    vector<SteinerPoint>
-    bottomLeftToTopRight(vector<SteinerPoint> steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
-                         int endColGrid, vector<int> layerPowerVectorV, vector<int> layerPowerVectorH,
-                         vector<vector<vector<int>>> gridVector) {
-        SteinerPoint steinerPointFirst;
-        SteinerPoint steinerPointSecond;
-        SteinerPoint steinerPointThird;
-        bool foundRoute = false;
-        //Up-Right-Up
-        //向上走 每換一次Row 代表 換不同的 pattern route 的 方法
-        for (int tempRow = startRowGrid; tempRow <= endRowGrid; tempRow++) {
-            bool lineFirst = false;
-            bool lineSecond = false;
-            bool lineThird = false;
-            //當此pattern 可以找到不同層的線，即可完成pattern Route
-            if (lineFirst == false) {
-                for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int leftRow = startRowGrid; leftRow <= tempRow; leftRow++) {
-//                        cout << "left :" << gridVector[(layerPowerVectorV[layer]) - 1][leftRow][startColGrid] << endl;
-                        if (gridVector[(layerPowerVectorV[layer] - 1)][leftRow][startColGrid] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointFirst.setLayer(layerPowerVectorV[layer]);
-                        steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                        steinerPointFirst.setCellPointCol(startColGrid + 1);
-                        steinerPointFirst.setSteinerPointRow(tempRow + 1);
-                        steinerPointFirst.setSteinerPointCol(startColGrid + 1);
-                        lineFirst = true;
-//                        cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                             << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer() << endl;
-                        break;
-                    }
-                }
-            }
-            //向右走
-            if (lineSecond == false) {
-                for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int col = startColGrid; col <= endColGrid; col++) {
-//                        cout << "H :" << gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] << endl;
-                        if (gridVector[(layerPowerVectorH[layer] - 1)][tempRow][col] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointSecond.setLayer(layerPowerVectorH[layer]);
-                        steinerPointSecond.setCellPointRow(tempRow + 1);
-                        steinerPointSecond.setCellPointCol(startColGrid + 1);
-                        steinerPointSecond.setSteinerPointRow(tempRow + 1);
-                        steinerPointSecond.setSteinerPointCol(endColGrid + 1);
-//                        cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                             << steinerPointSecond.getCellPointCol() << " " << steinerPointSecond.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer() << endl;
-                        lineSecond = true;
-                        break;
-                    }
-                }
-            }
-            //向上走
-            if (lineThird == false) {
-                for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                    bool lackSupply = false;
-                    for (int rightRow = tempRow; rightRow <= endRowGrid; rightRow++) {
-//                        cout << "right :" << gridVector[(layerPowerVectorV[layer] - 1)][rightRow][endColGrid]
-//                             << endl;
-                        if (gridVector[(layerPowerVectorV[layer] - 1)][rightRow][endColGrid] <= 0) {
-                            lackSupply = true;
-                        }
-                    }
-                    if (lackSupply == false) {
-                        steinerPointThird.setLayer(layerPowerVectorV[layer]);
-                        steinerPointThird.setCellPointRow(tempRow + 1);
-                        steinerPointThird.setCellPointCol(endColGrid + 1);
-                        steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                        steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                             << " "
-//                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
-                        lineThird = true;
-                        break;
-                    }
-                }
-            }
-//            cout << "" << endl;
-            if (lineFirst == true and lineSecond == true and lineThird == true) {
-                if (countDistance(steinerPointFirst) > 1) {
-                    steinerLineVector.push_back(steinerPointFirst);
-                }
-                if (countDistance(steinerPointSecond) > 1) {
-                    steinerLineVector.push_back(steinerPointSecond);
-                }
-                if (countDistance(steinerPointThird) > 1) {
-                    steinerLineVector.push_back(steinerPointThird);
-                }
-                foundRoute = true;
-//                cout << "Steiner line vector :" << endl;
-//                for (int i = 0; i < steinerLineVector.size(); i++) {
-//                    cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                         << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                         << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer() << endl;
-//                }
-                break;
-            }
-        }
-
-        if (foundRoute == false) {
-            // Right-Up-Right
-            for (int tempCol = startColGrid; tempCol <= endColGrid; tempCol++) {
-                bool lineFirst = false;
-                bool lineSecond = false;
-                bool lineThird = false;
-                if (lineFirst == false) {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int downCol = startColGrid; downCol <= tempCol; downCol++) {
-//                            cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol]
-//                                 << endl;
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][startRowGrid][downCol] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointFirst.setLayer(layerPowerVectorH[layer]);
-                            steinerPointFirst.setCellPointRow(startRowGrid + 1);
-                            steinerPointFirst.setCellPointCol(startColGrid + 1);
-                            steinerPointFirst.setSteinerPointRow(startRowGrid + 1);
-                            steinerPointFirst.setSteinerPointCol(tempCol + 1);
-                            lineFirst = true;
-//                            cout << "Steiner line : " << steinerPointFirst.getCellPointRow() << " "
-//                                 << steinerPointFirst.getCellPointCol() << " " << steinerPointFirst.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointFirst.getSteinerPointCol() << " " << steinerPointFirst.getLayer()
-//                                 << endl;
-                            break;
-                        }
-                    }
-                }
-                if (lineSecond == false) {
-                    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int row = startRowGrid; row <= endRowGrid; row++) {
-//                            cout << "V :" << gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] << endl;
-                            if (gridVector[(layerPowerVectorV[layer] - 1)][row][tempCol] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointSecond.setLayer(layerPowerVectorV[layer]);
-                            steinerPointSecond.setCellPointRow(startRowGrid + 1);
-                            steinerPointSecond.setCellPointCol(tempCol + 1);
-                            steinerPointSecond.setSteinerPointRow(endRowGrid + 1);
-                            steinerPointSecond.setSteinerPointCol(tempCol + 1);
-//                            cout << "Steiner line : " << steinerPointSecond.getCellPointRow() << " "
-//                                 << steinerPointSecond.getCellPointCol() << " "
-//                                 << steinerPointSecond.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointSecond.getSteinerPointCol() << " " << steinerPointSecond.getLayer()
-//                                 << endl;
-                            lineSecond = true;
-                            break;
-                        }
-                    }
-                }
-                if (lineThird == false) {
-                    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-                        bool lackSupply = false;
-                        for (int upCol = tempCol; upCol <= endColGrid; upCol++) {
-//                            cout << "up :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] << endl;
-                            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][upCol] <= 0) {
-                                lackSupply = true;
-                            }
-                        }
-                        if (lackSupply == false) {
-                            steinerPointThird.setLayer(layerPowerVectorH[layer]);
-                            steinerPointThird.setCellPointRow(endRowGrid + 1);
-                            steinerPointThird.setCellPointCol(tempCol + 1);
-                            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-                            steinerPointThird.setSteinerPointCol(endColGrid + 1);
-//                            cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-//                                 << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-//                                 << " "
-//                                 << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer()
-//                                 << endl;
-                            lineThird = true;
-                            break;
-                        }
-                    }
-                }
-//                cout << "" << endl;
-                if (lineFirst == true and lineSecond == true and lineThird == true) {
-                    if (countDistance(steinerPointFirst) > 1) {
-                        steinerLineVector.push_back(steinerPointFirst);
-                    }
-                    if (countDistance(steinerPointSecond) > 1) {
-                        steinerLineVector.push_back(steinerPointSecond);
-                    }
-                    if (countDistance(steinerPointThird) > 1) {
-                        steinerLineVector.push_back(steinerPointThird);
-                    }
-                    foundRoute = true;
-//                    cout << "Steiner line vector :" << endl;
-//                    for (int i = 0; i < steinerLineVector.size(); i++) {
-//                        cout << steinerLineVector[i].getCellPointRow() << " " << steinerLineVector[i].getCellPointCol()
-//                             << " " << steinerLineVector[i].getSteinerPointRow() << " "
-//                             << steinerLineVector[i].getSteinerPointCol() << " " << steinerLineVector[i].getLayer()
-//                             << endl;
-//                    }
-                    break;
-                }
-
-            }
-        }
-        return steinerLineVector;
-    }
-
-
-};
-
-
-
-
-
-//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-//        bool lackSupply = false;
-//        for (int downCol = tempCol; downCol >= endColGrid; downCol--) {
-////                        cout << "down :" << gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol]
-////                             << endl;
-//            if (gridVector[(layerPowerVectorH[layer] - 1)][endRowGrid][downCol] <= 0) {
-//                lackSupply = true;
-//            }
-//        }
-//        if (lackSupply == false) {
-//            steinerPointThird.setLayer(layerPowerVectorH[layer]);
-//            steinerPointThird.setCellPointRow(endRowGrid + 1);
-//            steinerPointThird.setCellPointCol(tempCol + 1);
-//            steinerPointThird.setSteinerPointRow(endRowGrid + 1);
-//            steinerPointThird.setSteinerPointCol(endColGrid + 1);
-////                        cout << "Steiner line : " << steinerPointThird.getCellPointRow() << " "
-////                             << steinerPointThird.getCellPointCol() << " " << steinerPointThird.getSteinerPointRow()
-////                             << " "
-////                             << steinerPointThird.getSteinerPointCol() << " " << steinerPointThird.getLayer() << endl;
-//            lineThird = true;
-//            break;
-//        }
-//
-//    }
-
-//void UPatternRouteV(int startRow, int endRow, int col, vector<SteinerPoint> *steinerLineVector,
-//                    vector<vector<vector<int>>> gridVector, vector<int> layerPowerVectorV,
-//                    vector<int> layerPowerVectorH) {
-//    //不用減 1 已經減好了
-//    bool canRoute = true;
-//
-//    //右 start U-pattern
-//    for (int layer = 0; layer < layerPowerVectorH.size(); layer++) {
-//
-//    }
-//
-//    //右 end U-pattern
-//
-//    //左 start U-pattern
-//
-//    //左 end U-pattern
-//
-//    //直 U-pattern
-//    for (int layer = 0; layer < layerPowerVectorV.size(); layer++) {
-//        if (startRow < endRow) {
-//            for (int row = startRow; row <= endRow; row++) {
-//                if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
-//                    canRoute = false;
-//                }
-//            }
-//        } else {
-//            for (int row = endRow; row <= startRow; row++) {
-//                if (gridVector[(layerPowerVectorV[layer] - 1)][row][col] <= 0) {
-//                    canRoute = false;
-//                }
-//            }
-//
-//        }
-//    }
-//
-//
-//}
-
-//if (item.first == "N78" or item.first == "N792" or item.first == "N1661" or
-//item.first == "N1662" or item.first == "N1665" or item.first == "N1698" or
-//item.first == "N1701" or item.first == "N1743" or item.first == "N1838" or
-//item.first == "N1843" or item.first == "N1845" or item.first == "N1861" or
-//item.first== "N1885" or item.first == "N1934") {
-//myfile << "gridSupply : " << (*gridVector)[1 - 1][2 - 1][5 - 1] << endl;
-//}
-
-
-//            // layerMap
-//            cout << "layerMap :" << endl;
-//            for (auto const item : layerSteinerMap) {
-//                for (auto stei : item.second) {
-//                    cout << stei.getCellPointRow() << " " << stei.getCellPointCol() << " " << stei.getSteinerPointRow()
-//                         << " " << stei.getSteinerPointCol() << " " << stei.getLayer() << endl;
-//                }
-//            }
-//            cout << "" << endl;
-//
-//            cout << "point Map " << endl;
-//            for (auto const item : pointMap) {
-//                for (auto const str : item.second) {
-//                    cout << item.first << " " << str.first << endl;
-//                }
-//            }
-//            cout << "" << endl;
-//
-//            cout << "before route " << endl;
-//            for (Route route: (*routeVector)) {
-//                cout << "route line : " << route.getStartRowIndx() << " "
-//                     << route.getStartColIndx() << " " << route.getStartLayIndx()
-//                     << " " << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx()
-//                     << " "
-//                     << route.getNetName()
-//                     << endl;
-//            }
-//            cout << "" << endl;
-
-
-//        map<string, vector<SteinerPoint> > layerSteinerMap
-//                map<string, map<string, string>> pointMap;
