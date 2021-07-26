@@ -65,6 +65,7 @@ CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../Header/SteinerPoint.h
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../Header/VoltageArea.h
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../Util/Constant.h
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../Util/ReRoute.cpp
+CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../Util/ReRoute.h
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../flute/flute.h
 
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Header/Blockage.h
@@ -80,6 +81,7 @@ CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Header/Route.h
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Header/VoltageArea.h
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/Constant.h
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/ReadFile.cpp
+CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/ReadFile.h
 
 CMakeFiles/Cell_Movement.dir/Util/Util.cpp.o: ../Util/Util.cpp
 
@@ -134,8 +136,8 @@ CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Header/SteinerPoint.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Header/VoltageArea.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/Constant.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/Evaluation.cpp
-CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/ReRoute.cpp
-CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/ReadFile.cpp
+CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/ReRoute.h
+CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/ReadFile.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/Util.cpp
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../flute/flute.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../main.cpp

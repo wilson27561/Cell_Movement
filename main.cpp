@@ -5,9 +5,8 @@
 #include "flute/flute.h"
 #include "Util/Constant.h"
 #include "Util/Util.cpp"
-#include "Util/ReadFile.cpp"
-#include "Util/Evaluation.cpp"
-#include "Util/ReRoute.cpp"
+#include "Util/ReadFile.h"
+#include "Util/ReRoute.h"
 #include "Header/Layer.h"
 #include "Header/MasterCell.h"
 #include "Header/CellInstance.h"
@@ -39,7 +38,6 @@ int main() {
 
     Util util;
     ReadFile readFile;
-    Evaluation evaluation;
     ReRoute reRoute;
     string content;
     vector<string> contentvector;
@@ -85,9 +83,9 @@ int main() {
     //TODO two pin 做 cell move by 面積 ->
     //TODO random route ->
     //TODO 若是直線繞不行的話，需要另外走 U - pattern route ->
-    //TODO 多執行緒 讀檔
+    //TODO 多執行緒 讀檔 ->
     //TODO 確定set 生命週期 reduce supply時可以改寫 ，減少記憶體使用 ->
-    //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
+    //TODO 先檢查完需要做的reroute，再依net的weight順序做排序 ->
 
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = util.splitString(contentvector[i]);
