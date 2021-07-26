@@ -158,9 +158,6 @@
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/Constant.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/Evaluation.cpp">
-			<Option target="Cell_Movement"/>
-		</Unit>
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/ReRoute.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>

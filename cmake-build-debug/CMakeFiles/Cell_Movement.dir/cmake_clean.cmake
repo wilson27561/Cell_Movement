@@ -12,7 +12,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o"
-  "CMakeFiles/Cell_Movement.dir/Util/Evaluation.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Util/Util.cpp.o"

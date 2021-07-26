@@ -493,33 +493,6 @@ Util/Constant.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.s
 .PHONY : Util/Constant.cpp.s
 
-Util/Evaluation.o: Util/Evaluation.cpp.o
-
-.PHONY : Util/Evaluation.o
-
-# target to build an object file
-Util/Evaluation.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Evaluation.cpp.o
-.PHONY : Util/Evaluation.cpp.o
-
-Util/Evaluation.i: Util/Evaluation.cpp.i
-
-.PHONY : Util/Evaluation.i
-
-# target to preprocess a source file
-Util/Evaluation.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Evaluation.cpp.i
-.PHONY : Util/Evaluation.cpp.i
-
-Util/Evaluation.s: Util/Evaluation.cpp.s
-
-.PHONY : Util/Evaluation.s
-
-# target to generate assembly for a file
-Util/Evaluation.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Evaluation.cpp.s
-.PHONY : Util/Evaluation.cpp.s
-
 Util/ReRoute.o: Util/ReRoute.cpp.o
 
 .PHONY : Util/ReRoute.o
@@ -892,9 +865,6 @@ help:
 	@echo "... Util/Constant.o"
 	@echo "... Util/Constant.i"
 	@echo "... Util/Constant.s"
-	@echo "... Util/Evaluation.o"
-	@echo "... Util/Evaluation.i"
-	@echo "... Util/Evaluation.s"
 	@echo "... Util/ReRoute.o"
 	@echo "... Util/ReRoute.i"
 	@echo "... Util/ReRoute.s"

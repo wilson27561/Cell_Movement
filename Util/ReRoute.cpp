@@ -23,7 +23,57 @@ class GgridBoundaryIndex;
 class Util;
 class flute;
 
-//class ReRoute  {
+
+
+void ReRoute::boundaryReroute(map<string, Net> *netMap,
+                              map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
+                              vector<vector<vector<int> > > *gridVector, map<string, vector<int>> *powerFactorMap) {
+    //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
+    //TODO 拔一條繞一條   ok
+    //TODO 確認routingLayer按比重   ok
+    //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
+    //TODO 超過半週長要重繞   ok
+    //TODO two pin 做 cell move
+    //TODO 多執行緒
+    //TODO 是否要將via 放到兩條線中間
+
+    for (auto const &item : (*netMap)) {
+        vector<Route> routeVec = item.second.getNumRoute();
+        bool isNeedReroute = false;
+        //判斷net 是否 需要重繞
+        if (isOutOfBoundary(routeVec, item.second.getBoundaryMap())) {
+//            cout << "is Out Of Boundary : " << endl;
+            isNeedReroute = true;
+        } else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
+//            cout << "is Over Flow Half Perimeter : " << endl;
+            isNeedReroute = true;
+        } else {
+            isNeedReroute = false;
+        };
+
+        //-------  check bounding route start -------
+        if (isNeedReroute) {
+            //拔掉線段 supply add
+            cout << "Need reroute net name : " << item.first << endl;
+            vector<Route> numRoute = item.second.getNumRoute();
+            //加上原來的線段grid
+            reviseRouteSupply(&(*gridVector), &numRoute, ADD, item.first);
+
+            vector<Route> routeVector;
+            getSteinerRoute(&routeVector, item.first, &(*netMap), &(*gridVector), &(*powerFactorMap));
+            if (routeVector.size() > 0) {
+                (*netMap)[item.first].setNumRoute(routeVector);
+                //減掉新的線段
+                reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, item.first);
+            } else {
+                //減掉原來的線段
+                reviseRouteSupply(&(*gridVector), &numRoute, REDUCE, item.first);
+            }
+        }
+        //-------  check bounding route end -------
+    }
+
+}
 
 
 void ReRoute::reviseRouteSupply(vector<vector<vector<int> > > *gridVector, vector<Route> *numRoute, string revise,
@@ -340,55 +390,6 @@ void ReRoute::getSteinerPointRoute(Tree t, vector<SteinerPoint> *steinerLine, ve
     if (isValidRoute == false) {
         (*steinerLine).clear();
     }
-}
-void ReRoute::boundaryReroute(map<string, Net> *netMap,
-                              map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                              vector<vector<vector<int> > > *gridVector, map<string, vector<int>> *powerFactorMap) {
-    //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
-    //TODO 拔一條繞一條   ok
-    //TODO 確認routingLayer按比重   ok
-    //TODO 確認minimumRoutingConstraint  ok (確認是否要從 1開始繞，還是可以從最minimumconstraint那一層開始去做繞線)
-    //TODO 超過半週長要重繞   ok
-    //TODO two pin 做 cell move
-    //TODO 多執行緒
-    //TODO 是否要將via 放到兩條線中間
-
-    for (auto const &item : (*netMap)) {
-        vector<Route> routeVec = item.second.getNumRoute();
-        bool isNeedReroute = false;
-        //判斷net 是否 需要重繞
-        if (isOutOfBoundary(routeVec, item.second.getBoundaryMap())) {
-            cout << "is Out Of Boundary : " << endl;
-            isNeedReroute = true;
-        } else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
-            cout << "is Over Flow Half Perimeter : " << endl;
-            isNeedReroute = true;
-        } else {
-            isNeedReroute = false;
-        };
-
-        //-------  check bounding route start -------
-        if (isNeedReroute) {
-            //拔掉線段 supply add
-            cout << "Need reroute net name : " << item.first << endl;
-            vector<Route> numRoute = item.second.getNumRoute();
-            //加上原來的線段grid
-            reviseRouteSupply(&(*gridVector), &numRoute, ADD, item.first);
-
-            vector<Route> routeVector;
-            getSteinerRoute(&routeVector, item.first, &(*netMap), &(*gridVector), &(*powerFactorMap));
-            if (routeVector.size() > 0) {
-                (*netMap)[item.first].setNumRoute(routeVector);
-                //減掉新的線段
-                reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, item.first);
-            } else {
-                //減掉原來的線段
-                reviseRouteSupply(&(*gridVector), &numRoute, REDUCE, item.first);
-            }
-        }
-        //-------  check bounding route end -------
-    }
-
 }
 
 int countDistance(SteinerPoint steinerPoint) {
@@ -1631,8 +1632,6 @@ void ReRoute::bottomLeftToTopRight(vector<SteinerPoint> *steinerLineVector, int 
         }
     }
 }
-//};
-
 
 
 

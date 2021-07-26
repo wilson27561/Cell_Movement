@@ -189,11 +189,6 @@ int main() {
 //    printf("FLUTE wirelength (without RSMT construction) = %d\n", flutewl);
 
 
-
-
-
-
-
     //   program total wire length -> add weight -> powerFactor
 //         int wire =   evaluation.wireLength(netMap);
 //         cout << "wire length : " << wire << endl;
