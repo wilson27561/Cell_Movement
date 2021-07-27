@@ -8,6 +8,12 @@
 
 class GgridBoundaryIndex {
 public:
+    GgridBoundaryIndex(int rowBeginIdx, int colBeginIdx, int rowEndIdx, int colEndIdx);
+
+    GgridBoundaryIndex();
+
+    virtual ~GgridBoundaryIndex();
+
     int getRowBeginIdx() const;
 
     void setRowBeginIdx(int rowBeginIdx);
@@ -21,6 +27,7 @@ public:
     void setRowEndIdx(int rowEndIdx);
 
     int getColEndIdx() const;
+
 
     void setColEndIdx(int colEndIdx);
 

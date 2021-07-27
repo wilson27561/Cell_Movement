@@ -547,33 +547,6 @@ Util/ReadFile.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.s
 .PHONY : Util/ReadFile.cpp.s
 
-Util/Util.o: Util/Util.cpp.o
-
-.PHONY : Util/Util.o
-
-# target to build an object file
-Util/Util.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Util.cpp.o
-.PHONY : Util/Util.cpp.o
-
-Util/Util.i: Util/Util.cpp.i
-
-.PHONY : Util/Util.i
-
-# target to preprocess a source file
-Util/Util.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Util.cpp.i
-.PHONY : Util/Util.cpp.i
-
-Util/Util.s: Util/Util.cpp.s
-
-.PHONY : Util/Util.s
-
-# target to generate assembly for a file
-Util/Util.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Cell_Movement.dir/build.make CMakeFiles/Cell_Movement.dir/Util/Util.cpp.s
-.PHONY : Util/Util.cpp.s
-
 flute/dist.o: flute/dist.cpp.o
 
 .PHONY : flute/dist.o
@@ -871,9 +844,6 @@ help:
 	@echo "... Util/ReadFile.o"
 	@echo "... Util/ReadFile.i"
 	@echo "... Util/ReadFile.s"
-	@echo "... Util/Util.o"
-	@echo "... Util/Util.i"
-	@echo "... Util/Util.s"
 	@echo "... flute/dist.o"
 	@echo "... flute/dist.i"
 	@echo "... flute/dist.s"

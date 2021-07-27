@@ -7,9 +7,12 @@
 using namespace std;
 #include <iostream>
 class Layer {
+public:
+    virtual ~Layer();
 
-    private:
-//    Layer Name M1
+    Layer();
+
+private:
         string layerName;
         int index;
         string routingDirection;

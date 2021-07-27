@@ -23,15 +23,20 @@
 using namespace std;
 class ReadFile {
 public:
+
+    ReadFile();
+
+    virtual ~ReadFile();
+
     int readMaxCell(vector<string> lineVector);
 
     GgridBoundaryIndex readGGridBoundaryIdx(vector<string> lineVector);
 
     void readLayer(vector<string> *contentVector, int *index, string layerCount, map<string, Layer> *layerMap);
 
-    void getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<int>> *powerFactorMap);
+    void getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<int > > *powerFactorMap);
 
-    void readNumNonDefaultSupply(vector<string> *contentVector, vector<vector<vector<int>>> *gridVector, int *index,
+    void readNumNonDefaultSupply(vector<string> *contentVector, vector<vector<vector<int > > > *gridVector, int *index,
                                  string layerCount);
 
     void
@@ -39,8 +44,8 @@ public:
                    int *index);
 
     void readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,
-                          map<string, MasterCell> *masterCellMap, map<string, map<string, Blockage>> *blockageCellMap,
-                          vector<vector<vector<int>>> *gridVector);
+                          map<string, MasterCell> *masterCellMap, map<string, map<string, Blockage > > *blockageCellMap,
+                          vector<vector<vector<int > > > *gridVector);
 
     void readBoundary(CellInstance cellInstance, map<string, int> *boundaryMap);
 
@@ -49,7 +54,7 @@ public:
                  set<string> *netNameSet, int *index);
 
     void readRoute(vector<string> *contentVector, vector<string> *lineVector, map<string, Net> *netMap,
-                   vector<vector<vector<int>>> *gridVector, int *index, map<string, set<string>> *reducePointMap,
+                   vector<vector<vector<int > > > *gridVector, int *index, map<string, set<string > > *reducePointMap,
                    set<string> *netNameSet);
 
     vector<string> splitByChar(string str, char pattern);
@@ -59,13 +64,13 @@ public:
     int getInsertIndex(vector<double> powerFactorVec, double number);
 
     void getLayerGrid(GgridBoundaryIndex ggridBoundaryIndex, map<string, Layer> *layerMap,
-                      vector<vector<vector<int>>> *gridVector);
+                      vector<vector<vector<int > > > *gridVector);
 
-    void reduceRoute(vector<vector<vector<int>>> *gridVector, int startLayIndex, int endLayIndex, int startRowIndex,
-                     int endRowIndex, int startColIndex, int endColIndex, map<string, set<string>> *reducePointMap,
+    void reduceRoute(vector<vector<vector<int > > > *gridVector, int startLayIndex, int endLayIndex, int startRowIndex,
+                     int endRowIndex, int startColIndex, int endColIndex, map<string, set<string > > *reducePointMap,
                      string netName);
 
-    bool isReducePoint(string point, map<string, set<string>> *reducePointMap, string netName);
+    bool isReducePoint(string point, map<string, set<string > > *reducePointMap, string netName);
 
     void readVoltageArea(vector<string> *contentVector, map<string, VoltageArea> *voltageAreaMap, int *index);
 };

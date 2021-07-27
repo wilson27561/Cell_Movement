@@ -72,3 +72,5 @@ void Net::setBoundaryMap(const map<string, int> &boundaryMap) {
 Net::~Net() {
 
 }
+
+Net::Net() {}

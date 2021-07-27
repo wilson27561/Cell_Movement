@@ -28,3 +28,9 @@ int Blockage::getBlockageLayer() const {
 void Blockage::setBlockageLayer(int blockageLayer) {
     Blockage::blockageLayer = blockageLayer;
 }
+
+Blockage::~Blockage() {
+
+}
+
+Blockage::Blockage() {}

@@ -7,6 +7,13 @@
 
 
 class Grid {
+public:
+    virtual ~Grid();
+
+private:
+public:
+    Grid();
+
 private:
     int rowIndx;
     int colIndx;

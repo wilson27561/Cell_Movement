@@ -14,6 +14,11 @@ private:
     vector<Grid> gridVector;
     vector<string> instance;
 public:
+    virtual ~VoltageArea();
+
+    VoltageArea();
+
+public:
     const string &getAreaName() const;
 
     void setAreaName(const string &areaName);

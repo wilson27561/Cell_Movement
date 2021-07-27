@@ -22,18 +22,20 @@ class GgridBoundaryIndex;
 
 class Util;
 
-//class ReadFile {
-//public :
+
+ReadFile::ReadFile() {}
+
+ReadFile::~ReadFile() {
+
+}
+
+
 int ReadFile::readMaxCell(vector<string> lineVector) {
     return atoi(lineVector[1].c_str());
 }
 
 GgridBoundaryIndex ReadFile::readGGridBoundaryIdx(vector<string> lineVector) {
-    GgridBoundaryIndex gridBoundaryIndex;
-    gridBoundaryIndex.setRowBeginIdx(atoi(lineVector[1].c_str()));
-    gridBoundaryIndex.setColBeginIdx(atoi(lineVector[2].c_str()));
-    gridBoundaryIndex.setRowEndIdx(atoi(lineVector[3].c_str()));
-    gridBoundaryIndex.setColEndIdx(atoi(lineVector[4].c_str()));
+    GgridBoundaryIndex gridBoundaryIndex(stoi(lineVector[1]),stoi(lineVector[2]), stoi(lineVector[3]), stoi(lineVector[4]));
     return gridBoundaryIndex;
 }
 
@@ -58,7 +60,7 @@ void ReadFile::getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<i
     vector<int> verticalVector;
     vector<double> H_PowerFactorVec;
     vector<double> V_PowerFactorVec;
-    for (auto const &item : (*layerMap)) {
+    for (const auto &item : (*layerMap)) {
         Layer layer = item.second;
         if (layer.getRoutingDirection() == HORIZONTAL) {
             int index = getInsertIndex(H_PowerFactorVec, item.second.getPowerFactor());
@@ -147,7 +149,7 @@ void ReadFile::readCellInstance(vector<string> lineVector, map<string, CellInsta
         map<string, Blockage> blockageMap = (*masterCellMap)[lineVector[2]].getBlockageType();
         (*blockageCellMap).insert(pair<string, map<string, Blockage>>(lineVector[1], blockageMap));
         // reduce blockage
-        for (auto const item : blockageMap) {
+        for (auto const &item : blockageMap) {
             (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
                     cellInstance.getColIndx() - 1] =
                     (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
@@ -266,7 +268,7 @@ ReadFile::readRoute(vector<string> *contentVector, vector<string> *lineVector, m
                         routeVector[6]);
         }
     }
-    for (const auto netName : (*netNameSet)) {
+    for (const auto &netName : (*netNameSet)) {
         int layer = (*netMap)[netName].getConnectCell()[0].getLayerName();
         int row = (*netMap)[netName].getConnectCell()[0].getRowIndx();
         int col = (*netMap)[netName].getConnectCell()[0].getColIndx();
@@ -509,6 +511,7 @@ vector<string> ReadFile::splitString(string content) {
     }
     return contentVector;
 }
+
 
 
 //};

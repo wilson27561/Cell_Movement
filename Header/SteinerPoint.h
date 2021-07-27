@@ -14,6 +14,11 @@ private:
     int CellPointRow;
     int CellPointCol;
     int layer;
+public:
+    virtual ~SteinerPoint();
+
+    SteinerPoint();
+
 
 public:
     int getLayer() const;
@@ -25,7 +30,6 @@ public:
 
     SteinerPoint(int steinerPointRow, int steinerPointCol, int cellPointRow, int cellPointCol, int layer);
 
-    SteinerPoint();
 
     int getSteinerPointRow() const;
 

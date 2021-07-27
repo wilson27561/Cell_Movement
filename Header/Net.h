@@ -14,8 +14,14 @@
 using namespace std;
 class Net {
 private :
+
+
     string netName;
     int numPin;
+public:
+    Net();
+
+private:
     string minRoutingConstraint;
     double weight;
     //目前沒用到

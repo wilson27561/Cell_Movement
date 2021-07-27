@@ -53,3 +53,7 @@ void SteinerPoint::setLayer(int layer) {
 SteinerPoint::SteinerPoint(int steinerPointRow, int steinerPointCol, int cellPointRow, int cellPointCol, int layer)
         : steinerPointRow(steinerPointRow), steinerPointCol(steinerPointCol), CellPointRow(cellPointRow),
           CellPointCol(cellPointCol), layer(layer) {}
+
+SteinerPoint::~SteinerPoint() {
+
+}

@@ -14,6 +14,11 @@ private :
     string layerName;
     int incrOrDecrValue;
 public:
+    virtual ~NumNonDefaultSupplyGgrid();
+
+    NumNonDefaultSupplyGgrid();
+
+public:
     int getRowIndx() const;
 
     void setRowIndx(int rowIndx);

@@ -76,8 +76,6 @@ CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/Constant.h
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/ReadFile.cpp
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/ReadFile.h
 
-CMakeFiles/Cell_Movement.dir/Util/Util.cpp.o: ../Util/Util.cpp
-
 CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o: ../flute/dist.cpp
 CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o: ../flute/dist.h
 CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o: ../flute/global.h
@@ -130,7 +128,6 @@ CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Header/VoltageArea.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/Constant.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/ReRoute.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/ReadFile.h
-CMakeFiles/Cell_Movement.dir/main.cpp.o: ../Util/Util.cpp
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../flute/flute.h
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../main.cpp
 

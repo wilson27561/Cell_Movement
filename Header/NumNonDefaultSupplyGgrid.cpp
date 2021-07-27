@@ -43,3 +43,9 @@ int NumNonDefaultSupplyGgrid::getIncrOrDecrValue() const {
 void NumNonDefaultSupplyGgrid::setIncrOrDecrValue(int incrOrDecrValue) {
     NumNonDefaultSupplyGgrid::incrOrDecrValue = incrOrDecrValue;
 }
+
+NumNonDefaultSupplyGgrid::~NumNonDefaultSupplyGgrid() {
+
+}
+
+NumNonDefaultSupplyGgrid::NumNonDefaultSupplyGgrid() {}

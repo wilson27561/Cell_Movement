@@ -24,6 +24,12 @@ class Util;
 class flute;
 
 
+ReRoute::ReRoute() {}
+
+ReRoute::~ReRoute() {
+}
+
+
 
 void ReRoute::boundaryReroute(map<string, Net> *netMap,
                               map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
@@ -37,24 +43,31 @@ void ReRoute::boundaryReroute(map<string, Net> *netMap,
     //TODO 多執行緒
     //TODO 是否要將via 放到兩條線中間
 
-    for (auto const &item : (*netMap)) {
+    for (const auto &item : (*netMap)) {
         vector<Route> routeVec = item.second.getNumRoute();
         bool isNeedReroute = false;
         //判斷net 是否 需要重繞
         if (isOutOfBoundary(routeVec, item.second.getBoundaryMap())) {
 //            cout << "is Out Of Boundary : " << endl;
             isNeedReroute = true;
-        } else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
-//            cout << "is Over Flow Half Perimeter : " << endl;
-            isNeedReroute = true;
-        } else {
-            isNeedReroute = false;
-        };
+        }
+//        else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
+////            cout << "is Over Flow Half Perimeter : " << endl;
+//            isNeedReroute = true;
+//        }
+//    else {
+//            isNeedReroute = false;
+//        };
 
         //-------  check bounding route start -------
         if (isNeedReroute) {
             //拔掉線段 supply add
             cout << "Need reroute net name : " << item.first << endl;
+//            N14729
+//            N14705
+            if(item.first == "N14729"){
+                cout << " check " << endl;
+            }
             vector<Route> numRoute = item.second.getNumRoute();
             //加上原來的線段grid
             reviseRouteSupply(&(*gridVector), &numRoute, ADD, item.first);
@@ -479,7 +492,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
     int index = 0;
     set<string> cellSet;
     //-------  steiner tree  start -------
-    for (auto const &cell : (*netMap)[reRouteNet].getConnectCell()) {
+    for (const auto &cell : (*netMap)[reRouteNet].getConnectCell()) {
         string cellString = to_string(cell.getRowIndx()) + "_" + to_string(cell.getColIndx());
         cellSet.insert(cellString);
         row[index] = cell.getRowIndx();
@@ -513,7 +526,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
     //-------  steiner point via start -------
     if (steinerLine.size() > 0) {
         //steiner Line
-        for (auto const steinerPoint : steinerLine) {
+        for (const auto &steinerPoint : steinerLine) {
             //線放入route vector
             Route route;
             route.setStartLayIndx(steinerPoint.getLayer());
@@ -554,7 +567,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
         };
 
         // cell
-        for (auto const cell:  (*netMap)[reRouteNet].getConnectCell()) {
+        for (const auto &cell:  (*netMap)[reRouteNet].getConnectCell()) {
             int layer = cell.getLayerName();
             int rowIndx = cell.getRowIndx();
             int colIndx = cell.getColIndx();
@@ -599,7 +612,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
         set<string> viaSet;
         bool isValidVia = true;
         //每一層
-        for (auto const layerMap : layerSteinerMap) {
+        for (const auto &layerMap : layerSteinerMap) {
             string layer = layerMap.first;
             bool getVia = false;
             //每一層的線或cell
@@ -612,7 +625,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
 //                    cout << "steinerCoordinate : " << steinerCoordinate << "cellCoordinate : " << cellCoordinate
 //                         << endl;
                 //point map 從第二層開始
-                for (auto const pointGridMap : pointMap) {
+                for (const auto &pointGridMap : pointMap) {
                     int pointLayer = stoi(pointGridMap.first);
                     if (pointLayer == steiner.getLayer()) {
                         continue;
@@ -1632,7 +1645,6 @@ void ReRoute::bottomLeftToTopRight(vector<SteinerPoint> *steinerLineVector, int 
         }
     }
 }
-
 
 
 

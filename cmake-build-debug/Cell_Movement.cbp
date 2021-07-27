@@ -170,9 +170,6 @@
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/ReadFile.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
-		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/Util.cpp">
-			<Option target="Cell_Movement"/>
-		</Unit>
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/flute/dist.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>

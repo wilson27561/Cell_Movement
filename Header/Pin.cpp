@@ -35,3 +35,9 @@ const string &Pin::getConnectCell() const {
 void Pin::setConnectCell(const string &connectCell) {
     Pin::connectCell = connectCell;
 }
+
+Pin::~Pin() {
+
+}
+
+Pin::Pin() {}

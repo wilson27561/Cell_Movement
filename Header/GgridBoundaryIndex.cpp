@@ -35,3 +35,14 @@ int GgridBoundaryIndex::getColEndIdx() const {
 void GgridBoundaryIndex::setColEndIdx(int colEndIdx) {
     GgridBoundaryIndex::colEndIdx = colEndIdx;
 }
+
+GgridBoundaryIndex::GgridBoundaryIndex() {}
+
+GgridBoundaryIndex::~GgridBoundaryIndex() {
+
+}
+
+GgridBoundaryIndex::GgridBoundaryIndex(int rowBeginIdx, int colBeginIdx, int rowEndIdx, int colEndIdx) : rowBeginIdx(
+        rowBeginIdx), colBeginIdx(colBeginIdx), rowEndIdx(rowEndIdx), colEndIdx(colEndIdx) {}
+
+

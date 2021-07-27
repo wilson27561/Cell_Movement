@@ -43,3 +43,9 @@ double Layer::getPowerFactor() const {
 void Layer::setPowerFactor(double powerFactor) {
     Layer::powerFactor = powerFactor;
 }
+
+Layer::~Layer() {
+
+}
+
+Layer::Layer() {}

@@ -76,8 +76,6 @@ CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o
  /Users/wilson27561/Documents/Cell_Movement/Util/Constant.h
  /Users/wilson27561/Documents/Cell_Movement/Util/ReadFile.cpp
  /Users/wilson27561/Documents/Cell_Movement/Util/ReadFile.h
-CMakeFiles/Cell_Movement.dir/Util/Util.cpp.o
- /Users/wilson27561/Documents/Cell_Movement/Util/Util.cpp
 CMakeFiles/Cell_Movement.dir/flute/dist.cpp.o
  /Users/wilson27561/Documents/Cell_Movement/flute/dist.cpp
  /Users/wilson27561/Documents/Cell_Movement/flute/dist.h
@@ -131,6 +129,5 @@ CMakeFiles/Cell_Movement.dir/main.cpp.o
  /Users/wilson27561/Documents/Cell_Movement/Util/Constant.h
  /Users/wilson27561/Documents/Cell_Movement/Util/ReRoute.h
  /Users/wilson27561/Documents/Cell_Movement/Util/ReadFile.h
- /Users/wilson27561/Documents/Cell_Movement/Util/Util.cpp
  /Users/wilson27561/Documents/Cell_Movement/flute/flute.h
  /Users/wilson27561/Documents/Cell_Movement/main.cpp

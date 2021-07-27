@@ -14,6 +14,11 @@ class Pin {
     string layer;
     string connectCell;
 public:
+    virtual ~Pin();
+
+    Pin();
+
+public:
     const string &getPinName() const;
 
     void setPinName(const string &pinName);

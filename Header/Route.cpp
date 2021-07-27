@@ -60,3 +60,9 @@ void Route::setEndlayIndx(int endlayIndx) {
     Route::endlayIndx = endlayIndx;
 }
 
+Route::~Route() {
+
+}
+
+Route::Route() {}
+

@@ -11,7 +11,13 @@
 using namespace std;
 class CellInstance {
 private:
-        string cellName;
+public:
+    virtual ~CellInstance();
+
+    CellInstance();
+
+private:
+    string cellName;
         int layerName;
         int rowIndx;
         int colIndx;

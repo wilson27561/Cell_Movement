@@ -13,6 +13,10 @@ private:
     int blockageLayer;
     int demand;
 
+public:
+    virtual ~Blockage();
+
+    Blockage();
 
 public:
     const string &getBlockageName() const;

@@ -35,3 +35,9 @@ int Grid::getLayIndx() const {
 void Grid::setLayIndx(int layIndx) {
     Grid::layIndx = layIndx;
 }
+
+Grid::~Grid() {
+
+}
+
+Grid::Grid() {}

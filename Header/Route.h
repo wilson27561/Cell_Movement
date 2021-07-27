@@ -18,6 +18,11 @@ private:
     int endColIndx;
     int endlayIndx;
 public:
+    Route();
+
+    virtual ~Route();
+
+public:
 
     const string &getNetName() const;
 

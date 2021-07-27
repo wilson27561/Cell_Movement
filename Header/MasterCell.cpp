@@ -27,3 +27,9 @@ const map <string, Blockage> &MasterCell::getBlockageType() const {
 void MasterCell::setBlockageType(const map <string, Blockage> &blockageType) {
     MasterCell::blockageType = blockageType;
 }
+
+MasterCell::~MasterCell() {
+
+}
+
+MasterCell::MasterCell() {}

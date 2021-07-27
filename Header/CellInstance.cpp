@@ -60,3 +60,9 @@ const map<string, string> &CellInstance::getConnectPin() const {
 void CellInstance::setConnectPin(const map<string, string> &connectPin) {
     CellInstance::connectPin = connectPin;
 }
+
+CellInstance::~CellInstance() {
+
+}
+
+CellInstance::CellInstance() {}

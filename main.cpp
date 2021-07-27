@@ -4,7 +4,6 @@
 #include <fstream>
 #include "flute/flute.h"
 #include "Util/Constant.h"
-#include "Util/Util.cpp"
 #include "Util/ReadFile.h"
 #include "Util/ReRoute.h"
 #include "Header/Layer.h"
@@ -30,13 +29,27 @@ void printGridVector( vector<vector<vector<int> > > *gridVector){
 //     ----- supply cout end -----
 }
 
+vector<string> splitString( string content) //MasterCell MC1 2 2
+{
+    int i = 0;
+    vector<string> contentVector;
+    stringstream contentArray(content);
+    string word;
+    while (contentArray.good())
+    {
+        contentArray >> word ;
+        contentVector.push_back(word);
+        ++i;
+    }
+    return contentVector;
+}
+
 
 int main() {
 
     double START, END;
     START = clock();
 
-    Util util;
     ReadFile readFile;
     ReRoute reRoute;
     string content;
@@ -44,7 +57,7 @@ int main() {
     int maxCellMovent = 0;
     GgridBoundaryIndex ggridBoundaryIndex;
     map<string, Layer> layerMap;
-    map<string, vector<int>> powerFactorMap;
+    map<string, vector<int > > powerFactorMap;
     map<string, MasterCell> masterCellMap;
     map<string, CellInstance> cellInstanceMap;
     map<string, VoltageArea> voltageAreaMap;
@@ -53,10 +66,10 @@ int main() {
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
     map<string, CellInstance> numMoveCellInstMap;
-    map<string, map<string, Blockage>> blockageCellMap;
+    map<string, map<string, Blockage > > blockageCellMap;
     set<string> netNameSet;
     //reduce Supply
-    map<string,set<string>> reducePointMap;
+    map<string,set<string > > reducePointMap;
 
     ifstream fin(FILEPATH);
     if (fin) {
@@ -88,7 +101,7 @@ int main() {
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序 ->
 
     for (int i = 0; i < contentvector.size(); i++) {
-        vector<string> lineVector = util.splitString(contentvector[i]);
+        vector<string> lineVector = splitString(contentvector[i]);
         if (lineVector[0] == MAXCELLMOVE) {
             cout << "max cell Movement start " << endl;
             maxCellMovent = readFile.readMaxCell(lineVector);
@@ -129,8 +142,8 @@ int main() {
         }
     }
 
-    readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
+//    readFile.getLayerFacotr(&layerMap, &powerFactorMap);
+//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
 
 
 
@@ -139,18 +152,18 @@ int main() {
     ofstream myfile;
     myfile.open("output_"+FILEPATH);
     myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
-    for (auto const cellMove : numMoveCellInstMap) {
+    for (const auto & cellMove : numMoveCellInstMap) {
         myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
                << cellMove.second.getColIndx() << endl;
     };
     int numRoute = 0;
-    for (auto const net : netMap) {
+    for (const auto & net : netMap) {
             numRoute+=net.second.getNumRoute().size();
     };
 
     myfile << "NumRoutes" << " " << numRoute << endl;
-    for (auto const net : netMap) {
-        for (auto const route : net.second.getNumRoute()) {
+    for (const auto & net : netMap) {
+        for (const auto & route : net.second.getNumRoute()) {
             myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
                    << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
                    << route.getNetName() << endl;

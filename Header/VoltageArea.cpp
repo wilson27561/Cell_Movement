@@ -27,3 +27,9 @@ const vector<string> &VoltageArea::getInstance() const {
 void VoltageArea::setInstance(const vector<string> &instance) {
     VoltageArea::instance = instance;
 }
+
+VoltageArea::~VoltageArea() {
+
+}
+
+VoltageArea::VoltageArea() {}

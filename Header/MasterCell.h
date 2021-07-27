@@ -14,6 +14,13 @@ class Pin;
 class Blockage;
 class MasterCell {
 private :
+public:
+    MasterCell();
+
+    virtual ~MasterCell();
+
+private:
+
     string masterCellName;
     map<string,Pin> pinType;
     map<string,Blockage> blockageType;
