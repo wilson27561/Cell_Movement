@@ -6,7 +6,6 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <stdlib.h>
 #include "../Header/GgridBoundaryIndex.h"
 #include "../Header/MasterCell.h"
 #include "../Header/CellInstance.h"
@@ -23,7 +22,6 @@ class GgridBoundaryIndex;
 class Util;
 class flute;
 
-
 ReRoute::ReRoute() {}
 
 ReRoute::~ReRoute() {
@@ -33,7 +31,7 @@ ReRoute::~ReRoute() {
 
 void ReRoute::boundaryReroute(map<string, Net> *netMap,
                               map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                              vector<vector<vector<int> > > *gridVector, map<string, vector<int>> *powerFactorMap) {
+                              vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap) {
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
     //TODO 拔一條繞一條   ok
     //TODO 確認routingLayer按比重   ok
@@ -51,23 +49,18 @@ void ReRoute::boundaryReroute(map<string, Net> *netMap,
 //            cout << "is Out Of Boundary : " << endl;
             isNeedReroute = true;
         }
-//        else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
-////            cout << "is Over Flow Half Perimeter : " << endl;
-//            isNeedReroute = true;
-//        }
+        else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
+//            cout << "is Over Flow Half Perimeter : " << endl;
+            isNeedReroute = true;
+        }
 //    else {
 //            isNeedReroute = false;
 //        };
 
         //-------  check bounding route start -------
         if (isNeedReroute) {
+            cout << "Need Reroute Name : " << item.first << endl;
             //拔掉線段 supply add
-            cout << "Need reroute net name : " << item.first << endl;
-//            N14729
-//            N14705
-            if(item.first == "N14729"){
-                cout << " check " << endl;
-            }
             vector<Route> numRoute = item.second.getNumRoute();
             //加上原來的線段grid
             reviseRouteSupply(&(*gridVector), &numRoute, ADD, item.first);
@@ -211,8 +204,8 @@ void ReRoute::reviseRouteSupply(vector<vector<vector<int> > > *gridVector, vecto
 //public:
 //取得Steiner point cellpoint 為起點 steinerPoint 為終點
 void ReRoute::getSteinerPointRoute(Tree t, vector<SteinerPoint> *steinerLine, vector<vector<vector<int> > > *gridVector,
-                                   map<string, vector<int>> *powerFactorMap, string minRoutingConstraint,
-                                   map<string, vector<SteinerPoint>> *layerSteinerVector, string reRoute) {
+                                   map<string, vector<int > > *powerFactorMap, string minRoutingConstraint,
+                                   map<string, vector<SteinerPoint > > *layerSteinerVector, string reRoute) {
     vector<int> layerPowerVectorH;
     vector<int> layerPowerVectorV;
 
@@ -246,8 +239,7 @@ void ReRoute::getSteinerPointRoute(Tree t, vector<SteinerPoint> *steinerLine, ve
         int steinerPointCol = t.branch[t.branch[i].n].y;
         int cellPointRow = t.branch[i].x;
         int cellPointCol = t.branch[i].y;
-        int routeLayer;
-
+        int routeLayer = 0;
 //            cout << "steiner point : " << cellPointRow << " " << cellPointCol  << " " << steinerPointRow << " " << steinerPointCol  << endl;
         if (steinerPointRow == cellPointRow and steinerPointCol != cellPointCol) {
             int rowGrid = steinerPointRow - 1;
@@ -486,7 +478,7 @@ bool ReRoute::outOfBoundary(Route route, map<string, int> boundaryMap) {
 //取得Steiner Tree Routing 的線
 void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map<string, Net> *netMap,
                               vector<vector<vector<int> > > *gridVector,
-                              map<string, vector<int>> *powerFactorMap) {
+                              map<string, vector<int > > *powerFactorMap) {
     int row[MAXD];
     int col[MAXD];
     int index = 0;
@@ -503,8 +495,13 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
     if (cellSet.size() <= 1) {
         return;
     }
-    readLUT();
-    Tree flutetree = flute(index, row, col, ACCURACY);
+
+        FILE *fpwv=fopen(POWVFILE, "r");
+        FILE *fprt=fopen(POSTFILE, "r");
+        readLUT( &(*fpwv),&(*fprt));
+        Tree flutetree = flute(index, row, col, ACCURACY);
+        fclose(fpwv);
+        fclose(fprt);
 //            plottree(flutetree);
     //-------  steiner tree  end -------
 
@@ -513,7 +510,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
     //line for via
     map<string, vector<SteinerPoint> > layerSteinerMap;
     //point for via
-    map<string, map<string, string>> pointMap;
+    map<string, map<string, string> > pointMap;
     //steiner line for route
     vector<SteinerPoint> steinerLine;
 
@@ -557,7 +554,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
                 coordinateMap.insert(pair<string, string>(startCoordinate, startCoordinate));
                 coordinateMap.insert(pair<string, string>(endCoordinate, endCoordinate));
                 pointMap.insert(
-                        pair<string, map<string, string>>(to_string(steinerPoint.getLayer()), coordinateMap));
+                        pair<string, map<string, string> >(to_string(steinerPoint.getLayer()), coordinateMap));
             } else {
                 pointMap[to_string(steinerPoint.getLayer())].insert(
                         pair<string, string>(startCoordinate, startCoordinate));
@@ -974,7 +971,7 @@ void ReRoute::topRightToBottomLeft(vector<SteinerPoint> *steinerLineVector, int 
 
 void ReRoute::topLeftToBottomRight(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
                      int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
-                     vector<vector<vector<int>>> *gridVector) {
+                     vector<vector<vector<int> > > *gridVector) {
     SteinerPoint steinerPointFirst;
     SteinerPoint steinerPointSecond;
     SteinerPoint steinerPointThird;
@@ -1201,7 +1198,7 @@ void ReRoute::topLeftToBottomRight(vector<SteinerPoint> *steinerLineVector, int 
 
 void ReRoute::bottomRightToTopLeft(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
                           int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
-                          vector<vector<vector<int>>> *gridVector) {
+                          vector<vector<vector<int> > > *gridVector) {
     SteinerPoint steinerPointFirst;
     SteinerPoint steinerPointSecond;
     SteinerPoint steinerPointThird;
@@ -1428,7 +1425,7 @@ void ReRoute::bottomRightToTopLeft(vector<SteinerPoint> *steinerLineVector, int 
 
 void ReRoute::bottomLeftToTopRight(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
                           int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
-                          vector<vector<vector<int>>> *gridVector) {
+                          vector<vector<vector<int> > > *gridVector) {
     SteinerPoint steinerPointFirst;
     SteinerPoint steinerPointSecond;
     SteinerPoint steinerPointThird;

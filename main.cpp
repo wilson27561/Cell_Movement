@@ -137,39 +137,40 @@ int main() {
             cout << "-----route end-----" << endl;
         } else if (lineVector[0] == NAME) {
             cout << "-----voltage start-----" << endl;
-            readFile.readVoltageArea(&contentvector, &voltageAreaMap, &i);
+//            readFile.readVoltageArea(&contentvector, &voltageAreaMap, &i);
             cout << "-----voltage end-----" << endl;
+
         }
     }
 
-//    readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
+    readFile.getLayerFacotr(&layerMap, &powerFactorMap);
+    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
 
 
 
 //    printGridVector(&gridVector);
 
-    ofstream myfile;
-    myfile.open("output_"+FILEPATH);
-    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
-    for (const auto & cellMove : numMoveCellInstMap) {
-        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
-               << cellMove.second.getColIndx() << endl;
-    };
-    int numRoute = 0;
-    for (const auto & net : netMap) {
-            numRoute+=net.second.getNumRoute().size();
-    };
-
-    myfile << "NumRoutes" << " " << numRoute << endl;
-    for (const auto & net : netMap) {
-        for (const auto & route : net.second.getNumRoute()) {
-            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
-                   << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
-                   << route.getNetName() << endl;
-        };
-    };
-    myfile.close();
+//    ofstream myfile;
+//    myfile.open("output_"+FILEPATH);
+//    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
+//    for (const auto & cellMove : numMoveCellInstMap) {
+//        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
+//               << cellMove.second.getColIndx() << endl;
+//    };
+//    int numRoute = 0;
+//    for (const auto & net : netMap) {
+//            numRoute+=net.second.getNumRoute().size();
+//    };
+//
+//    myfile << "NumRoutes" << " " << numRoute << endl;
+//    for (const auto & net : netMap) {
+//        for (const auto & route : net.second.getNumRoute()) {
+//            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
+//                   << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
+//                   << route.getNetName() << endl;
+//        };
+//    };
+//    myfile.close();
 
 
     END = clock();

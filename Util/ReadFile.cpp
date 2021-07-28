@@ -55,7 +55,7 @@ void ReadFile::readLayer(vector<string> *contentVector, int *index, string layer
     *index = mapSize;
 }
 
-void ReadFile::getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<int>> *powerFactorMap) {
+void ReadFile::getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<int> > *powerFactorMap) {
     vector<int> horizontalVector;
     vector<int> verticalVector;
     vector<double> H_PowerFactorVec;
@@ -72,8 +72,8 @@ void ReadFile::getLayerFacotr(map<string, Layer> *layerMap, map<string, vector<i
             verticalVector.insert(verticalVector.begin() + index, item.second.getIndex());
         }
     }
-    (*powerFactorMap).insert(pair<string, vector<int>>(HORIZONTAL, horizontalVector));
-    (*powerFactorMap).insert(pair<string, vector<int>>(VERTICAL, verticalVector));
+    (*powerFactorMap).insert(pair<string, vector<int> >(HORIZONTAL, horizontalVector));
+    (*powerFactorMap).insert(pair<string, vector<int> >(VERTICAL, verticalVector));
 
 };
 
@@ -135,7 +135,7 @@ ReadFile::readMasterCell(vector<string> *contentVector, vector<string> *lineVect
 
 void ReadFile::readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,
                                 map<string, MasterCell> *masterCellMap,
-                                map<string, map<string, Blockage>> *blockageCellMap,
+                                map<string, map<string, Blockage> > *blockageCellMap,
                                 vector<vector<vector<int> > > *gridVector) {
     CellInstance cellInstance;
     cellInstance.setCellName(lineVector[1]);
@@ -147,7 +147,7 @@ void ReadFile::readCellInstance(vector<string> lineVector, map<string, CellInsta
 
     if ((*masterCellMap)[lineVector[2]].getBlockageType().size() > 0) {
         map<string, Blockage> blockageMap = (*masterCellMap)[lineVector[2]].getBlockageType();
-        (*blockageCellMap).insert(pair<string, map<string, Blockage>>(lineVector[1], blockageMap));
+        (*blockageCellMap).insert(pair<string, map<string, Blockage> >(lineVector[1], blockageMap));
         // reduce blockage
         for (auto const &item : blockageMap) {
             (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
@@ -243,7 +243,7 @@ ReadFile::readNet(vector<string> *contentVector, vector<string> *lineVector, map
 
 void
 ReadFile::readRoute(vector<string> *contentVector, vector<string> *lineVector, map<string, Net> *netMap,
-                    vector<vector<vector<int> > > *gridVector, int *index, map<string, set<string>> *reducePointMap,
+                    vector<vector<vector<int> > > *gridVector, int *index, map<string, set<string> > *reducePointMap,
                     set<string> *netNameSet) {
     int indexCount = *index;
     int numRoutes = stoi((*lineVector)[1]);
@@ -344,7 +344,7 @@ void ReadFile::getLayerGrid(GgridBoundaryIndex ggridBoundaryIndex, map<string, L
 //        }
 //        return gridVector;
 //    }
-bool ReadFile::isReducePoint(string point, map<string, set<string>> *reducePointMap, string netName) {
+bool ReadFile::isReducePoint(string point, map<string, set<string> > *reducePointMap, string netName) {
     if ((*reducePointMap).count(netName) > 0) {
         int oriSize = (*reducePointMap)[netName].size();
         (*reducePointMap)[netName].insert(point);
@@ -357,7 +357,7 @@ bool ReadFile::isReducePoint(string point, map<string, set<string>> *reducePoint
     } else {
         set<string> pointSet;
         pointSet.insert(point);
-        (*reducePointMap).insert(pair<string, set<string>>(netName, pointSet));
+        (*reducePointMap).insert(pair<string, set<string> >(netName, pointSet));
         return false;
     }
 
@@ -365,7 +365,7 @@ bool ReadFile::isReducePoint(string point, map<string, set<string>> *reducePoint
 
 void
 ReadFile::reduceRoute(vector<vector<vector<int> > > *gridVector, int startLayIndex, int endLayIndex, int startRowIndex,
-                      int endRowIndex, int startColIndex, int endColIndex, map<string, set<string>> *reducePointMap,
+                      int endRowIndex, int startColIndex, int endColIndex, map<string, set<string> > *reducePointMap,
                       string netName) {
 
     if (startLayIndex == endLayIndex and startColIndex == endColIndex) {
