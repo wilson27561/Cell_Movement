@@ -251,6 +251,7 @@ ReadFile::readRoute(vector<string> *contentVector, vector<string> *lineVector, m
     for (int i = indexCount + 1; i <= indexCount + numRoutes; i++) {
         vector<string> routeVector = splitString((*contentVector)[i]);
         if ((*netMap).count(routeVector[6]) > 0) {
+            cout << routeVector[6] << endl;
             Route route;
             route.setNetName(routeVector[6]);
             route.setStartRowIndx(stoi(routeVector[0]));

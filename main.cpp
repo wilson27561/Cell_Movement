@@ -2,7 +2,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
-#include "flute/flute.h"
+//#include "flute/flute.h"
 #include "Util/Constant.h"
 #include "Util/ReadFile.h"
 #include "Util/ReRoute.h"
@@ -14,13 +14,13 @@
 
 using namespace std;
 
-void printGridVector( vector<vector<vector<int> > > *gridVector){
+void printGridVector(vector<vector<vector<int> > > *gridVector) {
 //     ----- supply cout start -----
     for (int layer = 1; layer <= (*gridVector).size(); layer++) {
         cout << "Layer Name : " << layer << endl;
         for (int row = (*gridVector)[1].size(); row >= 1; row--) {
-            for (int col = 1; col <= (*gridVector)[1][1].size() ; col++) {
-                cout << (*gridVector)[layer-1][row-1][col-1] << "\t";
+            for (int col = 1; col <= (*gridVector)[1][1].size(); col++) {
+                cout << (*gridVector)[layer - 1][row - 1][col - 1] << "\t";
             }
             cout << endl;
         }
@@ -29,15 +29,14 @@ void printGridVector( vector<vector<vector<int> > > *gridVector){
 //     ----- supply cout end -----
 }
 
-vector<string> splitString( string content) //MasterCell MC1 2 2
+vector<string> splitString(string content) //MasterCell MC1 2 2
 {
     int i = 0;
     vector<string> contentVector;
     stringstream contentArray(content);
     string word;
-    while (contentArray.good())
-    {
-        contentArray >> word ;
+    while (contentArray.good()) {
+        contentArray >> word;
         contentVector.push_back(word);
         ++i;
     }
@@ -45,10 +44,15 @@ vector<string> splitString( string content) //MasterCell MC1 2 2
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
+
 
     double START, END;
     START = clock();
+
+//    string inputData = argv[1];
+//    string outputData = argv[2];
+
 
     ReadFile readFile;
     ReRoute reRoute;
@@ -57,7 +61,7 @@ int main() {
     int maxCellMovent = 0;
     GgridBoundaryIndex ggridBoundaryIndex;
     map<string, Layer> layerMap;
-    map<string, vector<int > > powerFactorMap;
+    map<string, vector<int> > powerFactorMap;
     map<string, MasterCell> masterCellMap;
     map<string, CellInstance> cellInstanceMap;
     map<string, VoltageArea> voltageAreaMap;
@@ -66,10 +70,10 @@ int main() {
     map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
     map<string, CellInstance> numMoveCellInstMap;
-    map<string, map<string, Blockage > > blockageCellMap;
+    map<string, map<string, Blockage> > blockageCellMap;
     set<string> netNameSet;
     //reduce Supply
-    map<string,set<string > > reducePointMap;
+    map<string, set<string> > reducePointMap;
 
     ifstream fin(FILEPATH);
     if (fin) {
@@ -78,6 +82,7 @@ int main() {
         }
     }
     fin.close();
+
 
     //TODO 調整讀檔方式  --> 已調整
     //TODO 調整boundary map 改為每條線經過的 --> 已調整
@@ -90,7 +95,7 @@ int main() {
     //TODO 改成使用pointer -> 已調整
     //TODO pattern route 部分 重構 -> 已調整
 
-    //TODO via 部分 重構 ->
+    //TODO via 部分 重構 -> 已調整 case4.txt 已跑完
     //TODO 減少多於線段的code->
 
     //TODO two pin 做 cell move by 面積 ->
@@ -99,6 +104,8 @@ int main() {
     //TODO 多執行緒 讀檔 ->
     //TODO 確定set 生命週期 reduce supply時可以改寫 ，減少記憶體使用 ->
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序 ->
+
+
 
     for (int i = 0; i < contentvector.size(); i++) {
         vector<string> lineVector = splitString(contentvector[i]);
@@ -129,48 +136,48 @@ int main() {
             cout << "-----CellInstance end-----" << endl;
         } else if (lineVector[0] == NET) {
             cout << "-----net start-----" << endl;
-            readFile.readNet(&contentvector, &lineVector, &netMap, &masterCellMap, &cellInstanceMap,&netNameSet, &i);
+            readFile.readNet(&contentvector, &lineVector, &netMap, &masterCellMap, &cellInstanceMap, &netNameSet, &i);
             cout << "-----net end-----" << endl;
         } else if (lineVector[0] == NUMROUTES) {
             cout << "-----route start-----" << endl;
-            readFile.readRoute(&contentvector, &lineVector, &netMap, &gridVector, &i,&reducePointMap,&netNameSet);
+            readFile.readRoute(&contentvector, &lineVector, &netMap, &gridVector, &i, &reducePointMap, &netNameSet);
             cout << "-----route end-----" << endl;
         } else if (lineVector[0] == NAME) {
             cout << "-----voltage start-----" << endl;
-//            readFile.readVoltageArea(&contentvector, &voltageAreaMap, &i);
+            readFile.readVoltageArea(&contentvector, &voltageAreaMap, &i);
             cout << "-----voltage end-----" << endl;
 
         }
     }
 
     readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap);
-
+    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap,START);
 
 
 //    printGridVector(&gridVector);
 
-//    ofstream myfile;
-//    myfile.open("output_"+FILEPATH);
-//    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
-//    for (const auto & cellMove : numMoveCellInstMap) {
-//        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
-//               << cellMove.second.getColIndx() << endl;
-//    };
-//    int numRoute = 0;
-//    for (const auto & net : netMap) {
-//            numRoute+=net.second.getNumRoute().size();
-//    };
-//
-//    myfile << "NumRoutes" << " " << numRoute << endl;
-//    for (const auto & net : netMap) {
-//        for (const auto & route : net.second.getNumRoute()) {
-//            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
-//                   << route.getEndRowIndx() << " "<< route.getEndColIndx() << " " << route.getEndlayIndx() << " "
-//                   << route.getNetName() << endl;
-//        };
-//    };
-//    myfile.close();
+
+    ofstream myfile;
+    myfile.open("output_"+FILEPATH);
+    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
+    for (const auto &cellMove : numMoveCellInstMap) {
+        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
+               << cellMove.second.getColIndx() << endl;
+    };
+    int numRoute = 0;
+    for (const auto &net : netMap) {
+        numRoute += net.second.getNumRoute().size();
+    };
+
+    myfile << "NumRoutes" << " " << numRoute << endl;
+    for (const auto &net : netMap) {
+        for (const auto &route : net.second.getNumRoute()) {
+            myfile << route.getStartRowIndx() << " " << route.getStartColIndx() << " " << route.getStartLayIndx() << " "
+                   << route.getEndRowIndx() << " " << route.getEndColIndx() << " " << route.getEndlayIndx() << " "
+                   << route.getNetName() << endl;
+        };
+    };
+    myfile.close();
 
 
     END = clock();
@@ -178,29 +185,7 @@ int main() {
     cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;
 
 
-//        int d=0;
-//    int x[MAXD], y[MAXD];
-//    Tree flutetree;
-//    int flutewl;
-//    while (!feof(stdin)) {
-//        scanf("%d %d\n", &x[d], &y[d]);
-//        std::cout<< "pin" << x[d]  << y[d] <<std::endl;
-//        d++;
-//    }
-//    x[0] = 12;
-//    y[0] = 25;
-//    x[1] = 13;
-//    y[1] = 31;
-//    x[2] = 14;
-//    y[2] = 33;
-//    d=3;
-//    readLUT();
-//    flutetree = flute(d, x, y, ACCURACY);
-//  std::cout<< "wirelength" << flutetree.length   <<std::endl;
-//    printf("FLUTE wirelength = %d\n", flutetree.length);
-//    plottree(flutetree);
-//    flutewl = flute_wl(d, x, y, ACCURACY);
-//    printf("FLUTE wirelength (without RSMT construction) = %d\n", flutewl);
+
 
 
     //   program total wire length -> add weight -> powerFactor
@@ -224,33 +209,7 @@ int main() {
 
 
 
-//    int d=0;
-//    int x[MAXD], y[MAXD];
-//    Tree flutetree;
-//    int flutewl;
-//    while (!feof(stdin)) {
-//        scanf("%d %d\n", &x[d], &y[d]);
-//        std::cout<< "pin" << x[d]  << y[d] <<std::endl;
-//        d++;
-//    }
-//    x[0] = 4;
-//    y[0] = 1;
-//    x[1] = 4;
-//    y[1] = 4;
-//    x[2] = 2;
-//    y[2] = 2;
-//    x[3] = 3;
-//    y[3] = 3;
-//    x[4] = 3;
-//    y[4] = 1;
-//    d=5;
-//    readLUT();
-//    flutetree = flute(d, x, y, ACCURACY);
-//  std::cout<< "wirelength" << flutetree.length   <<std::endl;
-//    printf("FLUTE wirelength = %d\n", flutetree.length);
-//    plottree(flutetree);
-//    flutewl = flute_wl(d, x, y, ACCURACY);
-//    printf("FLUTE wirelength (without RSMT construction) = %d\n", flutewl);
+
 
 
 //for(const auto& item :  netMap){
@@ -310,4 +269,44 @@ int main() {
 //for (int i = 0; i < item.second.getInstance().size(); ++i) {
 //cout << item.second.getInstance()[i] << endl;
 //}
+//}
+
+//for (int i = 0; i < contentvector.size(); i++) {
+//vector<string> lineVector = splitString(contentvector[i]);
+//// Horizontal direction
+//if(lineVector[0] == lineVector[3] and lineVector[1]!=lineVector[4] and lineVector[2] == lineVector[5]){
+//
+//// Vertical direction
+//}else if(lineVector[0] != lineVector[3] and lineVector[1]==lineVector[4] and lineVector[2] == lineVector[5]){
+//
+//}else if(lineVector[0] == lineVector[3] and lineVector[1] == lineVector[4] and lineVector[2] != lineVector[5]){
+//
+//}else{
+//cout << " wrong direction : " << lineVector[6] << endl;
+//cout << lineVector[0]  << " "  <<  lineVector[1]  <<" " << lineVector[2] << " " <<lineVector[3] << " " << lineVector[4] << " " << lineVector[5]  << " " << lineVector[6]  << endl;
+//}
+//
+//
+//// Z- direction
+//}
+
+
+//for (int i = 0; i < contentvector.size(); i++) {
+//vector<string> lineVector = splitString(contentvector[i]);
+//// Horizontal direction
+//if (lineVector[0] == lineVector[3] and lineVector[1] != lineVector[4] and lineVector[2] == lineVector[5]) {
+//
+//// Vertical direction
+//} else if (lineVector[0] != lineVector[3] and lineVector[1] == lineVector[4] and
+//lineVector[2] == lineVector[5]) {
+//
+//} else if (lineVector[0] == lineVector[3] and lineVector[1] == lineVector[4] and
+//lineVector[2] != lineVector[5]) {
+//
+//} else {
+//cout << " wrong direction : " << lineVector[6] << endl;
+//cout << lineVector[0] << " " << lineVector[1] << " " << lineVector[2] << " " << lineVector[3] << " "
+//<< lineVector[4] << " " << lineVector[5] << " " << lineVector[6] << endl;
+//}
+//// Z- direction
 //}

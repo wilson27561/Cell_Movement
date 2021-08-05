@@ -1,62 +1,63 @@
+/* ----------------------------------------------------------------- 
+ * Originally written by Chris Chu, Iowa State University:
+ -------------- FLUTE - Version 3.1 -----------------
+                       by
+                Chris C.-N. Chu
+       Dept. of ECpE, Iowa State University
+             Copyright (c) - 2005
+  Iowa State University Research Foundation, Inc.
+ ----------------------------------------------------
+ * Just fantastic code. Thanks Chris! (WPS).
+ * Modified by William Swartz for public use and to reduce memory usage
+ * and to remove MAXD constraint.  Flute is now dynamic and reentrant!
+ * Copyright (c) 2019 William Swartz.  UTD.  All rights reserved.
+----------------------------------------------------------------- */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
+#define FLUTE_INTERNAL_VARS
 #include "flute.h"
-#include <iostream>
-#if D<=7
-#define MGROUP 5040/4  // Max. # of groups, 7! = 5040
-#define MPOWV 15  // Max. # of POWVs per group
-#elif D==8
-#define MGROUP 40320/4  // Max. # of groups, 8! = 40320
-#define MPOWV 33  // Max. # of POWVs per group
-#elif D==9
-#define MGROUP 362880/4  // Max. # of groups, 9! = 362880
-#define MPOWV 79  // Max. # of POWVs per group
-#endif
-int numgrp[10]={0,0,0,0,6,30,180,1260,10080,90720};
+#include "flute_malloc.h"
 
-struct csoln
+namespace Flute {
+
+/* ***************** STATIC FUNCTION DEFINITIONS ******************* */
+static Tree dmergetree(Tree t1, Tree t2) ;
+static Tree vmergetree(Tree t1, Tree t2) ;
+static Tree hmergetree(Tree t1, Tree t2, int *s) ;
+static void local_refinement( FluteState * flute_p, int d, Tree *tp, int p) ;
+
+/* ***************** STATIC VARIABLE DEFINITIONS ******************* */
+
+
+FluteState * flute_init(  const char *wirelength_vector_file, const char *routing_tree_file )
 {
-    unsigned char parent;
-    unsigned char seg[11];  // Add: 0..i, Sub: j..10; seg[i+1]=seg[j-1]=0
-    unsigned char rowcol[D-2];  // row = rowcol[]/16, col = rowcol[]%16,
-    unsigned char neighbor[2*D-2];
-};
-struct csoln *LUT[D+1][MGROUP];  // storing 4 .. D
-int numsoln[D+1][MGROUP];
-
-struct point
-{
-    DTYPE x, y;
-    int o;
-};
-
-void readLUT();
-DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc);
-DTYPE flutes_wl_LD(int d, DTYPE xs[], DTYPE ys[], int s[]);
-DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc);
-DTYPE flutes_wl_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc);
-Tree flute(int d, DTYPE x[], DTYPE y[], int acc);
-Tree flutes_LD(int d, DTYPE xs[], DTYPE ys[], int s[]);
-Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc);
-Tree flutes_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc);
-Tree dmergetree(Tree t1, Tree t2);
-Tree hmergetree(Tree t1, Tree t2, int s[]);
-Tree vmergetree(Tree t1, Tree t2);
-void local_refinement(Tree *tp, int p);
-DTYPE wirelength(Tree t);
-void printtree(Tree t);
-void plottree(Tree t);
-
-void readLUT()
-{
-    unsigned char charnum[256], line[32], *linep, c;
     FILE *fpwv, *fprt;
-    struct csoln *p;
-    int d, i, j, k, kk, ns, nn;
+    FLUTE_SOLNPTR p ;
+    int d, i, j, k, kk, ns, nn, ne;
+    char ch ;
+    unsigned char line[2000], *linep, c;
+    unsigned char charnum[256] ;
+    unsigned char divd[256], modd[256], div16[256], mod16[256], dsq;
+    FluteState * flute_p ;			/* top module */
 
-    init_param();
+    flute_p = UTDCALLOC( 1, FLUTEBOX ) ;
+    /* was static int numgrp[10]={0,0,0,0,6,30,180,1260,10080,90720}; */
+    flute_p->numgrp[0] = 0 ;
+    flute_p->numgrp[1] = 0 ;
+    flute_p->numgrp[2] = 0 ;
+    flute_p->numgrp[3] = 0 ;
+    flute_p->numgrp[4] = 6 ;
+    flute_p->numgrp[5] = 30 ;
+    flute_p->numgrp[6] = 180 ;
+    flute_p->numgrp[7] = 1260 ;
+    flute_p->numgrp[8] = 10080 ;
+    flute_p->numgrp[9] = 90720 ;
+    flute_p->num_used = 0 ;
+    flute_p->num_alloc = FLUTE_SOLUTION_STORAGE ;
+    flute_p->storage = UTDMALLOC( flute_p->num_alloc, FLUTE_SOLNPTR ) ;
 
     for (i=0; i<=255; i++) {
         if ('0'<=i && i<='9')
@@ -65,74 +66,131 @@ void readLUT()
             charnum[i] = i - 'A' + 10;
         else // if (i=='$' || i=='\n' || ... )
             charnum[i] = 0;
+	div16[i] = i / 16;
+	mod16[i] = i % 16;
     }
 
-    fpwv=fopen(POWVFILE, "r");
-    if (fpwv == NULL) {
-        printf("Error in opening %s\n", POWVFILE);
-        exit(1);
+    fpwv=fopen( wirelength_vector_file, "r");
+    if (!(fpwv)) {
+        printf("Error in opening %s\n", wirelength_vector_file ) ;
+        return(NULL) ;
     }
 
-#if ROUTING==1
-    fprt=fopen(POSTFILE, "r");
-    if (fprt == NULL) {
-        printf("Error in opening %s\n", POSTFILE);
-        exit(1);
+#if FLUTE_ROUTING==1
+    fprt=fopen( routing_tree_file, "r");
+    if (!(fprt)) {
+        printf("Error in opening %s\n", routing_tree_file );
+        return(NULL) ;
     }
 #endif
 
-    for (d=4; d<=D; d++) {
-        fscanf(fpwv, "d=%d\n", &d);
-#if ROUTING==1
-        fscanf(fprt, "d=%d\n", &d);
-#endif
-        for (k=0; k<numgrp[d]; k++) {
-            ns = (int) charnum[fgetc(fpwv)];
 
-            if (ns==0) {  // same as some previous group
-                fscanf(fpwv, "%d\n", &kk);
-                numsoln[d][k] = numsoln[d][kk];
-                LUT[d][k] = LUT[d][kk];
-            }
-            else {
-                fgetc(fpwv);  // '\n'
-                numsoln[d][k] = ns;
-                p = (struct csoln*) malloc(ns*sizeof(struct csoln));
-                LUT[d][k] = p;
-                for (i=1; i<=ns; i++) {
-                    linep = (unsigned char *) fgets((char *) line, 32, fpwv);
-                    p->parent = charnum[*(linep++)];
-                    j = 0;
-                    while ((p->seg[j++] = charnum[*(linep++)]) != 0) ;
-                    j = 10;
-                    while ((p->seg[j--] = charnum[*(linep++)]) != 0) ;
-#if ROUTING==1
-                    nn = 2*d-2;
-                    fread(line, 1, d-2, fprt); linep=line;
-                    for (j=d; j<nn; j++) {
-                        c = charnum[*(linep++)];
-                        p->rowcol[j-d] = c;
-                    }
-                    fread(line, 1, nn/2+1, fprt); linep=line;  // last char \n
-                    for (j=0; j<nn; ) {
-                        c = *(linep++);
-                        p->neighbor[j++] = c/16;
-                        p->neighbor[j++] = c%16;
-                    }
+    for (d = 4; d <= FLUTE_D; d++) {
+      for (i = 0; i <= 255; i++) {
+	divd[i] = i / d;
+	modd[i] = i % d;
+      }
+      dsq = d*d;
+
+      fscanf(fpwv, "d=%d\n", &d);
+#if FLUTE_ROUTING==1    
+      fscanf(fprt, "d=%d\n", &d);
 #endif
-                    p++;
-                }
-            }
-        }
+      for (k = 0; k < flute_p->numgrp[d]; k++) {
+	ns = (int) charnum[fgetc(fpwv)];
+
+	if (ns == 0) { // same as some previous group
+	  fscanf(fpwv, "%d\n", &kk);
+	  flute_p->numsoln[d][k] = flute_p->numsoln[d][kk];
+	  flute_p->lut[d][k] = flute_p->lut[d][kk];
+	} else {
+	  ch = fgetc(fpwv); // '\n'
+	  flute_p->numsoln[d][k] = ns;
+	  p = UTDMALLOC( ns, FLUTE_SOLN ) ;
+	  if( ++flute_p->num_used > flute_p->num_alloc ){
+	    flute_p->num_alloc *= 2 ;
+	    flute_p->storage = UTDREALLOC( flute_p->storage, flute_p->num_alloc, FLUTE_SOLNPTR ) ;
+	  }
+	  flute_p->storage[flute_p->num_used-1] = p ;
+	  flute_p->lut[d][k] = p;
+	  for (i = 1; i <= ns; i++) {
+	    linep = (unsigned char*) fgets((char*) line, 2000, fpwv);
+	    p->parent = charnum[*(linep++)];
+	    j = 0;
+	    while ( (p->seg[j++] = charnum[*(linep++)]) != 0) ; 
+	    ;
+	      j = 10;
+	    while ((p->seg[j--] = charnum[*(linep++)]) != 0);
+#if FLUTE_ROUTING==1    
+	    nn = 2 * d - 2;
+	    ne = 2 * d - 3;
+	    fread(line, 1, d - 2, fprt);
+	    linep = line;
+	    for (j = d; j < nn; j++) {
+	      c = *(linep++);
+	      if (c >= dsq) {
+		c -= dsq;
+		p->neighbor[divd[c]] = j;
+		ne--;
+	      }
+	      p->row[j - d] = divd[c];
+	      p->col[j - d] = modd[c];
+	      p->neighbor[j] = j; // initialized
+	    }
+	    fread(line, 1, ne + 1, fprt);
+	    linep = line; // last char = \n
+	    for (j = 0; j < ne; j++) {
+	      c = *(linep++);
+	      p->neighbor[div16[c]] = mod16[c];
+	    }
+#endif
+	    p++;
+	  }
+	}
+      }
     }
-}
+    fclose(fpwv);
+    fclose(fprt);
+    return( flute_p ) ;
+} /* end flute_init() */
 
-DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc)
+void flute_free( FluteState * flute_p )
 {
-    DTYPE xs[MAXD], ys[MAXD], minval, l, xu, xl, yu, yl;
-    int s[MAXD];
-    int i, j, k, minidx;
-    struct point pt[MAXD], *ptp[MAXD], *tmpp;
+    int i ;			/* counter */
+    if( flute_p ){
+      for( i = 0 ; i < flute_p->num_used ; i++ ){
+	UTDFREE( flute_p->storage[i] ) ;
+      }
+      UTDFREE( flute_p->storage ) ;
+      UTDFREE(flute_p) ;
+    }
+} /* end flute_free() */
+
+void free_tree( FluteState * flute_p, Tree tree )
+{
+    if( tree.deg > 0 ){
+      UTDFREE( tree.branch ) ;
+    }
+    tree.deg = 0 ;
+
+} /* end flute_free_tree() */
+
+FLUTE_DTYPE flute_wl( FluteState * flute_p, int d, FLUTE_DTYPE *x, FLUTE_DTYPE *y, int acc)
+{
+    FLUTE_DTYPE minval, l, xu, xl, yu, yl ;
+    FLUTE_DTYPE *xs, *ys ;
+    int i, j, k, minidx, degree ;
+    int *s ;
+    FLUTE_POINTPTR tmpp, *ptp ;
+    FLUTE_POINTPTR pt ;
+
+    /* allocate the dynamic pieces on the heap rather than the stack */
+    degree = d + 1 ;
+    xs = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    ys = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    s = UTDMALLOC( degree, int ) ;
+    pt = UTDMALLOC( degree+1, FLUTE_POINT ) ;
+    ptp = UTDMALLOC( degree+1, FLUTE_POINTPTR ) ;
 
     if (d==2)
         l = ADIFF(x[0], x[1]) + ADIFF(y[0], y[1]);
@@ -154,14 +212,13 @@ DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc)
             yl = min(y[0], y[2]);
         }
         l = (xu-xl) + (yu-yl);
-    }
-    else {
+    } else {
         for (i=0; i<d; i++) {
             pt[i].x = x[i];
             pt[i].y = y[i];
             ptp[i] = &pt[i];
         }
-
+        
         // sort x
         for (i=0; i<d-1; i++) {
             minval = ptp[i]->x;
@@ -177,7 +234,7 @@ DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc)
             ptp[minidx] = tmpp;
         }
 
-#if REMOVE_DUPLICATE_PIN==1
+#if FLUTE_REMOVE_DUPLICATE_PIN==1
         ptp[d] = &pt[d];
         ptp[d]->x = ptp[d]->y = -999999;
         j = 0;
@@ -190,7 +247,7 @@ DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc)
         }
         d = j;
 #endif
-
+        
         for (i=0; i<d; i++) {
             xs[i] = ptp[i]->x;
             ptp[i]->o = i;
@@ -212,11 +269,17 @@ DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc)
         }
         ys[d-1] = ptp[d-1]->y;
         s[d-1] = ptp[d-1]->o;
-
-        l = flutes_wl(d, xs, ys, s, acc);
+        
+        l = flutes_wl( flute_p, d, xs, ys, s, acc);
     }
+    UTDFREE( xs ) ;
+    UTDFREE( ys ) ;
+    UTDFREE( s ) ;
+    UTDFREE( pt ) ;
+    UTDFREE( ptp ) ;
+
     return l;
-}
+} /* end flute_wl() */
 
 // xs[] and ys[] are coords in x and y in sorted order
 // s[] is a list of nodes in increasing y direction
@@ -225,7 +288,7 @@ DTYPE flute_wl(int d, DTYPE x[], DTYPE y[], int acc)
 // The points are (xs[s[i]], ys[i]) for i=0..d-1
 //             or (xs[i], ys[si[i]]) for i=0..d-1
 
-DTYPE flutes_wl_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
+FLUTE_DTYPE flutes_wl_RDP( FluteState * flute_p, int d, FLUTE_DTYPE *xs, FLUTE_DTYPE *ys, int *s, int acc)
 {
     int i, j, ss;
 
@@ -249,24 +312,24 @@ DTYPE flutes_wl_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
             d--;
         }
     }
-    return flutes_wl_ALLD(d, xs, ys, s, acc);
-}
+    return flutes_wl_ALLD( flute_p, d, xs, ys, s, acc);
+} /* end flutes_wl_RDP() */
 
 // For low-degree, i.e., 2 <= d <= D
-DTYPE flutes_wl_LD(int d, DTYPE xs[], DTYPE ys[], int s[])
+FLUTE_DTYPE flutes_wl_LD( FluteState * flute_p, int d, FLUTE_DTYPE *xs, FLUTE_DTYPE *ys, int *s)
 {
     int k, pi, i, j;
-    struct csoln *rlist;
-    DTYPE dd[2*D-2];  // 0..D-2 for v, D-1..2*D-3 for h
-    DTYPE minl, sum, l[MPOWV+1];
-
+    FLUTE_SOLNPTR rlist;
+    FLUTE_DTYPE dd[2*FLUTE_D-2];  // 0..D-2 for v, D-1..2*D-3 for h
+    FLUTE_DTYPE minl, sum, l[MPOWV+1];
+    
     if (d <= 3)
         minl = xs[d-1]-xs[0]+ys[d-1]-ys[0];
     else {
         k = 0;
         if (s[0] < s[2]) k++;
         if (s[1] < s[2]) k++;
-
+        
         for (i=3; i<=d-1; i++) {  // p0=0 always, skip i=1 for symmetry
             pi = s[i];
             for (j=d-1; j>i; j--)
@@ -274,28 +337,28 @@ DTYPE flutes_wl_LD(int d, DTYPE xs[], DTYPE ys[], int s[])
                     pi--;
             k = pi + (i+1)*k;
         }
-
-        if (k < numgrp[d])  // no horizontal flip
+        
+        if (k < flute_p->numgrp[d])  // no horizontal flip
             for (i=1; i<=d-3; i++) {
                 dd[i]=ys[i+1]-ys[i];
                 dd[d-1+i]=xs[i+1]-xs[i];
             }
         else {
-            k=2*numgrp[d]-1-k;
+            k=2*flute_p->numgrp[d]-1-k;
             for (i=1; i<=d-3; i++) {
                 dd[i]=ys[i+1]-ys[i];
                 dd[d-1+i]=xs[d-1-i]-xs[d-2-i];
             }
         }
-
+        
         minl = l[0] = xs[d-1]-xs[0]+ys[d-1]-ys[0];
-        rlist = LUT[d][k];
+        rlist = flute_p->lut[d][k];
         for (i=0; rlist->seg[i]>0; i++)
             minl += dd[rlist->seg[i]];
-
+        
         l[1] = minl;
         j = 2;
-        while (j <= numsoln[d][k]) {
+        while (j <= flute_p->numsoln[d][k]) {
             rlist++;
             sum = l[rlist->parent];
             for (i=0; rlist->seg[i]>0; i++)
@@ -306,20 +369,37 @@ DTYPE flutes_wl_LD(int d, DTYPE xs[], DTYPE ys[], int s[])
             l[j++] = sum;
         }
     }
-
+    
     return minl;
-}
+} /* end flutes_wl_LD() */
 
 // For medium-degree, i.e., D+1 <= d
-DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
+FLUTE_DTYPE flutes_wl_MD(FluteState * flute_p,int d, FLUTE_DTYPE *xs, FLUTE_DTYPE *ys, int *s, int acc)
 {
-    DTYPE x1[MAXD], x2[MAXD], y1[MAXD], y2[MAXD];
-    int si[MAXD], s1[MAXD], s2[MAXD];
-    float score[2*MAXD], penalty[MAXD], pnlty, dx, dy;
-    DTYPE ll, minl, extral;
+    float pnlty, dx, dy;
+    float *score, *penalty ;
+    FLUTE_DTYPE xydiff;
+    FLUTE_DTYPE ll, minl, extral;
+    FLUTE_DTYPE *x1, *x2, *y1, *y2 ;
+    FLUTE_DTYPE *distx, *disty ;
     int i, r, p, maxbp, nbp, bp, ub, lb, n1, n2, newacc;
-    int ms, mins, maxs, minsi, maxsi;
-    DTYPE distx[MAXD], disty[MAXD], xydiff;
+    int ms, mins, maxs, minsi, maxsi, degree ;
+    int return_val ;
+    int *si, *s1, *s2 ;
+
+    degree = d + 1 ;
+    score = UTDMALLOC( 2 * degree, float ) ;
+    penalty = UTDMALLOC( degree, float ) ;
+
+    x1 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    y1 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    x2 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    y2 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    distx = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    disty = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    si = UTDMALLOC( degree, int ) ;
+    s1 = UTDMALLOC( degree, int ) ;
+    s2 = UTDMALLOC( degree, int ) ;
 
     if (s[0] < s[d-1]) {
         ms = max(s[0], s[1]);
@@ -331,18 +411,30 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
                 y1[i] = ys[i];
                 s1[i] = s[i];
             }
-            x1[ms+1] = xs[ms];
-            y1[ms+1] = ys[ms];
+            x1[ms+1] = xs[ms]; 
+            y1[ms+1] = ys[ms]; 
             s1[ms+1] = ms+1;
-
+            
             s2[0] = 0;
             for (i=1; i<=d-1-ms; i++)
                 s2[i] = s[i+ms]-ms;
-
-            return flutes_wl_LMD(ms+2, x1, y1, s1, acc)
-                   + flutes_wl_LMD(d-ms, xs+ms, ys+ms, s2, acc);
+            
+            return_val = flutes_wl_LMD( flute_p, ms+2, x1, y1, s1, acc) + 
+	                 flutes_wl_LMD( flute_p, d-ms, xs+ms, ys+ms, s2, acc);
+	    UTDFREE( score ) ;
+	    UTDFREE( penalty ) ;
+	    UTDFREE( x1 ) ;
+	    UTDFREE( y1 ) ;
+	    UTDFREE( x2 ) ;
+	    UTDFREE( y2 ) ;
+	    UTDFREE( distx ) ;
+	    UTDFREE( disty ) ;
+	    UTDFREE( si ) ;
+	    UTDFREE( s1 ) ;
+	    UTDFREE( s2 ) ;
+	    return return_val;
         }
-    }
+    }    
     else {  // (s[0] > s[d-1])
         ms = min(s[0], s[1]);
         for (i=2; i<=d-1-ms; i++)
@@ -359,16 +451,28 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
             x1[d-ms] = xs[d-1];
             y1[d-ms] = ys[d-1-ms];
             s1[d-ms] = 0;
-
+            
             s2[0] = ms;
             for (i=1; i<=ms; i++)
                 s2[i] = s[i+d-1-ms];
-
-            return flutes_wl_LMD(d+1-ms, x1, y1, s1, acc)
-                   + flutes_wl_LMD(ms+1, xs, ys+d-1-ms, s2, acc);
+            
+            return_val = flutes_wl_LMD( flute_p, d+1-ms, x1, y1, s1, acc) +
+                         flutes_wl_LMD( flute_p, ms+1, xs, ys+d-1-ms, s2, acc);
+	    UTDFREE( score ) ;
+	    UTDFREE( penalty ) ;
+	    UTDFREE( x1 ) ;
+	    UTDFREE( y1 ) ;
+	    UTDFREE( x2 ) ;
+	    UTDFREE( y2 ) ;
+	    UTDFREE( distx ) ;
+	    UTDFREE( disty ) ;
+	    UTDFREE( si ) ;
+	    UTDFREE( s1 ) ;
+	    UTDFREE( s2 ) ;
+	    return return_val;
         }
     }
-
+    
 // Find inverse si[] of s[]
     for (r=0; r<d; r++)
         si[s[r]] = r;
@@ -378,13 +482,13 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
     if (lb < 2) lb = 2;
     ub=d-1-lb;
 
-// Compute scores
+// Compute scores    
 #define AAWL 0.6
 #define BBWL 0.3
     float CCWL = 7.4/((d+10.)*(d-3.));
     float DDWL = 4.8/(d-1);
-
-    // Compute penalty[]
+    
+    // Compute penalty[]    
     dx = CCWL*(xs[d-2]-xs[1]);
     dy = CCWL*(ys[d-2]-ys[1]);
     for (r = d/2, pnlty = 0; r>=0; r--, pnlty += dx)
@@ -434,21 +538,21 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
             maxsi = si[r];
         disty[r] += ys[maxsi] - ys[minsi];
     }
-
+    
     nbp=0;
     for (r=lb; r<=ub; r++) {
         if (si[r]==0 || si[r]==d-1)
             score[nbp] = (xs[r+1] - xs[r-1]) - penalty[r]
-                         - AAWL*(ys[d-2]-ys[1]) - DDWL*disty[r];
+                - AAWL*(ys[d-2]-ys[1]) - DDWL*disty[r];
         else score[nbp] = (xs[r+1] - xs[r-1]) - penalty[r]
-                          - BBWL*(ys[si[r]+1]-ys[si[r]-1]) - DDWL*disty[r];
+                 - BBWL*(ys[si[r]+1]-ys[si[r]-1]) - DDWL*disty[r];
         nbp++;
 
         if (s[r]==0 || s[r]==d-1)
             score[nbp] = (ys[r+1] - ys[r-1]) - penalty[s[r]]
-                         - AAWL*(xs[d-2]-xs[1]) - DDWL*distx[r];
+                - AAWL*(xs[d-2]-xs[1]) - DDWL*distx[r];
         else score[nbp] = (ys[r+1] - ys[r-1]) - penalty[s[r]]
-                          - BBWL*(xs[s[r]+1]-xs[s[r]-1]) - DDWL*distx[r];
+                 - BBWL*(xs[s[r]+1]-xs[s[r]-1]) - DDWL*distx[r];
         nbp++;
     }
 
@@ -458,8 +562,8 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
         newacc = acc/2;
         if (acc >= nbp) acc = nbp-1;
     }
-
-    minl = (DTYPE) INT_MAX;
+    
+    minl = (FLUTE_DTYPE) INT_MAX;
     for (i=0; i<acc; i++) {
         maxbp = 0;
         for (bp=1; bp<nbp; bp++)
@@ -500,8 +604,8 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
                     n1++;  n2++;
                 }
             }
-            ll = extral + flutes_wl_LMD(p+1, xs, y1, s1, newacc)
-                 + flutes_wl_LMD(d-p, xs+p, y2, s2, newacc);
+            ll = extral + flutes_wl_LMD( flute_p, p+1, xs, y1, s1, newacc)
+                + flutes_wl_LMD( flute_p, d-p, xs+p, y2, s2, newacc);
         }
         else {  // if (!BreakInX(maxbp))
             n1 = n2 = 0;
@@ -533,13 +637,28 @@ DTYPE flutes_wl_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
                     n1++;  n2++;
                 }
             }
-            ll = extral + flutes_wl_LMD(p+1, x1, ys, s1, newacc)
-                 + flutes_wl_LMD(d-p, x2, ys+p, s2, newacc);
+            ll = extral + flutes_wl_LMD( flute_p, p+1, x1, ys, s1, newacc) + 
+	                  flutes_wl_LMD( flute_p, d-p, x2, ys+p, s2, newacc);
         }
         if (minl > ll) minl = ll;
     }
-    return minl;
-}
+    return_val = minl ;
+
+EXIT_FLUTE_WL_MD:
+    UTDFREE( score ) ;
+    UTDFREE( penalty ) ;
+    UTDFREE( x1 ) ;
+    UTDFREE( y1 ) ;
+    UTDFREE( x2 ) ;
+    UTDFREE( y2 ) ;
+    UTDFREE( distx ) ;
+    UTDFREE( disty ) ;
+    UTDFREE( si ) ;
+    UTDFREE( s1 ) ;
+    UTDFREE( s2 ) ;
+
+    return return_val ;
+} /* end flutes_wl_MD() */
 
 static int orderx(const void *a, const void *b)
 {
@@ -565,18 +684,18 @@ static int ordery(const void *a, const void *b)
     return 0;
 }
 
-Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
+Tree flute( FluteState * flute_p, int d, FLUTE_DTYPE *x, FLUTE_DTYPE *y, int acc)
 {
-    DTYPE *xs, *ys, minval;
+    FLUTE_DTYPE *xs, *ys, minval;
     int *s;
     int i, j, k, minidx;
     struct point *pt, **ptp, *tmpp;
     Tree t;
-
+    
     if (d==2) {
         t.deg = 2;
         t.length = ADIFF(x[0], x[1]) + ADIFF(y[0], y[1]);
-        t.branch = (Branch *) malloc(2*sizeof(Branch));
+        t.branch = UTDMALLOC( 2, Branch ) ;
         t.branch[0].x = x[0];
         t.branch[0].y = y[0];
         t.branch[0].n = 1;
@@ -585,11 +704,11 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
         t.branch[1].n = 1;
     }
     else {
-        xs = (DTYPE *)malloc(sizeof(DTYPE)*(d));
-        ys = (DTYPE *)malloc(sizeof(DTYPE)*(d));
-        s = (int *)malloc(sizeof(int)*(d));
-        pt = (struct point *)malloc(sizeof(struct point)*(d+1));
-        ptp = (struct point **)malloc(sizeof(struct point*)*(d+1));
+        xs = UTDMALLOC( d, FLUTE_DTYPE ) ;
+        ys = UTDMALLOC( d, FLUTE_DTYPE ) ;
+        s = UTDMALLOC( d, int ) ;
+        pt = UTDMALLOC( d+1, FLUTE_POINT ) ;
+        ptp = UTDMALLOC( d+1, FLUTE_POINTPTR ) ;
 
         for (i=0; i<d; i++) {
             pt[i].x = x[i];
@@ -597,7 +716,7 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
             ptp[i] = &pt[i];
         }
 
-//        // sort x
+        // sort x
         if (d<200) {
             for (i=0; i<d-1; i++) {
                 minval = ptp[i]->x;
@@ -616,7 +735,7 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
             qsort(ptp, d, sizeof(struct point *), orderx);
         }
 
-#if REMOVE_DUPLICATE_PIN==1
+#if FLUTE_REMOVE_DUPLICATE_PIN==1
         ptp[d] = &pt[d];
         ptp[d]->x = ptp[d]->y = -999999;
         j = 0;
@@ -629,14 +748,13 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
         }
         d = j;
 #endif
-
+        
         for (i=0; i<d; i++) {
             xs[i] = ptp[i]->x;
             ptp[i]->o = i;
         }
 
         // sort y to find s[]
-        //這邊要改 d 可能為0
         if (d<200) {
             for (i=0; i<d-1; i++) {
                 minval = ptp[i]->y;
@@ -660,17 +778,18 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
                 s[i] = ptp[i]->o;
             }
         }
-        t = flutes(d, xs, ys, s, acc);
+        
+        t = flutes( flute_p, d, xs, ys, s, acc);
 
-        free(xs);
-        free(ys);
-        free(s);
-        free(pt);
-        free(ptp);
+        UTDFREE(xs);
+        UTDFREE(ys);
+        UTDFREE(s);
+        UTDFREE(pt);
+        UTDFREE(ptp);
     }
 
     return t;
-}
+} /* end flute() */
 
 // xs[] and ys[] are coords in x and y in sorted order
 // s[] is a list of nodes in increasing y direction
@@ -679,10 +798,10 @@ Tree flute(int d, DTYPE x[], DTYPE y[], int acc)
 // The points are (xs[s[i]], ys[i]) for i=0..d-1
 //             or (xs[i], ys[si[i]]) for i=0..d-1
 
-Tree flutes_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
+Tree flutes_RDP( FluteState * flute_p, int d, FLUTE_DTYPE xs[], FLUTE_DTYPE ys[], int s[], int acc)
 {
     int i, j, ss;
-
+    
     for (i=0; i<d-1; i++) {
         if (xs[s[i]]==xs[s[i+1]] && ys[i]==ys[i+1]) {
             if (s[i] < s[i+1])
@@ -703,197 +822,224 @@ Tree flutes_RDP(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
             d--;
         }
     }
-    return flutes_ALLD(d, xs, ys, s, acc);
+    return flutes_ALLD( flute_p, d, xs, ys, s, acc);
 }
-
+    
 // For low-degree, i.e., 2 <= d <= D
-Tree flutes_LD(int d, DTYPE xs[], DTYPE ys[], int s[])
+Tree flutes_LD( FluteState * flute_p, int d, FLUTE_DTYPE *xs, FLUTE_DTYPE *ys, int *s)
 {
-    int k, pi, i, j;
-    struct csoln *rlist, *bestrlist;
-    DTYPE dd[2*D-2];  // 0..D-2 for v, D-1..2*D-3 for h
-    DTYPE minl, sum, l[MPOWV+1];
-    int hflip;
-    Tree t;
+      int k, pi, i, j, k0, k1 ;
+      FLUTE_SOLNPTR rlist, bestrlist;
+      FLUTE_DTYPE dd[2 * FLUTE_D - 2]; // 0..D-2 for v, D-1..2*D-3 for h
+      FLUTE_DTYPE minl, sum;
+      FLUTE_DTYPE l[MPOWV + 1];
+      int hflip;
+      Tree t;
 
-    t.deg = d;
-    t.branch = (Branch *) malloc((2*d-2)*sizeof(Branch));
-    if (d == 2) {
-        minl = xs[1]-xs[0]+ys[1]-ys[0];
-        t.branch[0].x = xs[s[0]];
-        t.branch[0].y = ys[0];
-        t.branch[0].n = 1;
-        t.branch[1].x = xs[s[1]];
-        t.branch[1].y = ys[1];
-        t.branch[1].n = 1;
-    }
-    else if (d == 3) {
-        minl = xs[2]-xs[0]+ys[2]-ys[0];
-        t.branch[0].x = xs[s[0]];
-        t.branch[0].y = ys[0];
-        t.branch[0].n = 3;
-        t.branch[1].x = xs[s[1]];
-        t.branch[1].y = ys[1];
-        t.branch[1].n = 3;
-        t.branch[2].x = xs[s[2]];
-        t.branch[2].y = ys[2];
-        t.branch[2].n = 3;
-        t.branch[3].x = xs[1];
-        t.branch[3].y = ys[1];
-        t.branch[3].n = 3;
-    }
-    else {
-        k = 0;
-        if (s[0] < s[2]) k++;
-        if (s[1] < s[2]) k++;
+      t.deg = d;
+      t.branch = UTDMALLOC((2 * d - 2), Branch) ;
+      if (d == 2) {
+	      minl = xs[1] - xs[0] + ys[1] - ys[0];
+	      t.branch[0].x = xs[s[0]];
+	      t.branch[0].y = ys[0];
+	      t.branch[0].n = 1;
+	      t.branch[1].x = xs[s[1]];
+	      t.branch[1].y = ys[1];
+	      t.branch[1].n = 1;
+      } else if (d == 3) {
+	      minl = xs[2] - xs[0] + ys[2] - ys[0];
+	      t.branch[0].x = xs[s[0]];
+	      t.branch[0].y = ys[0];
+	      t.branch[0].n = 3;
+	      t.branch[1].x = xs[s[1]];
+	      t.branch[1].y = ys[1];
+	      t.branch[1].n = 3;
+	      t.branch[2].x = xs[s[2]];
+	      t.branch[2].y = ys[2];
+	      t.branch[2].n = 3;
+	      t.branch[3].x = xs[1];
+	      t.branch[3].y = ys[1];
+	      t.branch[3].n = 3;
+      } else {
+	      k = 0;
+	      if (s[0] < s[2]) k++;
+	      if (s[1] < s[2]) k++;
 
-        for (i=3; i<=d-1; i++) {  // p0=0 always, skip i=1 for symmetry
-            pi = s[i];
-            for (j=d-1; j>i; j--)
-                if (s[j] < s[i])
-                    pi--;
-            k = pi + (i+1)*k;
-        }
+	      k0 = k ;
+	      for (i = 3; i <= d - 1; i++) { // p0=0 always, skip i=1 for symmetry
+		      pi = s[i];
+		      for (j = d - 1; j > i; j--)
+			      if (s[j] < s[i])
+				      pi--;
+		      k = pi + (i + 1) * k;
+	      }
 
-        if (k < numgrp[d]) { // no horizontal flip
-            hflip = 0;
-            for (i=1; i<=d-3; i++) {
-                dd[i]=ys[i+1]-ys[i];
-                dd[d-1+i]=xs[i+1]-xs[i];
-            }
-        }
-        else {
-            hflip = 1;
-            k=2*numgrp[d]-1-k;
-            for (i=1; i<=d-3; i++) {
-                dd[i]=ys[i+1]-ys[i];
-                dd[d-1+i]=xs[d-1-i]-xs[d-2-i];
-            }
-        }
+	      k1 = k ;
+	      if (k < flute_p->numgrp[d]) { // no horizontal flip
+		      hflip = 0;
+		      for (i = 1; i <= d - 3; i++) {
+			      dd[i] = ys[i + 1] - ys[i];
+			      dd[d - 1 + i] = xs[i + 1] - xs[i];
+		      }
+	      } else {
+		      hflip = 1;
+		      k = 2 * flute_p->numgrp[d] - 1 - k;
+		      for (i = 1; i <= d - 3; i++) {
+			      dd[i] = ys[i + 1] - ys[i];
+			      dd[d - 1 + i] = xs[d - 1 - i] - xs[d - 2 - i];
+		      }
+	      }
 
-        minl = l[0] = xs[d-1]-xs[0]+ys[d-1]-ys[0];
-        rlist = LUT[d][k];
-        for (i=0; rlist->seg[i]>0; i++)
-            minl += dd[rlist->seg[i]];
-        bestrlist = rlist;
-        l[1] = minl;
-        j = 2;
-        while (j <= numsoln[d][k]) {
-            rlist++;
-            sum = l[rlist->parent];
-            for (i=0; rlist->seg[i]>0; i++)
-                sum += dd[rlist->seg[i]];
-            for (i=10; rlist->seg[i]>0; i--)
-                sum -= dd[rlist->seg[i]];
-            if (sum < minl) {
-                minl = sum;
-                bestrlist = rlist;
-            }
-            l[j++] = sum;
-        }
+	      minl = l[0] = xs[d - 1] - xs[0] + ys[d - 1] - ys[0];
+	      if( k < 0 ){
+		fprintf( stderr, "mistake here.\n" ) ;
+		k = 0 ;
+	      }
+	      rlist = flute_p->lut[d][k];
+	      for (i = 0; rlist->seg[i] > 0; i++)
+		      minl += dd[rlist->seg[i]];
+	      bestrlist = rlist;
+	      l[1] = minl;
+	      j = 2;
+	      while (j <= flute_p->numsoln[d][k]) {
+		      rlist++;
+		      sum = l[rlist->parent];
+		      for (i = 0; rlist->seg[i] > 0; i++)
+			      sum += dd[rlist->seg[i]];
+		      for (i = 10; rlist->seg[i] > 0; i--)
+			      sum -= dd[rlist->seg[i]];
+		      if (sum < minl) {
+			      minl = sum;
+			      bestrlist = rlist;
+		      }
+		      l[j++] = sum;
+	      }
 
-        t.branch[0].x = xs[s[0]];
-        t.branch[0].y = ys[0];
-        t.branch[1].x = xs[s[1]];
-        t.branch[1].y = ys[1];
-        for (i=2; i<d-2; i++) {
-            t.branch[i].x = xs[s[i]];
-            t.branch[i].y = ys[i];
-            t.branch[i].n = bestrlist->neighbor[i];
-        }
-        t.branch[d-2].x = xs[s[d-2]];
-        t.branch[d-2].y = ys[d-2];
-        t.branch[d-1].x = xs[s[d-1]];
-        t.branch[d-1].y = ys[d-1];
-        if (hflip) {
-            if (s[1] < s[0]) {
-                t.branch[0].n = bestrlist->neighbor[1];
-                t.branch[1].n = bestrlist->neighbor[0];
-            }
-            else {
-                t.branch[0].n = bestrlist->neighbor[0];
-                t.branch[1].n = bestrlist->neighbor[1];
-            }
-            if (s[d-1] < s[d-2]) {
-                t.branch[d-2].n = bestrlist->neighbor[d-1];
-                t.branch[d-1].n = bestrlist->neighbor[d-2];
-            }
-            else {
-                t.branch[d-2].n = bestrlist->neighbor[d-2];
-                t.branch[d-1].n = bestrlist->neighbor[d-1];
-            }
-            for (i=d; i<2*d-2; i++) {
-                t.branch[i].x = xs[d-1-bestrlist->rowcol[i-d]%16];
-                t.branch[i].y = ys[bestrlist->rowcol[i-d]/16];
-                t.branch[i].n = bestrlist->neighbor[i];
-            }
-        }
-        else {  // !hflip
-            if (s[0] < s[1]) {
-                t.branch[0].n = bestrlist->neighbor[1];
-                t.branch[1].n = bestrlist->neighbor[0];
-            }
-            else {
-                t.branch[0].n = bestrlist->neighbor[0];
-                t.branch[1].n = bestrlist->neighbor[1];
-            }
-            if (s[d-2] < s[d-1]) {
-                t.branch[d-2].n = bestrlist->neighbor[d-1];
-                t.branch[d-1].n = bestrlist->neighbor[d-2];
-            }
-            else {
-                t.branch[d-2].n = bestrlist->neighbor[d-2];
-                t.branch[d-1].n = bestrlist->neighbor[d-1];
-            }
-            for (i=d; i<2*d-2; i++) {
-                t.branch[i].x = xs[bestrlist->rowcol[i-d]%16];
-                t.branch[i].y = ys[bestrlist->rowcol[i-d]/16];
-                t.branch[i].n = bestrlist->neighbor[i];
-            }
-        }
-    }
-    t.length = minl;
+	      t.branch[0].x = xs[s[0]];
+	      t.branch[0].y = ys[0];
+	      t.branch[1].x = xs[s[1]];
+	      t.branch[1].y = ys[1];
+	      for (i = 2; i < d - 2; i++) {
+		      t.branch[i].x = xs[s[i]];
+		      t.branch[i].y = ys[i];
+		      t.branch[i].n = bestrlist->neighbor[i];
+	      }
+	      t.branch[d - 2].x = xs[s[d - 2]];
+	      t.branch[d - 2].y = ys[d - 2];
+	      t.branch[d - 1].x = xs[s[d - 1]];
+	      t.branch[d - 1].y = ys[d - 1];
+	      if (hflip) {
+		      if (s[1] < s[0]) {
+			      t.branch[0].n = bestrlist->neighbor[1];
+			      t.branch[1].n = bestrlist->neighbor[0];
+		      } else {
+			      t.branch[0].n = bestrlist->neighbor[0];
+			      t.branch[1].n = bestrlist->neighbor[1];
+		      }
+		      if (s[d - 1] < s[d - 2]) {
+			      t.branch[d - 2].n = bestrlist->neighbor[d - 1];
+			      t.branch[d - 1].n = bestrlist->neighbor[d - 2];
+		      } else {
+			      t.branch[d - 2].n = bestrlist->neighbor[d - 2];
+			      t.branch[d - 1].n = bestrlist->neighbor[d - 1];
+		      }
+		      for (i = d; i < 2 * d - 2; i++) {
+			      t.branch[i].x = xs[d - 1 - bestrlist->col[i - d]];
+			      t.branch[i].y = ys[bestrlist->row[i - d]];
+			      t.branch[i].n = bestrlist->neighbor[i];
+		      }
+	      } else { // !hflip
+		      if (s[0] < s[1]) {
+			      t.branch[0].n = bestrlist->neighbor[1];
+			      t.branch[1].n = bestrlist->neighbor[0];
+		      } else {
+			      t.branch[0].n = bestrlist->neighbor[0];
+			      t.branch[1].n = bestrlist->neighbor[1];
+		      }
+		      if (s[d - 2] < s[d - 1]) {
+			      t.branch[d - 2].n = bestrlist->neighbor[d - 1];
+			      t.branch[d - 1].n = bestrlist->neighbor[d - 2];
+		      } else {
+			      t.branch[d - 2].n = bestrlist->neighbor[d - 2];
+			      t.branch[d - 1].n = bestrlist->neighbor[d - 1];
+		      }
+		      for (i = d; i < 2 * d - 2; i++) {
+			      t.branch[i].x = xs[bestrlist->col[i - d]];
+			      t.branch[i].y = ys[bestrlist->row[i - d]];
+			      t.branch[i].n = bestrlist->neighbor[i];
+		      }
+	      }
+	}
+	t.length = minl;
 
-    return t;
-}
+	return t;
+
+} /* end flutes_LD() */
+
 
 // For medium-degree, i.e., D+1 <= d
-Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
+Tree flutes_MD( FluteState * flute_p, int d, FLUTE_DTYPE xs[], FLUTE_DTYPE ys[], int s[], int acc)
 {
-    DTYPE x1[MAXD], x2[MAXD], y1[MAXD], y2[MAXD];
-    int si[MAXD], s1[MAXD], s2[MAXD];
-    float score[2*MAXD], penalty[MAXD], pnlty, dx, dy;
-    DTYPE ll, minl, coord1, coord2;
-    int i, r, p, maxbp, bestbp, bp, nbp, ub, lb, n1, n2, nn1, nn2, newacc;
-    Tree t, t1, t2, bestt1, bestt2;
+    float *score, *penalty, pnlty, dx, dy;
     int ms, mins, maxs, minsi, maxsi;
-    DTYPE distx[MAXD], disty[MAXD], xydiff;
+    int i, r, p, maxbp, bestbp, bp, nbp, ub, lb, n1, n2, nn1, nn2, newacc;
+    int *si, *s1, *s2, degree ;
+    Tree t, t1, t2, bestt1, bestt2;
+    FLUTE_DTYPE ll, minl, coord1, coord2;
+    FLUTE_DTYPE *distx, *disty, xydiff;
+    FLUTE_DTYPE *x1, *x2, *y1, *y2;
+
+    degree = d + 1 ;
+    score = UTDMALLOC( 2 * degree, float ) ;
+    penalty = UTDMALLOC( degree, float ) ;
+
+    x1 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    y1 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    x2 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    y2 = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    distx = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    disty = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    si = UTDMALLOC( degree, int ) ;
+    s1 = UTDMALLOC( degree, int ) ;
+    s2 = UTDMALLOC( degree, int ) ;
 
     if (s[0] < s[d-1]) {
         ms = max(s[0], s[1]);
         for (i=2; i<=ms; i++)
             ms = max(ms, s[i]);
         if (ms <= d-3) {
-            for (i=0; i<=ms; i++) {
-                x1[i] = xs[i];
-                y1[i] = ys[i];
-                s1[i] = s[i];
-            }
-            x1[ms+1] = xs[ms];
-            y1[ms+1] = ys[ms];
-            s1[ms+1] = ms+1;
+	  for (i=0; i<=ms; i++) {
+	    x1[i] = xs[i];
+	    y1[i] = ys[i];
+	    s1[i] = s[i];
+	  }
+	  x1[ms+1] = xs[ms]; 
+	  y1[ms+1] = ys[ms]; 
+	  s1[ms+1] = ms+1;
+            
+	  s2[0] = 0;
+	  for (i=1; i<=d-1-ms; i++)
+	    s2[i] = s[i+ms]-ms;
 
-            s2[0] = 0;
-            for (i=1; i<=d-1-ms; i++)
-                s2[i] = s[i+ms]-ms;
+	  t1 = flutes_LMD( flute_p, ms+2, x1, y1, s1, acc);
+	  t2 = flutes_LMD( flute_p, d-ms, xs+ms, ys+ms, s2, acc);
+	  t = dmergetree(t1, t2);
+	  UTDFREE(t1.branch);
+	  UTDFREE(t2.branch);
+            
+	  UTDFREE( score ) ;
+	  UTDFREE( penalty ) ;
+	  UTDFREE( x1 ) ;
+	  UTDFREE( y1 ) ;
+	  UTDFREE( x2 ) ;
+	  UTDFREE( y2 ) ;
+	  UTDFREE( distx ) ;
+	  UTDFREE( disty ) ;
+	  UTDFREE( si ) ;
+	  UTDFREE( s1 ) ;
+	  UTDFREE( s2 ) ;
 
-            t1 = flutes_LMD(ms+2, x1, y1, s1, acc);
-            t2 = flutes_LMD(d-ms, xs+ms, ys+ms, s2, acc);
-            t = dmergetree(t1, t2);
-            free(t1.branch);
-            free(t2.branch);
-
-            return t;
+	  return t;
         }
     }
     else {  // (s[0] > s[d-1])
@@ -901,54 +1047,66 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
         for (i=2; i<=d-1-ms; i++)
             ms = min(ms, s[i]);
         if (ms >= 2) {
-            x1[0] = xs[ms];
-            y1[0] = ys[0];
-            s1[0] = s[0]-ms+1;
-            for (i=1; i<=d-1-ms; i++) {
-                x1[i] = xs[i+ms-1];
-                y1[i] = ys[i];
-                s1[i] = s[i]-ms+1;
-            }
-            x1[d-ms] = xs[d-1];
-            y1[d-ms] = ys[d-1-ms];
-            s1[d-ms] = 0;
+	  x1[0] = xs[ms];
+	  y1[0] = ys[0];
+	  s1[0] = s[0]-ms+1;
+	  for (i=1; i<=d-1-ms; i++) {
+	    x1[i] = xs[i+ms-1];
+	    y1[i] = ys[i];
+	    s1[i] = s[i]-ms+1;
+	  }
+	  x1[d-ms] = xs[d-1];
+	  y1[d-ms] = ys[d-1-ms];
+	  s1[d-ms] = 0;
+            
+	  s2[0] = ms;
+	  for (i=1; i<=ms; i++)
+	    s2[i] = s[i+d-1-ms];
+            
+	  t1 = flutes_LMD( flute_p, d+1-ms, x1, y1, s1, acc);
+	  t2 = flutes_LMD( flute_p, ms+1, xs, ys+d-1-ms, s2, acc);
+	  t = dmergetree(t1, t2);
+	  UTDFREE(t1.branch);
+	  UTDFREE(t2.branch);
+            
+	  UTDFREE( score ) ;
+	  UTDFREE( penalty ) ;
+	  UTDFREE( x1 ) ;
+	  UTDFREE( y1 ) ;
+	  UTDFREE( x2 ) ;
+	  UTDFREE( y2 ) ;
+	  UTDFREE( distx ) ;
+	  UTDFREE( disty ) ;
+	  UTDFREE( si ) ;
+	  UTDFREE( s1 ) ;
+	  UTDFREE( s2 ) ;
 
-            s2[0] = ms;
-            for (i=1; i<=ms; i++)
-                s2[i] = s[i+d-1-ms];
-
-            t1 = flutes_LMD(d+1-ms, x1, y1, s1, acc);
-            t2 = flutes_LMD(ms+1, xs, ys+d-1-ms, s2, acc);
-            t = dmergetree(t1, t2);
-            free(t1.branch);
-            free(t2.branch);
-
-            return t;
+	  return t;
         }
     }
 
 // Find inverse si[] of s[]
     for (r=0; r<d; r++)
         si[s[r]] = r;
-
+    
 // Determine breaking directions and positions dp[]
     lb=(d-2*acc+2)/4;
     if (lb < 2) lb = 2;
     ub=d-1-lb;
 
-// Compute scores
+// Compute scores    
 #define AA 0.6  // 2.0*BB
 #define BB 0.3
     float CC = 7.4/((d+10.)*(d-3.));
     float DD = 4.8/(d-1);
 
-    // Compute penalty[]
+    // Compute penalty[]    
     dx = CC*(xs[d-2]-xs[1]);
     dy = CC*(ys[d-2]-ys[1]);
     for (r = d/2, pnlty = 0; r>=2; r--, pnlty += dx)
         penalty[r] = pnlty,  penalty[d-1-r] = pnlty;
     penalty[1] = pnlty,  penalty[d-2] = pnlty;
-    penalty[0] = pnlty,  penalty[d-1] = pnlty;
+    penalty[0] = pnlty,  penalty[d-1] = pnlty; 
     for (r = d/2-1, pnlty = dy; r>=2; r--, pnlty += dy)
         penalty[s[r]] += pnlty,  penalty[s[d-1-r]] += pnlty;
     penalty[s[1]] += pnlty,  penalty[s[d-2]] += pnlty;
@@ -1002,22 +1160,22 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
     for (r=lb; r<=ub; r++) {
         if (si[r]<=1)
             score[nbp] = (xs[r+1] - xs[r-1]) - penalty[r]
-                         - AA*(ys[2]-ys[1]) - DD*disty[r];
+                - AA*(ys[2]-ys[1]) - DD*disty[r];
         else if (si[r]>=d-2)
             score[nbp] = (xs[r+1] - xs[r-1]) - penalty[r]
-                         - AA*(ys[d-2]-ys[d-3]) - DD*disty[r];
+                - AA*(ys[d-2]-ys[d-3]) - DD*disty[r];
         else score[nbp] = (xs[r+1] - xs[r-1]) - penalty[r]
-                          - BB*(ys[si[r]+1]-ys[si[r]-1]) - DD*disty[r];
+                 - BB*(ys[si[r]+1]-ys[si[r]-1]) - DD*disty[r];
         nbp++;
-
+        
         if (s[r]<=1)
             score[nbp] = (ys[r+1] - ys[r-1]) - penalty[s[r]]
-                         - AA*(xs[2]-xs[1]) - DD*distx[r];
+                - AA*(xs[2]-xs[1]) - DD*distx[r];
         else if (s[r]>=d-2)
             score[nbp] = (ys[r+1] - ys[r-1]) - penalty[s[r]]
-                         - AA*(xs[d-2]-xs[d-3]) - DD*distx[r];
+                - AA*(xs[d-2]-xs[d-3]) - DD*distx[r];
         else score[nbp] = (ys[r+1] - ys[r-1]) - penalty[s[r]]
-                          - BB*(xs[s[r]+1]-xs[s[r]-1]) - DD*distx[r];
+                 - BB*(xs[s[r]+1]-xs[s[r]-1]) - DD*distx[r];
         nbp++;
     }
 
@@ -1027,8 +1185,8 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
         newacc = acc/2;
         if (acc >= nbp) acc = nbp-1;
     }
-
-    minl = (DTYPE) INT_MAX;
+    
+    minl = (FLUTE_DTYPE) INT_MAX;
     bestt1.branch = bestt2.branch = NULL;
     for (i=0; i<acc; i++) {
         maxbp = 0;
@@ -1061,8 +1219,8 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
                 }
             }
 
-            t1 = flutes_LMD(p+1, xs, y1, s1, newacc);
-            t2 = flutes_LMD(d-p, xs+p, y2, s2, newacc);
+            t1 = flutes_LMD( flute_p, p+1, xs, y1, s1, newacc);
+            t2 = flutes_LMD( flute_p, d-p, xs+p, y2, s2, newacc);
             ll = t1.length + t2.length;
             coord1 = t1.branch[t1.branch[nn1].n].y;
             coord2 = t2.branch[t2.branch[nn2].n].y;
@@ -1091,8 +1249,8 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
                 }
             }
 
-            t1 = flutes_LMD(p+1, x1, ys, s1, newacc);
-            t2 = flutes_LMD(d-p, x2, ys+p, s2, newacc);
+            t1 = flutes_LMD( flute_p, p+1, x1, ys, s1, newacc);
+            t2 = flutes_LMD( flute_p, d-p, x2, ys+p, s2, newacc);
             ll = t1.length + t2.length;
             coord1 = t1.branch[t1.branch[p].n].x;
             coord2 = t2.branch[t2.branch[0].n].x;
@@ -1103,25 +1261,33 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
         }
         if (minl > ll) {
             minl = ll;
-            free(bestt1.branch);
-            free(bestt2.branch);
+	    if( bestt1.branch ){
+	      UTDFREE(bestt1.branch) ;
+	    }
+	    if( bestt2.branch ){
+	      UTDFREE(bestt2.branch) ;
+	    }
             bestt1 = t1;
             bestt2 = t2;
             bestbp = maxbp;
         }
         else {
-            free(t1.branch);
-            free(t2.branch);
+	  if( t1.branch ){
+            UTDFREE(t1.branch) ;
+	  }
+	  if( t2.branch ){
+            UTDFREE(t2.branch) ;
+	  }
         }
     }
 
-#if LOCAL_REFINEMENT==1
+#if FLUTE_LOCAL_REFINEMENT==1
     if (BreakInX(bestbp)) {
         t = hmergetree(bestt1, bestt2, s);
-        local_refinement(&t, si[BreakPt(bestbp)]);
+        local_refinement( d, &t, si[BreakPt(bestbp)]);
     } else {
         t = vmergetree(bestt1, bestt2);
-        local_refinement(&t, BreakPt(bestbp));
+        local_refinement( d, &t, BreakPt(bestbp));
     }
 #else
     if (BreakInX(bestbp)) {
@@ -1130,24 +1296,37 @@ Tree flutes_MD(int d, DTYPE xs[], DTYPE ys[], int s[], int acc)
         t = vmergetree(bestt1, bestt2);
     }
 #endif
+    
+    UTDFREE(bestt1.branch);
+    UTDFREE(bestt2.branch);
 
-    free(bestt1.branch);
-    free(bestt2.branch);
+EXIT_FLUTES_MD:
+    UTDFREE( score ) ;
+    UTDFREE( penalty ) ;
+    UTDFREE( x1 ) ;
+    UTDFREE( y1 ) ;
+    UTDFREE( x2 ) ;
+    UTDFREE( y2 ) ;
+    UTDFREE( distx ) ;
+    UTDFREE( disty ) ;
+    UTDFREE( si ) ;
+    UTDFREE( s1 ) ;
+    UTDFREE( s2 ) ;
 
     return t;
-}
+} /* end flutes_MD() */
 
-Tree dmergetree(Tree t1, Tree t2)
+static Tree dmergetree(Tree t1, Tree t2)
 {
     int i, d, prev, curr, next, offset1, offset2;
     Tree t;
 
     t.deg = d = t1.deg + t2.deg - 2;
     t.length = t1.length + t2.length;
-    t.branch = (Branch *) malloc((2*d-2)*sizeof(Branch));
+    t.branch = UTDMALLOC( (2*d-2), Branch ) ;
     offset1 = t2.deg-2;
     offset2 = 2*t1.deg-4;
-
+    
     for (i=0; i<=t1.deg-2; i++) {
         t.branch[i].x = t1.branch[i].x;
         t.branch[i].y = t1.branch[i].y;
@@ -1183,16 +1362,16 @@ Tree dmergetree(Tree t1, Tree t2)
     return t;
 }
 
-Tree hmergetree(Tree t1, Tree t2, int s[])
+static Tree hmergetree(Tree t1, Tree t2, int *s)
 {
     int i, prev, curr, next, extra, offset1, offset2;
     int p, ii, n1, n2, nn1, nn2;
-    DTYPE coord1, coord2;
+    FLUTE_DTYPE coord1, coord2;
     Tree t;
 
     t.deg = t1.deg + t2.deg - 1;
     t.length = t1.length + t2.length;
-    t.branch = (Branch *) malloc((2*t.deg-2)*sizeof(Branch));
+    t.branch = UTDMALLOC( (2*t.deg-2), Branch ) ;
     offset1 = t2.deg-1;
     offset2 = 2*t1.deg-3;
 
@@ -1203,13 +1382,13 @@ Tree hmergetree(Tree t1, Tree t2, int s[])
             t.branch[i].x = t1.branch[n1].x;
             t.branch[i].y = t1.branch[n1].y;
             t.branch[i].n = t1.branch[n1].n + offset1;
-            n1++;
+            n1++;            
         }
         else if (s[i] > p) {
             t.branch[i].x = t2.branch[n2].x;
             t.branch[i].y = t2.branch[n2].y;
             t.branch[i].n = t2.branch[n2].n + offset2;
-            n2++;
+            n2++;            
         }
         else {
             t.branch[i].x = t2.branch[n2].x;
@@ -1235,7 +1414,7 @@ Tree hmergetree(Tree t1, Tree t2, int s[])
     if (t2.branch[nn2].y > max(coord1, coord2)) {
         t.branch[extra].y = max(coord1, coord2);
         t.length -= t2.branch[nn2].y - t.branch[extra].y;
-    }
+    }  
     else if (t2.branch[nn2].y < min(coord1, coord2)) {
         t.branch[extra].y = min(coord1, coord2);
         t.length -= t.branch[extra].y - t2.branch[nn2].y;
@@ -1244,7 +1423,7 @@ Tree hmergetree(Tree t1, Tree t2, int s[])
     t.branch[extra].x = t2.branch[nn2].x;
     t.branch[extra].n = t.branch[ii].n;
     t.branch[ii].n = extra;
-
+        
     prev = extra;
     curr = t1.branch[nn1].n + offset1;
     next = t.branch[curr].n;
@@ -1255,19 +1434,19 @@ Tree hmergetree(Tree t1, Tree t2, int s[])
         next = t.branch[curr].n;
     }
     t.branch[curr].n = prev;
-
+    
     return t;
 }
 
-Tree vmergetree(Tree t1, Tree t2)
+static Tree vmergetree(Tree t1, Tree t2)
 {
     int i, prev, curr, next, extra, offset1, offset2;
-    DTYPE coord1, coord2;
+    FLUTE_DTYPE coord1, coord2;
     Tree t;
 
     t.deg = t1.deg + t2.deg - 1;
     t.length = t1.length + t2.length;
-    t.branch = (Branch *) malloc((2*t.deg-2)*sizeof(Branch));
+    t.branch = UTDMALLOC( (2*t.deg-2), Branch ) ;
     offset1 = t2.deg-1;
     offset2 = 2*t1.deg-3;
 
@@ -1297,7 +1476,7 @@ Tree vmergetree(Tree t1, Tree t2)
     if (t2.branch[0].x > max(coord1, coord2)) {
         t.branch[extra].x = max(coord1, coord2);
         t.length -= t2.branch[0].x - t.branch[extra].x;
-    }
+    }        
     else if (t2.branch[0].x < min(coord1, coord2)) {
         t.branch[extra].x = min(coord1, coord2);
         t.length -= t.branch[extra].x - t2.branch[0].x;
@@ -1321,19 +1500,25 @@ Tree vmergetree(Tree t1, Tree t2)
     return t;
 }
 
-void local_refinement(Tree *tp, int p)
+static void local_refinement( FluteState * flute_p, int deg, Tree *tp, int p)
 {
     int d, dd, i, ii, j, prev, curr, next, root;
-    int SteinerPin[2*MAXD], index[2*MAXD];
-    DTYPE x[MAXD], xs[D], ys[D];
-    int ss[D];
+    int *SteinerPin, *index, *ss, degree ;
+    FLUTE_DTYPE *x, *xs, *ys ;
     Tree tt;
 
+    degree = deg + 1 ;
+    SteinerPin = UTDMALLOC( 2 * degree, int ) ;
+    index = UTDMALLOC( 2 * degree, int ) ;
+    x = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    xs = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    ys = UTDMALLOC( degree, FLUTE_DTYPE ) ;
+    ss = UTDMALLOC( degree, int ) ;
+ 
     d = tp->deg;
     root = tp->branch[p].n;
 
-
-// Reverse edges to point to root
+// Reverse edges to point to root    
     prev = root;
     curr = tp->branch[prev].n;
     next = tp->branch[curr].n;
@@ -1345,7 +1530,7 @@ void local_refinement(Tree *tp, int p)
     }
     tp->branch[curr].n = prev;
     tp->branch[root].n = root;
-
+    
 // Find Steiner nodes that are at pins
     for (i=d; i<=2*d-3; i++)
         SteinerPin[i] = -1;
@@ -1357,7 +1542,7 @@ void local_refinement(Tree *tp, int p)
     }
     SteinerPin[root] = p;
 
-// Find pins that are directly connected to root
+// Find pins that are directly connected to root    
     dd = 0;
     for (i=0; i<d; i++) {
         curr = tp->branch[i].n;
@@ -1373,8 +1558,8 @@ void local_refinement(Tree *tp, int p)
         }
     }
 
-    if (4 <= dd && dd <= D) {
-// Find Steiner nodes that are directly connected to root
+    if (4 <= dd && dd <= FLUTE_D) {
+// Find Steiner nodes that are directly connected to root    
         ii=dd;
         for (i=0; i<dd; i++) {
             curr = tp->branch[index[i]].n;
@@ -1385,7 +1570,7 @@ void local_refinement(Tree *tp, int p)
             }
         }
         index[ii] = root;
-
+        
         for (ii=0; ii<dd; ii++) {
             ss[ii] = 0;
             for (j=0; j<ii; j++)
@@ -1398,7 +1583,7 @@ void local_refinement(Tree *tp, int p)
             ys[ii] = tp->branch[index[ii]].y;
         }
 
-        tt = flutes_LD(dd, xs, ys, ss);
+        tt = flutes_LD( flute_p, dd, xs, ys, ss);
 
 // Find new wirelength
         tp->length += tt.length;
@@ -1406,9 +1591,9 @@ void local_refinement(Tree *tp, int p)
             i = index[ii];
             j = tp->branch[i].n;
             tp->length -= ADIFF(tp->branch[i].x, tp->branch[j].x)
-                          + ADIFF(tp->branch[i].y, tp->branch[j].y);
+                + ADIFF(tp->branch[i].y, tp->branch[j].y);
         }
-
+        
 // Copy tt into t
         for (ii=0; ii<dd; ii++) {
             tp->branch[index[ii]].n = index[tt.branch[ii].n];
@@ -1418,21 +1603,29 @@ void local_refinement(Tree *tp, int p)
             tp->branch[index[ii]].y = tt.branch[ii].y;
             tp->branch[index[ii]].n = index[tt.branch[ii].n];
         }
-        free(tt.branch);
+        UTDFREE(tt.branch);
     }
-
+    
+    UTDFREE( SteinerPin ) ;
+    UTDFREE( index ) ;
+    UTDFREE( x ) ;
+    UTDFREE( xs ) ;
+    UTDFREE( ys ) ;
+    UTDFREE( ss ) ;
+    
     return;
-}
+} /* end local_refinement() */
 
-DTYPE wirelength(Tree t)
+
+FLUTE_DTYPE flute_wirelength(Tree t)
 {
     int i, j;
-    DTYPE l=0;
+    FLUTE_DTYPE l=0;
 
     for (i=0; i<2*t.deg-2; i++) {
         j = t.branch[i].n;
         l += ADIFF(t.branch[i].x, t.branch[j].x)
-             + ADIFF(t.branch[i].y, t.branch[j].y);
+            + ADIFF(t.branch[i].y, t.branch[j].y);
     }
 
     return l;
@@ -1452,13 +1645,15 @@ void printtree(Tree t)
 }
 
 // Output in a format that can be plotted by gnuplot
-void plottree(Tree t)
+void flute_plottree(Tree t)
 {
     int i;
-    for (i=0; i<2*t.deg-2; i++) {
 
+    for (i=0; i<2*t.deg-2; i++) {
         printf("%d %d\n", t.branch[i].x, t.branch[i].y);
         printf("%d %d\n\n", t.branch[t.branch[i].n].x,
                t.branch[t.branch[i].n].y);
     }
 }
+
+} // end namespace

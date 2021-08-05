@@ -30,7 +30,7 @@ public:
 
     void boundaryReroute(map<string, Net> *netMap,
                                  map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                                 vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap);
+                                 vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,double START);
 
      bool isOutOfBoundary(vector<Route> routeVec, map<string, int> boundaryMap);
 
@@ -44,7 +44,7 @@ public:
 
      bool isViaSupplyValidFunction(int startLayer, int endLayer, int row, int col, vector<vector<vector<int > > > gridVector);
 
-     void getSteinerPointRoute(Tree t, vector<SteinerPoint> *steinerLine, vector<vector<vector<int > > > *gridVector,
+     void getSteinerPointRoute(Flute::Tree flutetree, vector<SteinerPoint> *steinerLine, vector<vector<vector<int > > > *gridVector,
                               map<string, vector<int > > *powerFactorMap, string minRoutingConstraint,
                               map<string, vector<SteinerPoint > > *layerSteinerVector, string reRoute);
 
@@ -75,6 +75,7 @@ public:
     topRightToBottomLeft(vector<SteinerPoint> *steinerLineVector, int startRowGrid, int endRowGrid, int startColGrid,
                          int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
                          vector<vector<vector<int > > > *gridVector);
+    bool checkDirection(vector<Route> *routeVector);
 };
 
 #endif //CELL_MOVEMENT_REROUTE_H
