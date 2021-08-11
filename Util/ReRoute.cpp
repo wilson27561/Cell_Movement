@@ -33,6 +33,9 @@ ReRoute::~ReRoute() {
 void ReRoute::boundaryReroute(map<string, Net> *netMap,
                               map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
                               vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,double START) {
+
+    double STARTROUTE, ENDROUTE;
+    STARTROUTE = clock();
     //TODO 先檢查完需要做的reroute，再依net的weight順序做排序
     //TODO 拔一條繞一條   ok
     //TODO 確認routingLayer按比重   ok
@@ -41,7 +44,6 @@ void ReRoute::boundaryReroute(map<string, Net> *netMap,
     //TODO two pin 做 cell move
     //TODO 多執行緒
     //TODO 是否要將via 放到兩條線中間
-
     for (const auto &item : (*netMap)) {
         vector<Route> routeVec = item.second.getNumRoute();
         bool isNeedReroute = false;
@@ -74,9 +76,11 @@ void ReRoute::boundaryReroute(map<string, Net> *netMap,
             }
         }
         //-------  check bounding route end -------
-//        if(((int) clock() / CLOCKS_PER_SEC) == 3300){
-//            break;
-//        }
+        ENDROUTE = clock();
+        cout <<" run time: " <<(ENDROUTE - STARTROUTE) / CLOCKS_PER_SEC << endl;
+        if((ENDROUTE - STARTROUTE) / CLOCKS_PER_SEC >= 2700){
+            break;
+        }
     }
 }
 

@@ -11,6 +11,7 @@
 #include "Header/CellInstance.h"
 #include "Header/Net.h"
 #include "Header/SteinerPoint.h"
+#include "Util/CellMoveRoute.h"
 
 using namespace std;
 
@@ -56,6 +57,7 @@ int main(int argc, char *argv[]) {
 
     ReadFile readFile;
     ReRoute reRoute;
+    CellMoveRoute cellMoveRoute;
     string content;
     vector<string> contentvector;
     int maxCellMovent = 0;
@@ -66,12 +68,11 @@ int main(int argc, char *argv[]) {
     map<string, CellInstance> cellInstanceMap;
     map<string, VoltageArea> voltageAreaMap;
     map<string, Net> netMap;
-//    map<string, int> boundaryMap;
-    map<string, Grid> gridMap;
     vector<vector<vector<int> > > gridVector;
     map<string, CellInstance> numMoveCellInstMap;
     map<string, map<string, Blockage> > blockageCellMap;
     set<string> netNameSet;
+    vector<string> emptyBlockageCellVector;
     //reduce Supply
     map<string, set<string> > reducePointMap;
 
@@ -132,7 +133,7 @@ int main(int argc, char *argv[]) {
             cout << "-----MasterCell end-----" << endl;
         } else if (lineVector[0] == CELLINST) {
             cout << "-----CellInstance start-----" << endl;
-            readFile.readCellInstance(lineVector, &cellInstanceMap, &masterCellMap, &blockageCellMap, &gridVector);
+            readFile.readCellInstance(lineVector, &cellInstanceMap,&emptyBlockageCellVector, &masterCellMap, &blockageCellMap, &gridVector);
             cout << "-----CellInstance end-----" << endl;
         } else if (lineVector[0] == NET) {
             cout << "-----net start-----" << endl;
@@ -146,19 +147,43 @@ int main(int argc, char *argv[]) {
             cout << "-----voltage start-----" << endl;
             readFile.readVoltageArea(&contentvector, &voltageAreaMap, &i);
             cout << "-----voltage end-----" << endl;
-
         }
     }
 
     readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap,START);
+    cellMoveRoute.cellMoveReRoute(&netMap, &cellInstanceMap, &emptyBlockageCellVector, &masterCellMap,&gridVector, &powerFactorMap);
+
+
+
+//    set<string>  masterSet;
+//    for(auto const masterCell : masterCellMap){
+//        int blockageDemand = 0;
+//        for (auto const blockage:masterCell.second.getBlockageType()) {
+//            blockageDemand+=blockage.second.getDemand();
+//        }
+//        if(blockageDemand == 0 and masterCell.second.getPinType().size() <=2){
+////            cout << masterCell.first << " " << blockageDemand << endl;
+//            masterSet.insert(masterCell.first);
+//        }
+//    }
+
+//    int emptyBlockage = 0;
+//    for(auto const cellInstance : cellInstanceMap){
+//        if(masterSet.count(cellInstance.second.getMasterCellName()) == 1 and cellInstance.second.getMovalbe() == "Movable"){
+//            emptyBlockage+=1;
+//            cout << "empty blockage : "<<cellInstance.first << endl;
+//        }
+//    }
+//    cout << "emptyBlockage : "<< emptyBlockage << endl;
+
+//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START);
 
 
 //    printGridVector(&gridVector);
 
 
     ofstream myfile;
-    myfile.open("output_"+FILEPATH);
+    myfile.open("output_" + FILEPATH);
     myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
     for (const auto &cellMove : numMoveCellInstMap) {
         myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
@@ -178,8 +203,8 @@ int main(int argc, char *argv[]) {
         };
     };
     myfile.close();
-
-
+//
+//
     END = clock();
     cout << endl << "程式執行所花費：" << (double) clock() / CLOCKS_PER_SEC << " S";
     cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;

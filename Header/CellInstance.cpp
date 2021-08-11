@@ -53,16 +53,17 @@ void CellInstance::setLayerName(int layerName) {
     CellInstance::layerName = layerName;
 }
 
-const map<string, string> &CellInstance::getConnectPin() const {
-    return connectPin;
-}
-
-void CellInstance::setConnectPin(const map<string, string> &connectPin) {
-    CellInstance::connectPin = connectPin;
-}
 
 CellInstance::~CellInstance() {
 
 }
 
 CellInstance::CellInstance() {}
+
+const vector<string> &CellInstance::getConnectNetVector() const {
+    return connectNetVector;
+}
+
+void CellInstance::setConnectNetVector(const vector<string> &connectNetVector) {
+    CellInstance::connectNetVector = connectNetVector;
+}

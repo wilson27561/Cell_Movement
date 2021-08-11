@@ -133,29 +133,35 @@ ReadFile::readMasterCell(vector<string> *contentVector, vector<string> *lineVect
 
 }
 
-void ReadFile::readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,
+void ReadFile::readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap, vector<string> *emptyBlockageCellVector,
                                 map<string, MasterCell> *masterCellMap,
                                 map<string, map<string, Blockage> > *blockageCellMap,
                                 vector<vector<vector<int> > > *gridVector) {
     CellInstance cellInstance;
+    vector<string> connectNetVector;
     cellInstance.setCellName(lineVector[1]);
     cellInstance.setMasterCellName(lineVector[2]);
     cellInstance.setRowIndx(stoi(lineVector[3]));
     cellInstance.setColIndx(stoi(lineVector[4]));
     cellInstance.setMovalbe(lineVector[5]);
+    cellInstance.setConnectNetVector(connectNetVector);
     (*cellInstanceMap).insert(pair<string, CellInstance>(lineVector[1], cellInstance));
-
+    int blockageTotalDemand = 0;
     if ((*masterCellMap)[lineVector[2]].getBlockageType().size() > 0) {
         map<string, Blockage> blockageMap = (*masterCellMap)[lineVector[2]].getBlockageType();
         (*blockageCellMap).insert(pair<string, map<string, Blockage> >(lineVector[1], blockageMap));
         // reduce blockage
         for (auto const &item : blockageMap) {
+            blockageTotalDemand+=item.second.getDemand();
             (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
                     cellInstance.getColIndx() - 1] =
                     (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
                             cellInstance.getColIndx() - 1] - item.second.getDemand();
         }
-
+        // insert empty blockage in map
+    }else{
+        if(lineVector[5] == MOVABLE)
+        (*emptyBlockageCellVector).push_back(lineVector[1]);
     }
 
 };
@@ -207,7 +213,6 @@ ReadFile::readNet(vector<string> *contentVector, vector<string> *lineVector, map
                   map<string, MasterCell> *masterCellMap, map<string, CellInstance> *cellInstanceMap,
                   set<string> *netNameSet, int *index) {
     int indexCount = *index;
-    cout << "read Net Name : " << (*lineVector)[1] << endl;
     int pinCount = stoi((*lineVector)[2]);
     Net net;
     net.setNetName((*lineVector)[1]);
@@ -222,10 +227,16 @@ ReadFile::readNet(vector<string> *contentVector, vector<string> *lineVector, map
         //pinCellVec[0] -> C1 pinCellVec[1] -> P1 一個net可能會連接同一個cell 不同  pin
         string masterCellName = (*cellInstanceMap)[pinCellVec[0]].getMasterCellName();
         map<string, Pin> pinMap = (*masterCellMap)[masterCellName].getPinType();
+        //net上連到的cell 放入 CellInstance
+        if((*cellInstanceMap).count(pinCellVec[0])){
+           vector<string> netVector =  (*cellInstanceMap)[pinCellVec[0]].getConnectNetVector();
+           netVector.push_back((*lineVector)[1]);
+            (*cellInstanceMap)[pinCellVec[0]].setConnectNetVector(netVector);
+        }
+
+        //net上連到的cell 放入 Data structure of Net vector row col layer
         CellInstance cellinstance;
         cellinstance.setCellName(pinCellVec[0]);
-//            cellinstance.setConnectPin(pinCellVec[1]);
-//            cout << "cell Name : " << pinCellVec[0] <<" Pin :" << pinCellVec[1] << " layer : "  <<pinMap[pinCellVec[1]].getLayer()<< endl;
         string layer = pinMap[pinCellVec[1]].getLayer();
         layer.erase(std::remove(layer.begin(), layer.end(), 'M'), layer.end());
         cellinstance.setLayerName(stoi(layer));

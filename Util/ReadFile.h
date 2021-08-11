@@ -43,7 +43,7 @@ public:
     readMasterCell(vector<string> *contentVector, vector<string> *lineVector, map<string, MasterCell> *masterCellMap,
                    int *index);
 
-    void readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap,
+    void readCellInstance(vector<string> lineVector, map<string, CellInstance> *cellInstanceMap, vector<string> *emptyBlockageCellVector,
                           map<string, MasterCell> *masterCellMap, map<string, map<string, Blockage > > *blockageCellMap,
                           vector<vector<vector<int > > > *gridVector);
 

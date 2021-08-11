@@ -3,7 +3,7 @@
 //
 #include "Constant.h"
 
-const string FILEPATH = "case4.txt";
+const string FILEPATH = "case1.txt";
 const string MAXCELLMOVE = "MaxCellMove";
 const string GGRIDBOUNDARYIDX = "GGridBoundaryIdx";
 const string NUMLAYER = "NumLayer";
@@ -26,3 +26,8 @@ const string HORIZONTAL = "H";
 const string VERTICAL = "V";
 const string ADD = "add";
 const string REDUCE = "reduce";
+const string MOVABLE = "Movable";
+const string UPPOINT = "uppoint";
+const string DOWNPOINT = "downpoint";
+const string RIGHTPOINT = "rightpoint";
+const string LEFTPOINT = "leftpoint";

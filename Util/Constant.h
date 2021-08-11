@@ -35,8 +35,11 @@ extern const string HORIZONTAL;
 extern const string VERTICAL;
 extern const string ADD;
 extern const string REDUCE;
-
-
+extern const string MOVABLE;
+extern const string UPPOINT;
+extern const string DOWNPOINT;
+extern const string RIGHTPOINT;
+extern const string LEFTPOINT;
 
 //class Constant {
 //

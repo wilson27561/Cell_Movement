@@ -152,6 +152,12 @@
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Header/VoltageArea.h">
 			<Option target="Cell_Movement"/>
 		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/CellMoveRoute.cpp">
+			<Option target="Cell_Movement"/>
+		</Unit>
+		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/CellMoveRoute.h">
+			<Option target="Cell_Movement"/>
+		</Unit>
 		<Unit filename="/Users/wilson27561/Documents/Cell_Movement/Util/Constant.cpp">
 			<Option target="Cell_Movement"/>
 		</Unit>
