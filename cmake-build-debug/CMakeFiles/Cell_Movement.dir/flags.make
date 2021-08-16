@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -g -std=gnu++14
+CXX_FLAGS = -g -mmacosx-version-min=10.15 -std=gnu++14
 

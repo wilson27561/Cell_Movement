@@ -7,6 +7,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/Cell_Movement.dir/Header/MasterCell.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Header/Net.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Header/NumNonDefaultSupplyGgrid.cpp.o"
+  "CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o"
   "CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o"

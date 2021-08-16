@@ -180,9 +180,22 @@ CMakeFiles/Cell_Movement.dir/Header/NumNonDefaultSupplyGgrid.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Cell_Movement.dir/Header/NumNonDefaultSupplyGgrid.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/wilson27561/Documents/Cell_Movement/Header/NumNonDefaultSupplyGgrid.cpp -o CMakeFiles/Cell_Movement.dir/Header/NumNonDefaultSupplyGgrid.cpp.s
 
+CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
+CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o: ../Header/PatternPoint.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Header/PatternPoint.cpp
+
+CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/wilson27561/Documents/Cell_Movement/Header/PatternPoint.cpp > CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.i
+
+CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/wilson27561/Documents/Cell_Movement/Header/PatternPoint.cpp -o CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.s
+
 CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o: ../Header/Pin.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Header/Pin.cpp
 
 CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.i: cmake_force
@@ -195,7 +208,7 @@ CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o: ../Header/Route.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Header/Route.cpp
 
 CMakeFiles/Cell_Movement.dir/Header/Route.cpp.i: cmake_force
@@ -208,7 +221,7 @@ CMakeFiles/Cell_Movement.dir/Header/Route.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o: ../Header/SteinerPoint.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Header/SteinerPoint.cpp
 
 CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.i: cmake_force
@@ -221,7 +234,7 @@ CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.o: ../Header/VoltageArea.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Header/VoltageArea.cpp
 
 CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.i: cmake_force
@@ -234,7 +247,7 @@ CMakeFiles/Cell_Movement.dir/Header/VoltageArea.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.o: ../Util/CellMoveRoute.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Util/CellMoveRoute.cpp
 
 CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.i: cmake_force
@@ -247,7 +260,7 @@ CMakeFiles/Cell_Movement.dir/Util/CellMoveRoute.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o: ../Util/Constant.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Util/Constant.cpp
 
 CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.i: cmake_force
@@ -260,7 +273,7 @@ CMakeFiles/Cell_Movement.dir/Util/Constant.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o: ../Util/ReRoute.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Util/ReRoute.cpp
 
 CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.i: cmake_force
@@ -273,7 +286,7 @@ CMakeFiles/Cell_Movement.dir/Util/ReRoute.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o: ../Util/ReadFile.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/Util/ReadFile.cpp
 
 CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.i: cmake_force
@@ -286,7 +299,7 @@ CMakeFiles/Cell_Movement.dir/Util/ReadFile.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o: ../flute/flute.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/flute/flute.cpp
 
 CMakeFiles/Cell_Movement.dir/flute/flute.cpp.i: cmake_force
@@ -299,7 +312,7 @@ CMakeFiles/Cell_Movement.dir/flute/flute.cpp.s: cmake_force
 
 CMakeFiles/Cell_Movement.dir/main.cpp.o: CMakeFiles/Cell_Movement.dir/flags.make
 CMakeFiles/Cell_Movement.dir/main.cpp.o: ../main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/Cell_Movement.dir/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/Cell_Movement.dir/main.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Cell_Movement.dir/main.cpp.o -c /Users/wilson27561/Documents/Cell_Movement/main.cpp
 
 CMakeFiles/Cell_Movement.dir/main.cpp.i: cmake_force
@@ -320,6 +333,7 @@ Cell_Movement_OBJECTS = \
 "CMakeFiles/Cell_Movement.dir/Header/MasterCell.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/Header/Net.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/Header/NumNonDefaultSupplyGgrid.cpp.o" \
+"CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o" \
 "CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o" \
@@ -342,6 +356,7 @@ Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/Layer.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/MasterCell.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/Net.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/NumNonDefaultSupplyGgrid.cpp.o
+Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/PatternPoint.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/Pin.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/Route.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/Header/SteinerPoint.cpp.o
@@ -354,7 +369,7 @@ Cell_Movement: CMakeFiles/Cell_Movement.dir/flute/flute.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/main.cpp.o
 Cell_Movement: CMakeFiles/Cell_Movement.dir/build.make
 Cell_Movement: CMakeFiles/Cell_Movement.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Linking CXX executable Cell_Movement"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/wilson27561/Documents/Cell_Movement/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Linking CXX executable Cell_Movement"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Cell_Movement.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

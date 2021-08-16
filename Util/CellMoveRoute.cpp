@@ -25,25 +25,15 @@ CellMoveRoute::~CellMoveRoute() {
 }
 
 
-void CellMoveRoute::cellMoveReRoute(map<string, Net> *netMap,
-                                    map<string, CellInstance> *cellInstanceMap,
-                                    vector<string> *emptyBlockageCellVector,
-                                    map<string, MasterCell> *masterCellMap,
-                                    vector<vector<vector<int> > > *gridVector,
-                                    map<string, vector<int> > *powerFactorMap) {
-    emptyBlockageReRoute(&(*netMap),
-                         &(*cellInstanceMap), &(*emptyBlockageCellVector), &(*masterCellMap),
-                         &(*gridVector), &(*powerFactorMap));
+void CellMoveRoute::cellMoveReRoute(map<string, Net> *netMap,map<string, CellInstance> *cellInstanceMap,vector<string> *emptyBlockageCellVector,map<string, MasterCell> *masterCellMap,vector<vector<vector<int> > > *gridVector,map<string, vector<int> > *powerFactorMap) {
+    emptyBlockageReRoute(&(*netMap),&(*cellInstanceMap), &(*emptyBlockageCellVector), &(*masterCellMap),&(*gridVector), &(*powerFactorMap));
+
+
 
 
 }
 
-void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap,
-                                         map<string, CellInstance> *cellInstanceMap,
-                                         vector<string> *emptyBlockageCellVector,
-                                         map<string, MasterCell> *masterCellMap,
-                                         vector<vector<vector<int> > > *gridVector,
-                                         map<string, vector<int> > *powerFactorMap) {
+void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap,map<string, CellInstance> *cellInstanceMap,vector<string> *emptyBlockageCellVector,map<string, MasterCell> *masterCellMap,vector<vector<vector<int> > > *gridVector,map<string, vector<int> > *powerFactorMap) {
     //所有cell裡面的blockage是空的
     for (auto const cell:(*emptyBlockageCellVector)) {
         bool isOnside = true;
@@ -56,9 +46,19 @@ void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap,
         //全部都在同一側開始做CellMove
         if (isOnside) {
             cout << "need Cell Move : " << cell << endl;
+            //step 1 : 減掉跟這條cell一樣所有的繞線，加上supply 跟 grid
+            //step 2 : 取得繞線
+            ReRoute reRoute;
+
+
+
+
+
         }
     }
 }
+
+
 
 bool CellMoveRoute::onOneSide(CellInstance cell, map<string, CellInstance> *cellInstanceMap, map<string, Net> *netMap)
 {
