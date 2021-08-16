@@ -17,6 +17,7 @@
 #include "../Header/Net.h"
 #include "../flute/flute.h"
 #include "../Header/SteinerPoint.h"
+#include "../Header/RoutePoint.h"
 #include "../Util/ReRoute.h"
 #include "Constant.h"
 
@@ -27,6 +28,8 @@ public:
     ReRoute();
 
     virtual ~ReRoute();
+
+    void transferFluteTree(vector<RoutePoint> *routePointVector, Flute::Tree flutetree);
 
     void boundaryReroute(map<string, Net> *netMap,
                                  map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
@@ -44,7 +47,7 @@ public:
 
      bool isViaSupplyValidFunction(int startLayer, int endLayer, int row, int col, vector<vector<vector<int > > > gridVector);
 
-     void getSteinerPointRoute(Flute::Tree flutetree, vector<SteinerPoint> *steinerLine, vector<vector<vector<int > > > *gridVector,
+     void getSteinerPointRoute(vector<RoutePoint> *routePointVector, vector<SteinerPoint> *steinerLine, vector<vector<vector<int > > > *gridVector,
                               map<string, vector<int > > *powerFactorMap, string minRoutingConstraint,
                               map<string, vector<SteinerPoint > > *layerSteinerVector, string reRoute);
 
@@ -76,6 +79,9 @@ public:
                          int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
                          vector<vector<vector<int > > > *gridVector);
     bool checkDirection(vector<Route> *routeVector);
+
+
+
 };
 
 #endif //CELL_MOVEMENT_REROUTE_H

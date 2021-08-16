@@ -14,6 +14,7 @@
 #include "../flute/flute.h"
 #include "../Header/SteinerPoint.h"
 #include "../Util/ReRoute.h"
+#include "../Header/RoutePoint.h"
 #include "Constant.h"
 
 using namespace std;
@@ -77,7 +78,6 @@ void ReRoute::boundaryReroute(map<string, Net> *netMap,
         }
         //-------  check bounding route end -------
         ENDROUTE = clock();
-        cout <<" run time: " <<(ENDROUTE - STARTROUTE) / CLOCKS_PER_SEC << endl;
         if((ENDROUTE - STARTROUTE) / CLOCKS_PER_SEC >= 2700){
             break;
         }
@@ -202,10 +202,27 @@ void ReRoute::reviseRouteSupply(vector<vector<vector<int> > > *gridVector, vecto
     }
 }
 
+void ReRoute::transferFluteTree(vector<RoutePoint> *routePointVector,Flute::Tree flutetree){
+    for (int i = 0; i < 2 * flutetree.deg - 2; i++) {
+        RoutePoint routePoint;
+        int steinerPointRow = flutetree.branch[flutetree.branch[i].n].x;
+        int steinerPointCol = flutetree.branch[flutetree.branch[i].n].y;
+        int cellPointRow = flutetree.branch[i].x;
+        int cellPointCol = flutetree.branch[i].y;
+        routePoint.setStartPointRow(flutetree.branch[flutetree.branch[i].n].x);
+        routePoint.setEndPointCol(flutetree.branch[flutetree.branch[i].n].y);
+        routePoint.setEndPointRow(flutetree.branch[i].x);
+        routePoint.setEndPointCol(flutetree.branch[i].y);
+        (*routePointVector).push_back(routePoint);
+    }
+}
+
+
+
 
 //public:
 //取得Steiner point cellpoint 為起點 steinerPoint 為終點
-void ReRoute::getSteinerPointRoute(Flute::Tree flutetree, vector<SteinerPoint> *steinerLine,
+void ReRoute::getSteinerPointRoute(vector<RoutePoint> *routePointVector, vector<SteinerPoint> *steinerLine,
                                    vector<vector<vector<int> > > *gridVector,
                                    map<string, vector<int> > *powerFactorMap, string minRoutingConstraint,
                                    map<string, vector<SteinerPoint> > *layerSteinerVector, string reRoute) {
@@ -238,11 +255,18 @@ void ReRoute::getSteinerPointRoute(Flute::Tree flutetree, vector<SteinerPoint> *
     //-------  routing by steiner point  start -------
     bool isValidRoute = true;
 
-    for (int i = 0; i < 2 * flutetree.deg - 2; i++) {
-        int steinerPointRow = flutetree.branch[flutetree.branch[i].n].x;
-        int steinerPointCol = flutetree.branch[flutetree.branch[i].n].y;
-        int cellPointRow = flutetree.branch[i].x;
-        int cellPointCol = flutetree.branch[i].y;
+//    for (int i = 0; i < 2 * flutetree.deg - 2; i++) {
+        for(int i =0;i< (*routePointVector).size();i++){
+//        int steinerPointRow = flutetree.branch[flutetree.branch[i].n].x;
+//        int steinerPointCol = flutetree.branch[flutetree.branch[i].n].y;
+//        int cellPointRow = flutetree.branch[i].x;
+//        int cellPointCol = flutetree.branch[i].y;
+
+        int steinerPointRow = (*routePointVector)[i].getStartPointRow();
+        int steinerPointCol = (*routePointVector)[i].getStartPointCol();
+        int cellPointRow = (*routePointVector)[i].getEndPointRow();
+        int cellPointCol = (*routePointVector)[i].getEndPointCol();
+
 
         int routeLayer = 0;
 //            cout << "steiner point : " << cellPointRow << " " << cellPointCol  << " " << steinerPointRow << " " << steinerPointCol  << endl;
@@ -501,10 +525,11 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
         return;
     }
     Flute::Tree flutetree;
+    vector<RoutePoint> routePointVector;
     Flute::FluteState *flute1 = Flute::flute_init(FLUTE_POWVFILE, FLUTE_PORTFILE);
     flutetree = Flute::flute(flute1, index, row, col, FLUTE_ACCURACY);
     //-------  steiner tree  end -------
-
+    transferFluteTree(&routePointVector, flutetree);
 
     //-------  steiner point route start -------
     //line for via
@@ -515,7 +540,7 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
     vector<SteinerPoint> steinerLine;
 
     string minimumRoutingConstraint = (*netMap)[reRouteNet].getMinRoutingConstraint();
-    getSteinerPointRoute(flutetree, &steinerLine, &(*gridVector), &(*powerFactorMap),
+    getSteinerPointRoute(&routePointVector, &steinerLine, &(*gridVector), &(*powerFactorMap),
                          minimumRoutingConstraint, &layerSteinerMap, reRouteNet);
     free_tree(flute1, flutetree);
     flute_free(flute1);

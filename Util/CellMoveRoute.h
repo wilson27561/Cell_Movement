@@ -33,7 +33,7 @@ public:
                          map<string, CellInstance> *cellInstanceMap,vector<string> *emptyBlockageCellVector, map<string, MasterCell> *masterCellMap,
                          vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap);
     bool onOneSide(CellInstance cell,  map<string, CellInstance> *cellInstanceMap,map<string, Net> *netMap);
-
+    void getRoutePointVector(string reRouteNet,map<string, Net> *netMap,map<string, CellInstance> *cellInstanceMap,vector<RoutePoint> *routePointVector);
 };
 
 

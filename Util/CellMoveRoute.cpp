@@ -28,9 +28,6 @@ CellMoveRoute::~CellMoveRoute() {
 void CellMoveRoute::cellMoveReRoute(map<string, Net> *netMap,map<string, CellInstance> *cellInstanceMap,vector<string> *emptyBlockageCellVector,map<string, MasterCell> *masterCellMap,vector<vector<vector<int> > > *gridVector,map<string, vector<int> > *powerFactorMap) {
     emptyBlockageReRoute(&(*netMap),&(*cellInstanceMap), &(*emptyBlockageCellVector), &(*masterCellMap),&(*gridVector), &(*powerFactorMap));
 
-
-
-
 }
 
 void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap,map<string, CellInstance> *cellInstanceMap,vector<string> *emptyBlockageCellVector,map<string, MasterCell> *masterCellMap,vector<vector<vector<int> > > *gridVector,map<string, vector<int> > *powerFactorMap) {
@@ -49,13 +46,47 @@ void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap,map<string, Ce
             //step 1 : 減掉跟這條cell一樣所有的繞線，加上supply 跟 grid
             //step 2 : 取得繞線
             ReRoute reRoute;
+            for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
 
 
 
+                vector<RoutePoint> routePointVector;
+                //取得每一點連線
+                getRoutePointVector( connectNet, &(*netMap), &(*cellInstanceMap),&routePointVector);
+                //如何移動cell 移動完失敗後 要再移回去
 
 
+
+                // ----- reRoute Net start ------
+                vector<Route> numRoute = (*netMap)[connectNet].getNumRoute();
+                reRoute.reviseRouteSupply(&(*gridVector), &numRoute, ADD, connectNet);
+                vector<Route> routeVector;
+                reRoute.getSteinerRoute(&routeVector, connectNet, &(*netMap), &(*gridVector), &(*powerFactorMap));
+                if (routeVector.size() > 0) {
+                    (*netMap)[connectNet].setNumRoute(routeVector);
+                    //減掉新的線段
+                    reRoute.reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, connectNet);
+                } else {
+                    //減掉原來的線段
+                    reRoute.reviseRouteSupply(&(*gridVector), &numRoute, REDUCE, connectNet);
+                }
+                // ----- reRoute Net end ------
+            }
         }
     }
+}
+
+
+void CellMoveRoute::getRoutePointVector(string reRouteNet,map<string, Net> *netMap,map<string, CellInstance> *cellInstanceMap,vector<RoutePoint> *routePointVector){
+        vector<CellInstance> cellInstanceVector = (*netMap)[reRouteNet].getConnectCell();
+       for(int i = 0; i < (cellInstanceVector.size()-1);i++){
+            RoutePoint routePoint;
+            routePoint.setStartPointRow(cellInstanceVector[i].getRowIndx());
+            routePoint.setStartPointCol(cellInstanceVector[i].getColIndx());
+            routePoint.setEndPointRow(cellInstanceVector[i+1].getRowIndx());
+            routePoint.setEndPointCol(cellInstanceVector[i+1].getColIndx());
+           (*routePointVector).push_back(routePoint);
+       };
 }
 
 

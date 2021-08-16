@@ -176,11 +176,9 @@ int main(int argc, char *argv[]) {
 //    }
 //    cout << "emptyBlockage : "<< emptyBlockage << endl;
 
-//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START);
-
 
 //    printGridVector(&gridVector);
-
+//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START);
 
     ofstream myfile;
     myfile.open("output_" + FILEPATH);
