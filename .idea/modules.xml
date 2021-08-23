@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Cell_Movement.iml" filepath="$PROJECT_DIR$/.idea/Cell_Movement.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Cell_Movement2.iml" filepath="$PROJECT_DIR$/.idea/Cell_Movement2.iml" />
     </modules>
   </component>
 </project>
