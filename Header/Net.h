@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include <map>
 #include "Pin.h"
 #include "Route.h"
@@ -27,19 +28,17 @@ private:
     //目前沒用到
     map<string,string> connectPin;
     map<string,int> boundaryMap;
-    vector<CellInstance> connectCell;
+    unordered_map<string,CellInstance> connectCell;
     vector<Route> numRoute;
 public:
     virtual ~Net();
 
-
-public:
-    const vector<CellInstance> &getConnectCell() const;
-
-    void setConnectCell(const vector<CellInstance> &connectCell);
-
 public:
     const map<string, string> &getConnectPin() const;
+
+    const unordered_map<string, CellInstance> &getConnectCell() const;
+
+    void setConnectCell(const unordered_map<string, CellInstance> &connectCell);
 
     void setConnectPin(const map<string, string> &connectPin);
 
@@ -68,6 +67,7 @@ public:
     const map<string, int> &getBoundaryMap() const;
 
     void setBoundaryMap(const map<string, int> &boundaryMap);
+
 };
 
 

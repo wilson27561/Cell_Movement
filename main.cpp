@@ -75,6 +75,8 @@ int main(int argc, char *argv[]) {
     vector<string> emptyBlockageCellVector;
     //reduce Supply
     map<string, set<string> > reducePointMap;
+    vector<CellInstance> moveCellInstanceVector;
+    unordered_map<string,string> isReRouteMap;
 
     ifstream fin(FILEPATH);
     if (fin) {
@@ -151,43 +153,19 @@ int main(int argc, char *argv[]) {
     }
 
     readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-    cellMoveRoute.cellMoveReRoute(&netMap, &cellInstanceMap, &emptyBlockageCellVector, &masterCellMap,&gridVector, &powerFactorMap);
+//    cellMoveRoute.cellMoveReRoute(&netMap, &cellInstanceMap, &emptyBlockageCellVector, &masterCellMap,&gridVector, &powerFactorMap,&moveCellInstanceVector,maxCellMovent,&isReRouteMap);
+    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START,&isReRouteMap);
 
 
 
-
-//    set<string>  masterSet;
-//    for(auto const masterCell : masterCellMap){
-//        int blockageDemand = 0;
-//        for (auto const blockage:masterCell.second.getBlockageType()) {
-//            blockageDemand+=blockage.second.getDemand();
-//        }
-//        if(blockageDemand == 0 and masterCell.second.getPinType().size() <=2){
-////            cout << masterCell.first << " " << blockageDemand << endl;
-//            masterSet.insert(masterCell.first);
-//        }
-//    }
-
-//    int emptyBlockage = 0;
-//    for(auto const cellInstance : cellInstanceMap){
-//        if(masterSet.count(cellInstance.second.getMasterCellName()) == 1 and cellInstance.second.getMovalbe() == "Movable"){
-//            emptyBlockage+=1;
-//            cout << "empty blockage : "<<cellInstance.first << endl;
-//        }
-//    }
-//    cout << "emptyBlockage : "<< emptyBlockage << endl;
-
-
-//    printGridVector(&gridVector);
-//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START);
 
     ofstream myfile;
     myfile.open("output_" + FILEPATH);
-    myfile << "NumMovedCellInst" << " " << numMoveCellInstMap.size() << endl;
-    for (const auto &cellMove : numMoveCellInstMap) {
-        myfile << "CellInst" << cellMove.second.getCellName() << " " << cellMove.second.getRowIndx() << " "
-               << cellMove.second.getColIndx() << endl;
+    myfile << "NumMovedCellInst" << " " << moveCellInstanceVector.size() << endl;
+    for (const auto &cellMove : moveCellInstanceVector) {
+        myfile << "CellInst" << " " << cellMove.getCellName() << " " << cellMove.getRowIndx() << " " << cellMove.getColIndx() << endl;
     };
+
     int numRoute = 0;
     for (const auto &net : netMap) {
         numRoute += net.second.getNumRoute().size();
@@ -202,8 +180,7 @@ int main(int argc, char *argv[]) {
         };
     };
     myfile.close();
-//
-//
+
     END = clock();
     cout << endl << "程式執行所花費：" << (double) clock() / CLOCKS_PER_SEC << " S";
     cout << endl << "進行運算所花費的時間：" << (END - START) / CLOCKS_PER_SEC << " S" << endl;
@@ -334,3 +311,25 @@ int main(int argc, char *argv[]) {
 //}
 //// Z- direction
 //}
+
+// empty blockage
+//    set<string>  masterSet;
+//    for(auto const masterCell : masterCellMap){
+//        int blockageDemand = 0;
+//        for (auto const blockage:masterCell.second.getBlockageType()) {
+//            blockageDemand+=blockage.second.getDemand();
+//        }
+//        if(blockageDemand == 0 and masterCell.second.getPinType().size() <=2){
+////            cout << masterCell.first << " " << blockageDemand << endl;
+//            masterSet.insert(masterCell.first);
+//        }
+//    }
+
+//    int emptyBlockage = 0;
+//    for(auto const cellInstance : cellInstanceMap){
+//        if(masterSet.count(cellInstance.second.getMasterCellName()) == 1 and cellInstance.second.getMovalbe() == "Movable"){
+//            emptyBlockage+=1;
+//            cout << "empty blockage : "<<cellInstance.first << endl;
+//        }
+//    }
+//    cout << "emptyBlockage : "<< emptyBlockage << endl;

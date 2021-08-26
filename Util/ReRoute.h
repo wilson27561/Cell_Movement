@@ -33,7 +33,7 @@ public:
 
     void boundaryReroute(map<string, Net> *netMap,
                                  map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                                 vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,double START);
+                                 vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,double START,unordered_map<string,string> *isReRouteMap);
 
      bool isOutOfBoundary(vector<Route> routeVec, map<string, int> boundaryMap);
 

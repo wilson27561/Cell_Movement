@@ -220,7 +220,7 @@ ReadFile::readNet(vector<string> *contentVector, vector<string> *lineVector, map
     net.setWeight(stod((*lineVector)[4]));
     map<string, int> boundaryMap;
 
-    vector<CellInstance> connectCellVector;
+    unordered_map <string,CellInstance> connectCellMap;
     for (int i = indexCount + 1; i <= indexCount + pinCount; i++) {
         vector<string> pinVector = splitString((*contentVector)[i]);
         vector<string> pinCellVec = splitByChar(pinVector[1], '/');
@@ -243,10 +243,10 @@ ReadFile::readNet(vector<string> *contentVector, vector<string> *lineVector, map
         cellinstance.setRowIndx((*cellInstanceMap)[pinCellVec[0]].getRowIndx());
         cellinstance.setColIndx((*cellInstanceMap)[pinCellVec[0]].getColIndx());
         readBoundary(cellinstance, &boundaryMap);
-        connectCellVector.push_back(cellinstance);
+        connectCellMap.insert(pair<string,CellInstance>(pinCellVec[0],cellinstance));
     }
     net.setBoundaryMap(boundaryMap);
-    net.setConnectCell(connectCellVector);
+    net.setConnectCell(connectCellMap);
     (*netMap).insert(pair<string, Net>((*lineVector)[1], net));
     (*netNameSet).insert((*lineVector)[1]);
     (*index) = indexCount + pinCount;
@@ -280,11 +280,15 @@ ReadFile::readRoute(vector<string> *contentVector, vector<string> *lineVector, m
                         routeVector[6]);
         }
     }
+    //有些有net但沒有route
     for (const auto &netName : (*netNameSet)) {
-        int layer = (*netMap)[netName].getConnectCell()[0].getLayerName();
-        int row = (*netMap)[netName].getConnectCell()[0].getRowIndx();
-        int col = (*netMap)[netName].getConnectCell()[0].getColIndx();
-        (*gridVector)[layer - 1][row - 1][col - 1] -= 1;
+        for(auto const netPoint: (*netMap)[netName].getConnectCell()){
+           int layer = netPoint.second.getLayerName();
+           int row = netPoint.second.getRowIndx();
+           int col = netPoint.second.getColIndx();
+           (*gridVector)[layer - 1][row - 1][col - 1] -= 1;
+           break;
+        }
     }
     *index = indexCount + numRoutes;
 }

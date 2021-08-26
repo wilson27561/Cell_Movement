@@ -53,13 +53,7 @@ void Net::setNumRoute(const vector<Route> &numRoute) {
     Net::numRoute = numRoute;
 }
 
-const vector<CellInstance> &Net::getConnectCell() const {
-    return connectCell;
-}
 
-void Net::setConnectCell(const vector<CellInstance> &connectCell) {
-    Net::connectCell = connectCell;
-}
 
 const map<string, int> &Net::getBoundaryMap() const {
     return boundaryMap;
@@ -74,3 +68,11 @@ Net::~Net() {
 }
 
 Net::Net() {}
+
+const unordered_map<string, CellInstance> &Net::getConnectCell() const {
+    return connectCell;
+}
+
+void Net::setConnectCell(const unordered_map<string, CellInstance> &connectCell) {
+    Net::connectCell = connectCell;
+}

@@ -33,7 +33,7 @@ ReRoute::~ReRoute() {
 
 void ReRoute::boundaryReroute(map<string, Net> *netMap,
                               map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                              vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,double START) {
+                              vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,double START,unordered_map<string,string> *isReRouteMap) {
 
     double STARTROUTE, ENDROUTE;
     STARTROUTE = clock();
@@ -51,7 +51,7 @@ void ReRoute::boundaryReroute(map<string, Net> *netMap,
         //判斷net 是否 需要重繞
         if (isOutOfBoundary(routeVec, item.second.getBoundaryMap())) {
             isNeedReroute = true;
-        } else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap())) {
+        } else if (isOverFlowHalfPerimeter(routeVec, item.second.getBoundaryMap()) ) {
             isNeedReroute = true;
         } else {
             isNeedReroute = false;
@@ -514,10 +514,10 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
     set<string> cellSet;
     //-------  steiner tree  start -------
     for (const auto &cell : (*netMap)[reRouteNet].getConnectCell()) {
-        string cellString = to_string(cell.getRowIndx()) + "_" + to_string(cell.getColIndx());
+        string cellString = to_string(cell.second.getRowIndx()) + "_" + to_string(cell.second.getColIndx());
         cellSet.insert(cellString);
-        row[index] = cell.getRowIndx();
-        col[index] = cell.getColIndx();
+        row[index] = cell.second.getRowIndx();
+        col[index] = cell.second.getColIndx();
         index += 1;
     }
     //若有net中的cell都在同一點上，則無法重繞
@@ -597,9 +597,9 @@ void ReRoute::getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map
         // ----- put cell in layerSteinerMap for via start -----
         // 所有的 cell 放到 layerSteinerMap
         for (const auto &cell:  (*netMap)[reRouteNet].getConnectCell()) {
-            int layer = cell.getLayerName();
-            int rowIndx = cell.getRowIndx();
-            int colIndx = cell.getColIndx();
+            int layer = cell.second.getLayerName();
+            int rowIndx = cell.second.getRowIndx();
+            int colIndx = cell.second.getColIndx();
             bool isInside = false;
             for (SteinerPoint steiner : layerSteinerMap[to_string(layer)]) {
                 int isHorizontal = layer % 2;
