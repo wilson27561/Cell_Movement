@@ -72,7 +72,7 @@ public:
 
     bool isReducePoint(string point, map<string, set<string > > *reducePointMap, string netName);
 
-    void readVoltageArea(vector<string> *contentVector, map<string, VoltageArea> *voltageAreaMap, int *index);
+    void readVoltageArea(vector<string> *contentVector, unordered_map<string, VoltageArea> *voltageAreaMap, int *index);
 };
 
 #endif //CELL_MOVEMENT_READFILE_H

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     map<string, vector<int> > powerFactorMap;
     map<string, MasterCell> masterCellMap;
     map<string, CellInstance> cellInstanceMap;
-    map<string, VoltageArea> voltageAreaMap;
+    unordered_map <string, VoltageArea> voltageAreaMap;
     map<string, Net> netMap;
     vector<vector<vector<int> > > gridVector;
     map<string, CellInstance> numMoveCellInstMap;
@@ -153,9 +153,8 @@ int main(int argc, char *argv[]) {
     }
 
     readFile.getLayerFacotr(&layerMap, &powerFactorMap);
-//    cellMoveRoute.cellMoveReRoute(&netMap, &cellInstanceMap, &emptyBlockageCellVector, &masterCellMap,&gridVector, &powerFactorMap,&moveCellInstanceVector,maxCellMovent,&isReRouteMap);
-    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START,&isReRouteMap);
-
+    cellMoveRoute.cellMoveReRoute(&netMap, &cellInstanceMap, &emptyBlockageCellVector, &masterCellMap,&gridVector, &powerFactorMap,&moveCellInstanceVector,maxCellMovent,&isReRouteMap,&voltageAreaMap);
+//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START);
 
 
 

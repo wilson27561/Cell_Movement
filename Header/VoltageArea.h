@@ -5,31 +5,23 @@
 #ifndef CELL_MOVEMENT_VOLTAGEAREA_H
 #define CELL_MOVEMENT_VOLTAGEAREA_H
 #include "Grid.h"
+#include <unordered_map>
 #include <iostream>
 #include <vector>
 using namespace std;
 class VoltageArea {
 private:
     string areaName;
-    vector<Grid> gridVector;
-    vector<string> instance;
-public:
-    virtual ~VoltageArea();
-
-    VoltageArea();
-
+    //row_col
+    unordered_map<string,string> gridMap;
 public:
     const string &getAreaName() const;
 
     void setAreaName(const string &areaName);
 
-    const vector<Grid> &getGridVector() const;
+    const unordered_map<string, string> &getGridMap() const;
 
-    void setGridVector(const vector<Grid> &gridVector);
-
-    const vector<string> &getInstance() const;
-
-    void setInstance(const vector<string> &instance);
+    void setGridMap(const unordered_map<string, string> &gridMap);
 
 
 };

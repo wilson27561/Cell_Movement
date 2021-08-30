@@ -17,7 +17,6 @@
 #include "../Header/Net.h"
 #include "../flute/flute.h"
 #include "../Header/SteinerPoint.h"
-#include "../Header/RoutePoint.h"
 #include "../Util/ReRoute.h"
 #include "Constant.h"
 
@@ -29,29 +28,27 @@ public:
 
     virtual ~ReRoute();
 
-    void transferFluteTree(vector<RoutePoint> *routePointVector, Flute::Tree flutetree);
-
     void boundaryReroute(map<string, Net> *netMap,
-                                 map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                                 vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,double START,unordered_map<string,string> *isReRouteMap);
+                         map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
+                         vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,double START);
 
-     bool isOutOfBoundary(vector<Route> routeVec, map<string, int> boundaryMap);
+    bool isOutOfBoundary(vector<Route> routeVec, map<string, int> boundaryMap);
 
-     bool outOfBoundary(Route route, map<string, int> boundaryMap);
+    bool outOfBoundary(Route route, map<string, int> boundaryMap);
 
-     bool isOverFlowHalfPerimeter(vector<Route> routeVec, map<string, int> boundaryMap);
+    bool isOverFlowHalfPerimeter(vector<Route> routeVec, map<string, int> boundaryMap);
 
-     bool isRepeatVia(string coordinate, string upLayer, string downLayer, set<string> *viaSet);
+    bool isRepeatVia(string coordinate, string upLayer, string downLayer, set<string> *viaSet);
 
-     bool isRevise(string point, set<string> *routeSet);
+    bool isRevise(string point, set<string> *routeSet);
 
-     bool isViaSupplyValidFunction(int startLayer, int endLayer, int row, int col, vector<vector<vector<int > > > gridVector);
+    bool isViaSupplyValidFunction(int startLayer, int endLayer, int row, int col, vector<vector<vector<int > > > gridVector);
 
-     void getSteinerPointRoute(vector<RoutePoint> *routePointVector, vector<SteinerPoint> *steinerLine, vector<vector<vector<int > > > *gridVector,
+    void getSteinerPointRoute(Flute::Tree flutetree, vector<SteinerPoint> *steinerLine, vector<vector<vector<int > > > *gridVector,
                               map<string, vector<int > > *powerFactorMap, string minRoutingConstraint,
                               map<string, vector<SteinerPoint > > *layerSteinerVector, string reRoute);
 
-     int caculatehalfPerimeter(map<string, int> boundaryMap);
+    int caculatehalfPerimeter(map<string, int> boundaryMap);
 
     void getSteinerRoute(vector<Route> *routeVector, string reRouteNet, map<string, Net> *netMap,
                          vector<vector<vector<int > > > *gridVector, map<string, vector<int > > *powerFactorMap);
@@ -79,9 +76,7 @@ public:
                          int endColGrid, vector<int> *layerPowerVectorV, vector<int> *layerPowerVectorH,
                          vector<vector<vector<int > > > *gridVector);
     bool checkDirection(vector<Route> *routeVector);
-
-
-
+    int caculateRouteLength(vector<Route> *routeVector);
 };
 
 #endif //CELL_MOVEMENT_REROUTE_H

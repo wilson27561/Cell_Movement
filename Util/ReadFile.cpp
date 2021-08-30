@@ -444,11 +444,10 @@ ReadFile::reduceRoute(vector<vector<vector<int> > > *gridVector, int startLayInd
 }
 
 
-void ReadFile::readVoltageArea(vector<string> *contentVector, map<string, VoltageArea> *voltageAreaMap, int *index) {
+void ReadFile::readVoltageArea(vector<string> *contentVector, unordered_map<string, VoltageArea> *voltageAreaMap, int *index) {
     int indexCount = (*index);
     VoltageArea voltageArea;
-    vector<Grid> gridVector;
-    vector<string> instanceVector;
+    unordered_map<string,string> gridMap;
     vector<string> voltage = splitString((*contentVector)[indexCount]);
     string areaName = voltage[1];
     voltageArea.setAreaName(voltage[1]);
@@ -458,22 +457,16 @@ void ReadFile::readVoltageArea(vector<string> *contentVector, map<string, Voltag
     vector<string> voltageGrid = splitString((*contentVector)[indexCount]);
     for (int i = indexCount + 1; i <= (indexCount + stoi(voltageGrid[1])); i++) {
         vector<string> gridvec = splitString((*contentVector)[i]);
-        Grid grid;
-        grid.setRowIndx(stoi(gridvec[0]));
-        grid.setColIndx(stoi(gridvec[1]));
-        gridVector.push_back(grid);
+        string grid = gridvec[0]+"_"+gridvec[1];
+        gridMap.insert(pair<string,string>(grid,grid));
     }
-    voltageArea.setGridVector(gridVector);
+    voltageArea.setGridMap(gridMap);
     //instance data
     indexCount = indexCount + stoi(voltageGrid[1]) + 1;
-
     vector<string> voltageInstance = splitString((*contentVector)[indexCount]);
     for (int i = indexCount + 1; i <= (indexCount + stoi(voltageInstance[1])); i++) {
-//            vector<string> insvec = splitString(contentVector[i]);
-        instanceVector.push_back((*contentVector)[i]);
+        (*voltageAreaMap).insert(pair<string, VoltageArea>((*contentVector)[i], voltageArea));
     };
-    voltageArea.setInstance(instanceVector);
-    (*voltageAreaMap).insert(pair<string, VoltageArea>(areaName, voltageArea));
     indexCount = indexCount + stoi(voltageInstance[1]);
     *index = indexCount;
 }

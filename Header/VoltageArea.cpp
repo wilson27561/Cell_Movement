@@ -3,6 +3,7 @@
 //
 
 #include "VoltageArea.h"
+#include <unordered_map>
 
 const string &VoltageArea::getAreaName() const {
     return areaName;
@@ -12,24 +13,10 @@ void VoltageArea::setAreaName(const string &areaName) {
     VoltageArea::areaName = areaName;
 }
 
-const vector<Grid> &VoltageArea::getGridVector() const {
-    return gridVector;
+const unordered_map<string, string> &VoltageArea::getGridMap() const {
+    return gridMap;
 }
 
-void VoltageArea::setGridVector(const vector<Grid> &gridVector) {
-    VoltageArea::gridVector = gridVector;
+void VoltageArea::setGridMap(const unordered_map<string, string> &gridMap) {
+    VoltageArea::gridMap = gridMap;
 }
-
-const vector<string> &VoltageArea::getInstance() const {
-    return instance;
-}
-
-void VoltageArea::setInstance(const vector<string> &instance) {
-    VoltageArea::instance = instance;
-}
-
-VoltageArea::~VoltageArea() {
-
-}
-
-VoltageArea::VoltageArea() {}

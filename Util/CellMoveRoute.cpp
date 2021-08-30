@@ -14,6 +14,7 @@
 #include "../Header/GgridBoundaryIndex.h"
 #include "../Header/MasterCell.h"
 #include "../Header/CellInstance.h"
+#include "../Header/Blockage.h"
 #include "../Header/VoltageArea.h"
 #include "../Header/Net.h"
 #include "../flute/flute.h"
@@ -31,25 +32,26 @@ CellMoveRoute::~CellMoveRoute() {
 void CellMoveRoute::cellMoveReRoute(map<string, Net> *netMap, map<string, CellInstance> *cellInstanceMap,
                                     vector<string> *emptyBlockageCellVector, map<string, MasterCell> *masterCellMap,
                                     vector<vector<vector<int> > > *gridVector,
-                                    map<string, vector<int> > *powerFactorMap,vector<CellInstance> *moveCellInstanceVector,int maxCellMovent, unordered_map<string,string> *isReRouteMap) {
+                                    map<string, vector<int> > *powerFactorMap,vector<CellInstance> *moveCellInstanceVector,int maxCellMovent, unordered_map<string,string> *isReRouteMap, unordered_map<string,VoltageArea> *voltageArearMap) {
 
-    emptyBlockageReRoute(&(*netMap), &(*cellInstanceMap), &(*emptyBlockageCellVector), &(*masterCellMap),
-                         &(*gridVector), &(*powerFactorMap), &(*moveCellInstanceVector), maxCellMovent, &(*isReRouteMap));
+    blockageReRoute(&(*netMap), &(*cellInstanceMap), &(*emptyBlockageCellVector), &(*masterCellMap),
+                         &(*gridVector), &(*powerFactorMap), &(*moveCellInstanceVector), maxCellMovent, &(*isReRouteMap),  &(*voltageArearMap));
 
 }
 
-void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap, map<string, CellInstance> *cellInstanceMap,
+void CellMoveRoute::blockageReRoute(map<string, Net> *netMap, map<string, CellInstance> *cellInstanceMap,
                                          vector<string> *emptyBlockageCellVector,
                                          map<string, MasterCell> *masterCellMap,
                                          vector<vector<vector<int> > > *gridVector,
                                          map<string, vector<int> > *powerFactorMap,
-                                         vector<CellInstance> *moveCellInstanceVector, int maxCellMovent, unordered_map<string,string> *isReRouteMap) {
+                                         vector<CellInstance> *moveCellInstanceVector, int maxCellMovent, unordered_map<string,string> *isReRouteMap,unordered_map<string,VoltageArea> *voltageArearMap) {
     //所有cell裡面的blockage是空的
     int maxCellMove = 0;
-    for (auto const cell:(*emptyBlockageCellVector)) {
+    for (auto const cellInstance:(*cellInstanceMap)) {
+        string cell = cellInstance.second.getCellName();
         bool isOnside = true;
         //cell 有哪些net連結到
-        if (onOneSide((*cellInstanceMap)[cell], &(*cellInstanceMap), &(*netMap))) {
+        if (onOneSide((*cellInstanceMap)[cell], &(*cellInstanceMap), &(*netMap)) and cellInstance.second.getMovalbe() == "Movable") {
             isOnside = true;
         } else {
             isOnside = false;
@@ -70,81 +72,99 @@ void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap, map<string, C
 
             //----------取的bounding box start----------
             unordered_map<string, int> boundaryMap;
-            CellInstance moveCellInstance;
+            vector<CellInstance> movedPosition;
             getBoundaryMap((*cellInstanceMap)[cell], &connectCellMap, &boundaryMap);
             //----------取的bounding box end----------
 
             //------ 取的moving position start------
-            srand(time(NULL));
             CellInstance oriCellInstance = (*cellInstanceMap)[cell];
-            set<string> cellMoveSet;
-            for (int i = 0; i < 3; i++) {
-                randomMovingPoint(boundaryMap, &moveCellInstance, cell);
-                if (isRepeatCellMove(moveCellInstance, &cellMoveSet) == false) {
-                    //------ 兩條net的connectCell 部分改掉改成 moveCellInstance start ------
-                    for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
-                        unordered_map<string, CellInstance> connectCellMap = (*netMap)[connectNet].getConnectCell();
-                        connectCellMap[cell].setRowIndx(moveCellInstance.getRowIndx());
-                        connectCellMap[cell].setColIndx(moveCellInstance.getColIndx());
-                        (*netMap)[connectNet].setConnectCell(connectCellMap);
-                    }
-                    //------ 兩條net的connectCell 部分改掉改成 moveCellInstance end ------
-                    unordered_map<string, vector<Route> > oriRouteMap;
-                    //---------- 先拔掉所有的繞線，再將route 暫存在在外面 start----------
-                    for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
-                        vector<Route> numRoute = (*netMap)[connectNet].getNumRoute();
-                        oriRouteMap.insert(pair<string, vector<Route> >(connectNet, numRoute));
-                        reRoute.reviseRouteSupply(&(*gridVector), &numRoute, ADD, connectNet);
-                    }
-                    //---------- 先拔掉所有的繞線，再將oriroute 暫存在在外面 end----------
+            string masterCellName = (*cellInstanceMap)[cell].getMasterCellName();
+            MasterCell masterCell =   (*masterCellMap)[masterCellName];
 
-                    bool canBeMoved = true;
-                    unordered_map<string, vector<Route> > successRouteMap;
-                    for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
-                        vector<Route> routeVector;
-                        reRoute.getSteinerRoute(&routeVector, connectNet, &(*netMap), &(*gridVector),
-                                                &(*powerFactorMap));
+            movedPoint( &boundaryMap,&movedPosition, oriCellInstance, &(*masterCellMap),&(*gridVector),&(*voltageArearMap));
 
-                        if (routeVector.size() > 0) {
-                            reRoute.reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, connectNet);
-                            successRouteMap.insert(pair<string, vector<Route> >(connectNet, routeVector));
-                        } else {
-                            canBeMoved = false;
-                            break;
-                        }
-                    }
-                    // 失敗處理
-                    if (canBeMoved == false) {
-                        for (const auto routeVec:successRouteMap) {
-                            vector<Route> routeVector = routeVec.second;
-                            reRoute.reviseRouteSupply(&(*gridVector), &routeVector, ADD, routeVec.first);
-                        }
-                        for (const auto routeVec:oriRouteMap) {
-                            vector<Route> routeVector = routeVec.second;
-                            reRoute.reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, routeVec.first);
-                        }
-                        for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
-                            unordered_map<string, CellInstance> connectCellMap = (*netMap)[connectNet].getConnectCell();
-                            connectCellMap[cell].setRowIndx(oriCellInstance.getRowIndx());
-                            connectCellMap[cell].setColIndx(oriCellInstance.getColIndx());
-                            (*netMap)[connectNet].setConnectCell(connectCellMap);
-                        }
-                        //成功處理
+            for(int i = 0;i<movedPosition.size();i++){
+
+
+
+                CellInstance moveCellInstance = movedPosition[i];
+                //------ 兩條net的connectCell 部分改掉改成 moveCellInstance start ------
+                for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
+                    unordered_map<string, CellInstance> connectCellMap = (*netMap)[connectNet].getConnectCell();
+                    connectCellMap[cell].setRowIndx(moveCellInstance.getRowIndx());
+                    connectCellMap[cell].setColIndx(moveCellInstance.getColIndx());
+                    (*netMap)[connectNet].setConnectCell(connectCellMap);
+                }
+                //------ 兩條net的connectCell 部分改掉改成 moveCellInstance end ------
+                unordered_map<string, vector<Route> > oriRouteMap;
+                //---------- 先拔掉所有的繞線，再將route 暫存在在外面 start----------
+                for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
+                    vector<Route> numRoute = (*netMap)[connectNet].getNumRoute();
+                    oriRouteMap.insert(pair<string, vector<Route> >(connectNet, numRoute));
+                    reRoute.reviseRouteSupply(&(*gridVector), &numRoute, ADD, connectNet);
+                }
+                //---------- 先拔掉所有的繞線，再將oriroute 暫存在在外面 end----------
+                //---------- 先將Cell blockage 加回去 start ----------
+                reviseSupplyCellBlockage( masterCell, &(*gridVector), oriCellInstance, ADD);
+                //---------- 先將Cell blockage 加回去 end ----------
+                //---------- 將新的Cell blockage 減去 start ----------
+                reviseSupplyCellBlockage( masterCell, &(*gridVector), (*cellInstanceMap)[cell], REDUCE);
+                //---------- 先將Cell blockage 減去 end ----------
+                bool canBeMoved = true;
+                unordered_map<string, vector<Route> > successRouteMap;
+
+                for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
+                    vector<Route> oriRoute = (*netMap)[connectNet].getNumRoute();
+                    vector<Route> routeVector;
+                    reRoute.getSteinerRoute(&routeVector, connectNet, &(*netMap), &(*gridVector),
+                                            &(*powerFactorMap));
+                    int afterRouteLength = caculateRouteLength(&routeVector);
+                    int oriRouteLength = caculateRouteLength(&oriRoute);
+                    if (routeVector.size() > 0 and afterRouteLength <= oriRouteLength ) {
+                        reRoute.reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, connectNet);
+                        successRouteMap.insert(pair<string, vector<Route> >(connectNet, routeVector));
                     } else {
-                        for (const auto routeVec:successRouteMap) {
-                            vector<Route> routeVector = routeVec.second;
-                            (*netMap)[routeVec.first].setNumRoute(routeVector);
-                            (*isReRouteMap).insert(pair<string,string>(routeVec.first,routeVec.first));
-                        }
-                        (*cellInstanceMap)[cell].setRowIndx(moveCellInstance.getRowIndx());
-                        (*cellInstanceMap)[cell].setColIndx(moveCellInstance.getColIndx());
-                        //儲存移動的map
-                        (*moveCellInstanceVector).push_back(moveCellInstance);
-                        maxCellMove +=1;
+                        canBeMoved = false;
                         break;
                     }
                 }
-            };
+                // 失敗處理
+                if (canBeMoved == false) {
+                    for (const auto routeVec:successRouteMap) {
+                        vector<Route> routeVector = routeVec.second;
+                        reRoute.reviseRouteSupply(&(*gridVector), &routeVector, ADD, routeVec.first);
+                    }
+                    for (const auto routeVec:oriRouteMap) {
+                        vector<Route> routeVector = routeVec.second;
+                        reRoute.reviseRouteSupply(&(*gridVector), &routeVector, REDUCE, routeVec.first);
+                    }
+                    for (auto const connectNet : (*cellInstanceMap)[cell].getConnectNetVector()) {
+                        unordered_map<string, CellInstance> connectCellMap = (*netMap)[connectNet].getConnectCell();
+                        connectCellMap[cell].setRowIndx(oriCellInstance.getRowIndx());
+                        connectCellMap[cell].setColIndx(oriCellInstance.getColIndx());
+                        (*netMap)[connectNet].setConnectCell(connectCellMap);
+                    }
+                    reviseSupplyCellBlockage( masterCell, &(*gridVector), (*cellInstanceMap)[cell], ADD);
+                    reviseSupplyCellBlockage( masterCell, &(*gridVector), oriCellInstance, REDUCE);
+                    //成功處理
+                } else {
+                    for (const auto routeVec:successRouteMap) {
+                        vector<Route> routeVector = routeVec.second;
+                        (*netMap)[routeVec.first].setNumRoute(routeVector);
+                        (*isReRouteMap).insert(pair<string,string>(routeVec.first,routeVec.first));
+                    }
+                    (*cellInstanceMap)[cell].setRowIndx(moveCellInstance.getRowIndx());
+                    (*cellInstanceMap)[cell].setColIndx(moveCellInstance.getColIndx());
+                    //儲存移動的map
+                    (*moveCellInstanceVector).push_back(moveCellInstance);
+                    maxCellMove +=1;
+                    break;
+                }
+
+
+
+
+            }
             //------ 取的moving position end------
         }
         if(maxCellMove == maxCellMovent){
@@ -153,27 +173,112 @@ void CellMoveRoute::emptyBlockageReRoute(map<string, Net> *netMap, map<string, C
     }
 }
 
-bool CellMoveRoute::isRepeatCellMove(CellInstance moveCellInstance, set<string> *cellMoveSet) {
-    string cell_move = to_string(moveCellInstance.getRowIndx()) + "_" + to_string(moveCellInstance.getColIndx());
-    int oriSize = (*cellMoveSet).size();
-    (*cellMoveSet).insert(cell_move);
-    int afterSize = (*cellMoveSet).size();
+void  CellMoveRoute::movedCellReRoute(){
 
-    if (oriSize == afterSize) {
-        return true;
-    } else {
-        return false;
+}
+
+
+int CellMoveRoute::caculateRouteLength(vector<Route> *routeVector){
+    int totalLength =0;
+    for (int i =0; i < (*routeVector).size();i++) {
+       int startRowIndx =  (*routeVector)[i].getStartRowIndx();
+       int startColIndx =  (*routeVector)[i].getStartColIndx();
+       int endRowIndx =  (*routeVector)[i].getEndRowIndx();
+       int endColIndx = (*routeVector)[i].getEndColIndx();
+       int startLayIndx = (*routeVector)[i].getStartLayIndx();
+       int endLayIndx = (*routeVector)[i].getEndlayIndx();
+       if(startRowIndx == endRowIndx and startColIndx != endColIndx){
+           int distance = startColIndx - endColIndx;
+           distance = abs(distance);
+           totalLength+=distance;
+           totalLength+=1;
+       }else if(startRowIndx != endRowIndx and startColIndx == endColIndx){
+           int distance = startRowIndx - endRowIndx;
+           distance = abs(distance);
+           totalLength+=distance;
+           totalLength+=1;
+       }else if(startLayIndx != endLayIndx and startRowIndx == endRowIndx and startColIndx == endColIndx){
+           int distance = startLayIndx - endLayIndx;
+           distance = abs(distance);
+           totalLength+=distance;
+       }else{
+           cout << "has some exception in route" << endl;
+       }
+
+    }
+    return totalLength;
+}
+
+
+void CellMoveRoute::reviseSupplyCellBlockage(MasterCell masterCell,vector<vector<vector<int> > > *gridVector,CellInstance cellInstance,string revise){
+   map<string,Blockage> blockageMap =  masterCell.getBlockageType();
+    for (auto const &item : blockageMap) {
+        if(revise == REDUCE){
+            (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
+                    cellInstance.getColIndx() - 1] =
+                    (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
+                            cellInstance.getColIndx() - 1] - item.second.getDemand();
+
+        }else{
+            (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
+                    cellInstance.getColIndx() - 1] =
+                    (*gridVector)[item.second.getBlockageLayer() - 1][cellInstance.getRowIndx() - 1][
+                            cellInstance.getColIndx() - 1] + item.second.getDemand();
+
+        }
     }
 }
 
-void CellMoveRoute::randomMovingPoint(unordered_map<string, int> boundaryMap, CellInstance *moveCellInstance,string cellName) {
-    int rowRange = boundaryMap[RIGHT] - boundaryMap[LEFT];
-    int row = rand() % rowRange + boundaryMap[LEFT];
-    int colRange = boundaryMap[UP] - boundaryMap[DOWN];
-    int col = rand() % colRange + boundaryMap[DOWN];
-    (*moveCellInstance).setRowIndx(row);
-    (*moveCellInstance).setColIndx(col);
-    (*moveCellInstance).setCellName(cellName);
+
+void CellMoveRoute::movedPoint(unordered_map<string, int> *boundaryMap,vector<CellInstance> *movePosition,CellInstance oriCellInstance,map<string,MasterCell> *masterCellMap,vector<vector<vector<int> > > *gridVector,unordered_map<string,VoltageArea> *voltageArearMap){
+    int startColRange = (*boundaryMap)[LEFT];
+    int endColRange= (*boundaryMap)[RIGHT];
+    int startRowRange = (*boundaryMap)[DOWN];
+    int endRowRange =  (*boundaryMap)[UP];
+    string masterCellName =oriCellInstance.getMasterCellName();
+
+    map<string,Blockage> blockageMap = (*masterCellMap)[masterCellName].getBlockageType();
+    for(int rowIndx =startRowRange ;rowIndx<= endRowRange;rowIndx++){
+        for(int colIndx =startColRange ;colIndx<=endColRange;colIndx++){
+            if(isOverFlowDemand(&blockageMap, &(*gridVector), rowIndx, colIndx) and  isVoltageArea(rowIndx, colIndx, oriCellInstance,&(*voltageArearMap))){
+                CellInstance movedCell;
+                movedCell.setRowIndx(rowIndx);
+                movedCell.setColIndx(colIndx);
+                movedCell.setCellName(oriCellInstance.getCellName());
+                (*movePosition).push_back(movedCell);
+            }
+        }
+    }
+}
+
+bool CellMoveRoute:: isVoltageArea(int rowIndx,int colIndx,CellInstance cellInstance,unordered_map<string,VoltageArea> *voltageArearMap){
+       string cellName =  cellInstance.getCellName();
+       string movedPosition = to_string(rowIndx)+"_"+ to_string(colIndx);
+    if ((*voltageArearMap).find(cellName) == (*voltageArearMap).end()){
+        return true;
+    }else{
+      unordered_map<string,string> gridMap =  (*voltageArearMap)[cellName].getGridMap();
+        if(gridMap.find(movedPosition) == gridMap.end()){
+            return  false;
+        }else{
+            return  true;
+        }
+    }
+       return true;
+}
+
+
+bool CellMoveRoute::isOverFlowDemand(map<string,Blockage> *blockageMap,vector<vector<vector<int> > > *gridVector,int rowIndx,int colIndx){
+    bool isValid = true;
+        for (auto const &item : *blockageMap) {
+            //row col 相反搞錯位置
+            int gridDemand  = (*gridVector)[item.second.getBlockageLayer() - 1][rowIndx - 1][colIndx - 1] - item.second.getDemand();
+            if(gridDemand < 0){
+                isValid  = false;
+                break;
+            }
+        }
+    return isValid;
 }
 
 void CellMoveRoute::getBoundaryMap(CellInstance movedCell, unordered_map<string, CellInstance> *connectCellMap,
@@ -245,16 +350,6 @@ void CellMoveRoute::getCellMovePosition(string movedCell, set<string> *movedPosi
     }
 }
 
-void CellMoveRoute::getRandomCellVector(set<string> *cellMovePositionSet, vector<string> *cellMovePositionVector) {
-    vector<string> cellMoveVector((*cellMovePositionSet).begin(), (*cellMovePositionSet).end());
-    int randomSize = cellMoveVector.size() / 3;
-    for (int i = 0; i < randomSize; i++) {
-        srand(time(NULL));
-        int random = rand() % (cellMoveVector.size() - 1);
-        (*cellMovePositionVector).push_back(cellMoveVector[random]);
-        cellMoveVector.erase(cellMoveVector.begin() + random);
-    }
-}
 
 
 //重新繞線

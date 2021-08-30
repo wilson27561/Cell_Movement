@@ -18,6 +18,7 @@ private:
     int endRowIndx;
     int endColIndx;
     int endlayIndx;
+    int routeLength;
 public:
     Route();
 
