@@ -32,7 +32,7 @@ ReRoute::~ReRoute() {
 
 void ReRoute::boundaryReroute(map<string, Net> *netMap,
                               map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                              vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,double START) {
+                              vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,unordered_map<string,string> *isReRouteMap,double START) {
 
     double STARTROUTE, ENDROUTE;
     STARTROUTE = clock();
@@ -480,6 +480,40 @@ bool ReRoute::outOfBoundary(Route route, map<string, int> boundaryMap) {
         isReRoute = true;
     }
     return isReRoute;
+}
+void ReRoute::getSamePointReRoute(map<string,Net> *netMap, map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
+                                  vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,string reRouteNet){
+    vector<int> layerVector;
+    int row;
+    int col;
+    bool isValidRoute = true;
+    for (const auto &cell : (*netMap)[reRouteNet].getConnectCell()) {
+        layerVector.push_back(cell.second.getLayerName());
+        row = cell.second.getRowIndx();
+        col = cell.second.getColIndx();
+    }
+    sort(layerVector.begin(), layerVector.end());
+    int startLayer = layerVector[0];
+    int endIndex = layerVector.size()-1;
+    int endLayer =  layerVector[endIndex];
+    for(int layerIndex = startLayer;layerIndex<=endLayer;layerIndex++){
+        if ((*gridVector)[layerIndex - 1][row - 1][col - 1] <= 0) {
+            isValidRoute= false;
+            break;
+        }
+    }
+    if(isValidRoute){
+        vector<Route> routeVector;
+        Route route;
+        route.setStartRowIndx(row);
+        route.setStartRowIndx(col);
+        route.setEndRowIndx(row);
+        route.setEndColIndx(col);
+        route.setStartLayIndx(startLayer);
+        route.setEndlayIndx(endLayer);
+        routeVector.push_back(route);
+        (*netMap)[reRouteNet].setNumRoute(routeVector);
+    }
 }
 
 //取得Steiner Tree Routing 的線

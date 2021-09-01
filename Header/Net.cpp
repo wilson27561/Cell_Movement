@@ -76,3 +76,11 @@ const unordered_map<string, CellInstance> &Net::getConnectCell() const {
 void Net::setConnectCell(const unordered_map<string, CellInstance> &connectCell) {
     Net::connectCell = connectCell;
 }
+
+int Net::getRouteLength() const {
+    return routeLength;
+}
+
+void Net::setRouteLength(int routeLength) {
+    Net::routeLength = routeLength;
+}

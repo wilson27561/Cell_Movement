@@ -30,6 +30,7 @@ private:
     map<string,int> boundaryMap;
     unordered_map<string,CellInstance> connectCell;
     vector<Route> numRoute;
+    int routeLength = 0;
 public:
     virtual ~Net();
 
@@ -68,6 +69,9 @@ public:
 
     void setBoundaryMap(const map<string, int> &boundaryMap);
 
+    int getRouteLength() const;
+
+    void setRouteLength(int routeLength);
 };
 
 

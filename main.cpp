@@ -154,7 +154,8 @@ int main(int argc, char *argv[]) {
 
     readFile.getLayerFacotr(&layerMap, &powerFactorMap);
     cellMoveRoute.cellMoveReRoute(&netMap, &cellInstanceMap, &emptyBlockageCellVector, &masterCellMap,&gridVector, &powerFactorMap,&moveCellInstanceVector,maxCellMovent,&isReRouteMap,&voltageAreaMap);
-//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap, START);
+
+//    reRoute.boundaryReroute(&netMap, &cellInstanceMap, &masterCellMap, &gridVector, &powerFactorMap,&isReRouteMap, START);
 
 
 

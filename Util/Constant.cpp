@@ -3,7 +3,7 @@
 //
 #include "Constant.h"
 
-const string FILEPATH = "case2.txt";
+const string FILEPATH = "case1.txt";
 const string MAXCELLMOVE = "MaxCellMove";
 const string GGRIDBOUNDARYIDX = "GGridBoundaryIdx";
 const string NUMLAYER = "NumLayer";

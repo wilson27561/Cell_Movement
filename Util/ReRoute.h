@@ -30,7 +30,7 @@ public:
 
     void boundaryReroute(map<string, Net> *netMap,
                          map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
-                         vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,double START);
+                         vector<vector<vector<int> > > *gridVector, map<string, vector<int > > *powerFactorMap,unordered_map<string,string> *isReRouteMap,double START);
 
     bool isOutOfBoundary(vector<Route> routeVec, map<string, int> boundaryMap);
 
@@ -77,6 +77,8 @@ public:
                          vector<vector<vector<int > > > *gridVector);
     bool checkDirection(vector<Route> *routeVector);
     int caculateRouteLength(vector<Route> *routeVector);
+    void getSamePointReRoute(map<string,Net> *netMap, map<string, CellInstance> *cellInstanceMap, map<string, MasterCell> *masterCellMap,
+                                      vector<vector<vector<int> > > *gridVector, map<string, vector<int> > *powerFactorMap,string reRouteNet);
 };
 
 #endif //CELL_MOVEMENT_REROUTE_H
